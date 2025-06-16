@@ -4,10 +4,10 @@ import { CompanyGuard } from '../../common/guards/company-quard';
 import { PaginatedListDTO } from '../../interface/paginated-list';
 import { CreateEmployeeDto } from './dto/create-emplooye.dto';
 import { UpdateEmplooyeDto } from './dto/update-emplooye.dto';
-import { EmplooyeService } from './emplooye.service';
+import { EmplooyeService } from './employee.service';
 
 @UseGuards(CompanyGuard)
-@Controller('emplooye')
+@Controller('employees')
 export class EmplooyeController {
   constructor(private readonly emplooyeService: EmplooyeService) {}
 

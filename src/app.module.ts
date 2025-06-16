@@ -6,7 +6,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { CompaniesModule } from './modules/companies/companies.module';
-import { EmplooyeModule } from './modules/emplooye/emplooye.module';
+import { EmplooyeModule } from './modules/emplooye/employee.module';
 import { LoggerModule } from './modules/logger/logger.module';
 import { UsersModule } from './modules/users/users.module';
 

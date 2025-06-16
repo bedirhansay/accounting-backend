@@ -4,7 +4,7 @@ import { Model, Types } from 'mongoose';
 import { PaginatedListDTO } from '../../interface/paginated-list';
 import { CreateEmployeeDto } from './dto/create-emplooye.dto';
 import { UpdateEmplooyeDto } from './dto/update-emplooye.dto';
-import { Emplooye, EmplooyeDocument } from './emplooye.schema';
+import { Emplooye, EmplooyeDocument } from './employee.schema';
 
 @Injectable()
 export class EmplooyeService {
@@ -64,12 +64,7 @@ export class EmplooyeService {
         .sort({ hireDate: -1 }) // veya createdAt: -1
         .exec();
 
-      return {
-        currentPage: page,
-        pageSize,
-        totalCount,
-        data,
-      };
+      return data;
     } catch (err) {
       console.error('❌ Personeller listelenirken hata:', err);
       throw new InternalServerErrorException({ _message: err.message });

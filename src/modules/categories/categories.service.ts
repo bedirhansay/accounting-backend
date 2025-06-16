@@ -77,10 +77,7 @@ export class CategoriesService {
 
       const categories = await this.categoryModel.find({ companyId }).sort({ createdAt: -1 }).exec();
 
-      return {
-        message: 'Kategoriler listelendi',
-        data: categories,
-      };
+      return categories;
     } catch (err) {
       console.error('❌ Kategorileri çekerken hata:', err);
       throw new InternalServerErrorException({ _message: err.message });
@@ -127,21 +124,20 @@ export class CategoriesService {
   }
 
   async remove(id: string, companyId: string) {
-    try {
-      if (!Types.ObjectId.isValid(id)) {
-        throw new BadRequestException('Geçersiz kategori ID');
-      }
-
-      const deleted = await this.categoryModel.findOneAndDelete({ _id: id, companyId }).exec();
-      if (!deleted) throw new NotFoundException('Silinecek kategori bulunamadı');
-
-      return {
-        message: 'Kategori silindi',
-        data: { id },
-      };
-    } catch (err) {
-      console.error('❌ Kategori silinirken hata:', err);
-      throw new InternalServerErrorException({ _message: err.message });
+    if (!Types.ObjectId.isValid(id)) {
+      console.log(id);
+      throw new BadRequestException('Geçersiz kategori ID');
     }
+
+    const deleted = await this.categoryModel.findOneAndDelete({ _id: id, companyId }).exec();
+
+    if (!deleted) {
+      throw new NotFoundException('Silinecek kategori bulunamadı');
+    }
+
+    return {
+      message: 'Kategori silindi',
+      data: { id },
+    };
   }
 }
