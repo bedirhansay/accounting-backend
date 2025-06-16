@@ -6,60 +6,41 @@ import { Model } from 'mongoose';
 
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { User, UserDocument } from '../users/user.schema';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>
+    @InjectModel(User.name)
+    private readonly userModel: Model<UserDocument>
   ) {}
 
-  async login(dto: CreateUserDto) {
+  async login(dto: LoginDto) {
     try {
-      const user = await this.findUserByEmailOrUsername(dto.email);
+      const user = await this.findUserByEmailOrUsername(dto.username);
 
       if (!user) {
         throw new UnauthorizedException('Kullanıcı bulunamadı');
       }
 
       const isPasswordValid = await bcrypt.compare(dto.password, user.password);
-
       if (!isPasswordValid) {
         throw new UnauthorizedException('Geçersiz şifre');
       }
 
-      const payload = { sub: user._id, email: user.email };
-      const accessToken = await this.jwtService.signAsync(payload);
-
-      return {
-        message: 'Giriş başarılı',
-        accessToken,
+      const payload = {
+        sub: user._id,
+        email: user.email,
+        username: user.username,
       };
-    } catch (error) {
-      console.error('❌ Giriş hatası:', error.message);
-      throw new UnauthorizedException({ _message: error.message || 'Giriş başarısız' });
-    }
-  }
 
-  async register(dto: CreateUserDto) {
-    try {
-      const existing = await this.userModel.findOne({ email: dto.email });
-      if (existing) {
-        throw new ConflictException('Bu e-posta zaten kayıtlı');
-      }
-
-      const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-      const user = new this.userModel({
-        username: dto.username,
-        email: dto.email,
-        password: hashedPassword,
-      });
-
-      await user.save();
+      const token = await this.jwtService.signAsync(payload);
 
       return {
-        message: 'Kayıt başarılı',
+        status: 200,
+        message: 'Giriş başarılı',
+        token,
         user: {
           id: user._id,
           email: user.email,
@@ -67,14 +48,45 @@ export class AuthService {
         },
       };
     } catch (error) {
-      console.error('❌ Kayıt hatası:', error.message);
-      throw new ConflictException({ _message: error.message || 'Kayıt başarısız' });
+      console.error('❌ Giriş hatası:', error);
+      throw new UnauthorizedException('Giriş başarısız');
     }
   }
 
-  private async findUserByEmailOrUsername(value: string) {
+  async register(dto: CreateUserDto) {
+    try {
+      const existingUser = await this.userModel.findOne({ email: dto.email });
+      if (existingUser) {
+        throw new ConflictException('Bu e-posta zaten kayıtlı');
+      }
+
+      const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+      const newUser = new this.userModel({
+        username: dto.username,
+        email: dto.email,
+        password: hashedPassword,
+      });
+
+      await newUser.save();
+
+      return {
+        message: 'Kayıt başarılı',
+        user: {
+          id: newUser._id,
+          email: newUser.email,
+          username: newUser.username,
+        },
+      };
+    } catch (error) {
+      console.error('❌ Kayıt hatası:', error);
+      throw new ConflictException('Kayıt başarısız');
+    }
+  }
+
+  private async findUserByEmailOrUsername(identifier: string) {
     return this.userModel.findOne({
-      $or: [{ email: value }, { username: value }],
+      $or: [{ username: identifier }, { email: identifier }],
     });
   }
 }

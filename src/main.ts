@@ -10,6 +10,7 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization', 'x-company-id'],
     credentials: true,
   });
+  app.setGlobalPrefix('api');
   await app.listen(3000);
 }
 bootstrap();
