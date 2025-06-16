@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 
+import { CompanyGuard } from '../../../src/common/guards/company-quard';
 import { CurrentCompany } from '../../common/decorator/company-decarator';
-import { CompanyGuard } from 'src/common/guards/company-quard';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
