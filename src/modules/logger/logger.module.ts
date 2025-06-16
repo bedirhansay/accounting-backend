@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
-import { LoggerController } from './logger.controller';
+import { MongooseModule } from '@nestjs/mongoose';
+
+import { ErrorLog, ErrorLogSchema } from './error.log-schema';
 import { ErrorLoggerService } from './logger.service';
 @Module({
-  controllers: [LoggerController],
+  imports: [MongooseModule.forFeature([{ name: ErrorLog.name, schema: ErrorLogSchema }])],
   providers: [ErrorLoggerService],
   exports: [ErrorLoggerService],
 })
