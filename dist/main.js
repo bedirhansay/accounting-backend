@@ -7,7 +7,10 @@ const jwt_quard_1 = require("./common/guards/jwt-quard");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.useGlobalGuards(new jwt_quard_1.JwtAuthGuard(app.get(jwt_1.JwtService)));
-    await app.listen(3000);
+    app.enableCors();
+    const port = process.env.PORT || 3000;
+    await app.listen(port);
+    console.log(`🚀 App running on http://localhost:${port}`);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map
