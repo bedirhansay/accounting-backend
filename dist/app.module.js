@@ -27,15 +27,10 @@ exports.AppModule = AppModule = __decorate([
             logger_module_1.LoggerModule,
             config_1.ConfigModule.forRoot({ isGlobal: true }),
             mongoose_1.MongooseModule.forRootAsync({
-                useFactory: async () => {
-                    const uri = process.env.MONGO_URI;
-                    const dbName = process.env.MONGO_DB;
-                    common_1.Logger.log(`🛠 MongoDB’ye bağlanılıyor: ${uri}`);
-                    return {
-                        uri,
-                        dbName,
-                    };
-                },
+                useFactory: async () => ({
+                    uri: process.env.MONGO_URI,
+                    dbName: process.env.MONGO_DB,
+                }),
             }),
             users_module_1.UsersModule,
             auth_module_1.AuthModule,
