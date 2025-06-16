@@ -1,22 +1,16 @@
+// src/main.ts
 import { NestFactory } from '@nestjs/core';
-import { JwtService } from '@nestjs/jwt';
+import { ExpressAdapter } from '@nestjs/platform-express';
+import * as express from 'express';
 import { AppModule } from './app.module';
-import { GlobalExceptionFilter } from './common/exception/global.exception';
-import { JwtAuthGuard } from './common/guards/jwt-quard';
-import { ErrorLoggerService } from './modules/logger/logger.service';
+
+const server = express();
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-
-  app.useGlobalGuards(new JwtAuthGuard(app.get(JwtService)));
-  const errorLogger = app.get(ErrorLoggerService);
-  app.useGlobalFilters(new GlobalExceptionFilter(errorLogger));
-  app.enableCors();
-
-  const port = process.env.PORT || 3000;
-  await app.listen(port);
-
-  console.log(`🚀 App running on http://localhost:${port}`);
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
+  await app.init();
 }
 
 bootstrap();
+
+export default server; // ✅ Vercel'in beklediği şey
