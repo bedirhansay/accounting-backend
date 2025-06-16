@@ -75,7 +75,7 @@ export class CategoriesService {
         throw new BadRequestException('Firma ID zorunludur');
       }
 
-      const categories = await this.categoryModel.find({ companyId }).exec();
+      const categories = await this.categoryModel.find({ companyId }).sort({ createdAt: -1 }).exec();
 
       return {
         message: 'Kategoriler listelendi',

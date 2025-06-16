@@ -11,6 +11,10 @@ const server = (0, express_1.default)();
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule, new platform_express_1.ExpressAdapter(server));
     await app.init();
+    const PORT = process.env.PORT || 3000;
+    server.listen(PORT, () => {
+        console.log(`🚀 Server is running on http://localhost:3000`);
+    });
 }
 bootstrap();
 exports.default = server;
