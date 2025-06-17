@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { Company, CompanySchema } from '../companies/company.schema';
-import { Fuel, FuelSchema } from '../emplooye/fuel.schema';
 import { Expense, ExpenseSchema } from '../expense/expense.schema';
+import { Fuel, FuelSchema } from '../fuel/fuel.schema';
 import { VehicleController } from './vehicle.controller';
 import { Vehicle, VehicleSchema } from './vehicle.schema';
 import { VehicleService } from './vehicle.service';

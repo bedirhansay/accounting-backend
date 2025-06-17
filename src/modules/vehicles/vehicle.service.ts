@@ -3,8 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
 import { FilterQueryDTO } from '../../common/DTO/requestDTO/QueryDTO';
-import { Fuel, FuelDocument } from '../emplooye/fuel.schema';
 import { Expense, ExpenseDocument } from '../expense/expense.schema';
+import { Fuel, FuelDocument } from '../fuel/fuel.schema';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { Vehicle, VehicleDocument } from './vehicle.schema';

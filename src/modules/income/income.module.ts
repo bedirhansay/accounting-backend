@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Company, CompanySchema } from '../companies/company.schema';
 import { IncomeController } from './income.controller';
-import { Income, IncomeSchema } from './income.dto';
+import { Income, IncomeSchema } from './income.schema';
 import { IncomeService } from './income.service';
 
 @Module({

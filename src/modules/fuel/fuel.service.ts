@@ -2,9 +2,9 @@ import { BadRequestException, Injectable, InternalServerErrorException, NotFound
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { PaginatedListDTO } from '../../interface/paginated-list';
-import { Fuel, FuelDocument } from '../emplooye/fuel.schema';
 import { CreateFuelDto } from './dto/create-fuel.dto';
 import { UpdateFuelDto } from './dto/update-fuel.dto';
+import { Fuel, FuelDocument } from './fuel.schema';
 
 @Injectable()
 export class FuelService {

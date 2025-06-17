@@ -7,7 +7,7 @@ import { Model, Types } from 'mongoose';
 import { FilterQueryDTO, IncomeExportQueryDTO } from '../../common/DTO/requestDTO/QueryDTO';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
-import { Income, IncomeDocument } from './income.dto';
+import { Income, IncomeDocument } from './income.schema';
 
 @Injectable()
 export class IncomeService {
