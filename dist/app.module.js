@@ -16,6 +16,7 @@ const global_exception_1 = require("./common/exception/global.exception");
 const auth_module_1 = require("./modules/auth/auth.module");
 const categories_module_1 = require("./modules/categories/categories.module");
 const companies_module_1 = require("./modules/companies/companies.module");
+const customers_module_1 = require("./modules/customers/customers.module");
 const employee_module_1 = require("./modules/emplooye/employee.module");
 const logger_module_1 = require("./modules/logger/logger.module");
 const users_module_1 = require("./modules/users/users.module");
@@ -39,6 +40,7 @@ exports.AppModule = AppModule = __decorate([
             companies_module_1.CompaniesModule,
             logger_module_1.LoggerModule,
             employee_module_1.EmplooyeModule,
+            customers_module_1.CustomersModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService, global_exception_1.GlobalExceptionFilter],

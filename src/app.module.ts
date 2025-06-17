@@ -7,6 +7,7 @@ import { GlobalExceptionFilter } from './common/exception/global.exception';
 import { AuthModule } from './modules/auth/auth.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { CompaniesModule } from './modules/companies/companies.module';
+import { CustomersModule } from './modules/customers/customers.module';
 import { EmplooyeModule } from './modules/emplooye/employee.module';
 import { LoggerModule } from './modules/logger/logger.module';
 import { UsersModule } from './modules/users/users.module';
@@ -27,6 +28,7 @@ import { UsersModule } from './modules/users/users.module';
     CompaniesModule,
     LoggerModule,
     EmplooyeModule,
+    CustomersModule,
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],
