@@ -1,7 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { CompanyDocument } from '../companies/company.schema';
 import { Category, CategoryDocument } from './categories.schema';
 import { CategoryType, CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -10,10 +9,7 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 export class CategoriesService {
   constructor(
     @InjectModel(Category.name)
-    private readonly categoryModel: Model<CategoryDocument>,
-
-    @InjectModel('Company')
-    private readonly companyModel: Model<CompanyDocument>
+    private readonly categoryModel: Model<CategoryDocument>
   ) {}
 
   async create(dto: CreateCategoryDto, companyId: string) {

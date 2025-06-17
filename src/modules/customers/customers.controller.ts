@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CurrentCompany } from '../../common/decorator/company-decarator';
+import { FilterQueryDTO } from '../../common/DTO/requestDTO/QueryDTO';
 import { CompanyGuard } from '../../common/guards/company-quard';
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
@@ -16,8 +17,8 @@ export class CustomersController {
   }
 
   @Get()
-  findAll(@CurrentCompany() companyId: string) {
-    return this.customersService.findAll(companyId);
+  findAll(@Query() query: FilterQueryDTO, @CurrentCompany() companyId: string) {
+    return this.customersService.findAll(companyId, query);
   }
 
   @Get(':id')
@@ -33,5 +34,14 @@ export class CustomersController {
   @Delete(':id')
   remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.customersService.remove(id, companyId);
+  }
+
+  @Get(':customerId/payments')
+  getPaymentsByCustomer(
+    @Param('customerId') customerId: string,
+    @Query() query: FilterQueryDTO,
+    @CurrentCompany() companyId: string
+  ) {
+    return this.customersService.getPaymentsByCustomer(customerId, query, companyId);
   }
 }

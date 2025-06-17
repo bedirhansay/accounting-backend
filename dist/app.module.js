@@ -20,6 +20,11 @@ const customers_module_1 = require("./modules/customers/customers.module");
 const employee_module_1 = require("./modules/emplooye/employee.module");
 const logger_module_1 = require("./modules/logger/logger.module");
 const users_module_1 = require("./modules/users/users.module");
+const fuel_module_1 = require("./modules/fuel/fuel.module");
+const vehicle_module_1 = require("./modules/vehicles/vehicle.module");
+const expense_module_1 = require("./modules/expense/expense.module");
+const income_module_1 = require("./modules/income/income.module");
+const payments_module_1 = require("./modules/payments/payments.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -41,6 +46,11 @@ exports.AppModule = AppModule = __decorate([
             logger_module_1.LoggerModule,
             employee_module_1.EmplooyeModule,
             customers_module_1.CustomersModule,
+            fuel_module_1.FuelModule,
+            vehicle_module_1.VehiclesModule,
+            expense_module_1.ExpenseModule,
+            income_module_1.IncomeModule,
+            payments_module_1.PaymentsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService, global_exception_1.GlobalExceptionFilter],

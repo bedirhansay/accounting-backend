@@ -7,7 +7,7 @@ import { UpdateEmplooyeDto } from './dto/update-emplooye.dto';
 import { Emplooye, EmplooyeDocument } from './employee.schema';
 
 @Injectable()
-export class EmplooyeService {
+export class EmployeeService {
   constructor(
     @InjectModel(Emplooye.name)
     private readonly emplooyeModel: Model<EmplooyeDocument>
@@ -32,7 +32,6 @@ export class EmplooyeService {
 
     const filter: any = { companyId };
 
-    // Arama kriteri
     if (search) {
       filter.$or = [
         { fullName: { $regex: search, $options: 'i' } },
@@ -51,7 +50,7 @@ export class EmplooyeService {
 
     const data = await this.emplooyeModel
       .find(filter)
-      .collation({ locale: 'tr', strength: 1 }) // Türkçe diline göre büyük/küçük harf duyarsız arama
+      .collation({ locale: 'tr', strength: 1 })
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .sort({ hireDate: -1 })

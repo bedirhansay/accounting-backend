@@ -11,6 +11,11 @@ import { CustomersModule } from './modules/customers/customers.module';
 import { EmplooyeModule } from './modules/emplooye/employee.module';
 import { LoggerModule } from './modules/logger/logger.module';
 import { UsersModule } from './modules/users/users.module';
+import { FuelModule } from './modules/fuel/fuel.module';
+import { VehiclesModule } from './modules/vehicles/vehicle.module';
+import { ExpenseModule } from './modules/expense/expense.module';
+import { IncomeModule } from './modules/income/income.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 
 @Module({
   imports: [
@@ -29,6 +34,11 @@ import { UsersModule } from './modules/users/users.module';
     LoggerModule,
     EmplooyeModule,
     CustomersModule,
+    FuelModule,
+    VehiclesModule,
+    ExpenseModule,
+    IncomeModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],
