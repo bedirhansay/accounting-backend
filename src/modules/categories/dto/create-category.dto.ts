@@ -7,5 +7,4 @@ export class CreateCategoryDto {
   name: string;
   description?: string;
   type: CategoryType;
-  companyId: string;
 }

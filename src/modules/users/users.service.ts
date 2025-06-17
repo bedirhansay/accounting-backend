@@ -13,18 +13,14 @@ export class UsersService {
     try {
       const createdUser = new this.userModel(createUserDto);
       const savedUser = await createdUser.save();
+
       return {
         statusCode: 201,
-        message: 'Kullanıcı başarıyla oluşturuldu',
-        data: {
-          id: savedUser._id,
-          email: savedUser.email,
-          username: savedUser.username,
-        },
+        data: { id: savedUser._id },
       };
     } catch (err) {
-      console.error('Kullanıcı oluşturulurken hata:', err);
-      throw new InternalServerErrorException({ _message: err.message });
+      console.error('❌ Kullanıcı oluşturulurken hata:', err);
+      throw new InternalServerErrorException(err.message);
     }
   }
 
@@ -36,8 +32,8 @@ export class UsersService {
         data: users,
       };
     } catch (err) {
-      console.error('Kullanıcılar çekilirken hata:', err);
-      throw new InternalServerErrorException({ _message: err.message });
+      console.error('❌ Kullanıcılar çekilirken hata:', err);
+      throw new InternalServerErrorException(err.message);
     }
   }
 
@@ -55,8 +51,8 @@ export class UsersService {
         data: user,
       };
     } catch (err) {
-      console.error('Kullanıcı getirilirken hata:', err);
-      throw new InternalServerErrorException({ _message: err.message });
+      console.error('❌ Kullanıcı getirilirken hata:', err);
+      throw new InternalServerErrorException(err.message);
     }
   }
 
@@ -67,6 +63,7 @@ export class UsersService {
       }
 
       const updatedUser = await this.userModel.findByIdAndUpdate(id, updateUserDto, { new: true }).exec();
+
       if (!updatedUser) throw new NotFoundException('Güncellenecek kullanıcı bulunamadı');
 
       return {
@@ -74,8 +71,8 @@ export class UsersService {
         data: updatedUser,
       };
     } catch (err) {
-      console.error('Kullanıcı güncellenirken hata:', err);
-      throw new InternalServerErrorException({ _message: err.message });
+      console.error('❌ Kullanıcı güncellenirken hata:', err);
+      throw new InternalServerErrorException(err.message);
     }
   }
 
@@ -93,8 +90,8 @@ export class UsersService {
         data: { id },
       };
     } catch (err) {
-      console.error('Kullanıcı silinirken hata:', err);
-      throw new InternalServerErrorException({ _message: err.message });
+      console.error('❌ Kullanıcı silinirken hata:', err);
+      throw new InternalServerErrorException(err.message);
     }
   }
 }

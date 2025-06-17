@@ -1,6 +1,12 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { BadRequestException, createParamDecorator, ExecutionContext } from '@nestjs/common';
 
-export const CurrentCompany = createParamDecorator((data: unknown, ctx: ExecutionContext) => {
+export const CurrentCompany = createParamDecorator((_data: unknown, ctx: ExecutionContext) => {
   const request = ctx.switchToHttp().getRequest();
-  return request.companyId;
+  const companyId = request.companyId;
+
+  if (!companyId) {
+    throw new BadRequestException('companyId bulunamadı. Lütfen header’a ekleyin.');
+  }
+
+  return companyId;
 });

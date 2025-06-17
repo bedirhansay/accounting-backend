@@ -13,7 +13,7 @@ export class EmplooyeController {
 
   @Post()
   create(@Body() createEmplooyeDto: CreateEmployeeDto, @CurrentCompany() companyId: string) {
-    return this.emplooyeService.create({ ...createEmplooyeDto, companyId });
+    return this.emplooyeService.create(createEmplooyeDto, companyId);
   }
 
   @Get()

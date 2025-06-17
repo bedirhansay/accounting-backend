@@ -12,6 +12,7 @@ const config_1 = require("@nestjs/config");
 const mongoose_1 = require("@nestjs/mongoose");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
+const global_exception_1 = require("./common/exception/global.exception");
 const auth_module_1 = require("./modules/auth/auth.module");
 const categories_module_1 = require("./modules/categories/categories.module");
 const companies_module_1 = require("./modules/companies/companies.module");
@@ -40,7 +41,7 @@ exports.AppModule = AppModule = __decorate([
             employee_module_1.EmplooyeModule,
         ],
         controllers: [app_controller_1.AppController],
-        providers: [app_service_1.AppService],
+        providers: [app_service_1.AppService, global_exception_1.GlobalExceptionFilter],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

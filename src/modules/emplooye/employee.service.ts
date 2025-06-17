@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { PaginatedListDTO } from '../../interface/paginated-list';
@@ -13,141 +13,104 @@ export class EmplooyeService {
     private readonly emplooyeModel: Model<EmplooyeDocument>
   ) {}
 
-  async create(dto: CreateEmployeeDto) {
-    try {
-      if (!dto.companyId) {
-        throw new BadRequestException('Firma ID zorunludur');
-      }
+  async create(dto: CreateEmployeeDto, companyId: string) {
+    const existing = await this.emplooyeModel.findOne({ fullName: dto.fullName, companyId });
 
-      const created = await new this.emplooyeModel(dto).save();
-
-      return {
-        statusCode: 201,
-        message: 'Personel başarıyla eklendi',
-        data: created,
-      };
-    } catch (err) {
-      console.error('❌ Personel eklenirken hata:', err);
-      throw new InternalServerErrorException({ _message: err.message });
+    if (existing) {
+      throw new BadRequestException('Bu isimde bir personel zaten var.');
     }
+    const created = await new this.emplooyeModel({ ...dto, companyId }).save();
+
+    return {
+      statusCode: 201,
+      data: { id: created._id },
+    };
   }
 
   async findAll(params: PaginatedListDTO & { companyId: string }) {
-    try {
-      const { page, pageSize, search, beginDate, endDate, companyId } = params;
+    const { page, pageSize, search, beginDate, endDate, companyId } = params;
 
-      if (!companyId) {
-        throw new BadRequestException('Firma ID zorunludur');
-      }
+    const filter: any = { companyId };
 
-      const filter: any = { companyId };
-
-      if (search) {
-        filter.fullName = { $regex: search, $options: 'i' };
-      }
-
-      if (beginDate || endDate) {
-        filter.hireDate = {};
-        if (beginDate) {
-          filter.hireDate.$gte = new Date(beginDate);
-        }
-        if (endDate) {
-          filter.hireDate.$lte = new Date(endDate);
-        }
-      }
-
-      const totalCount = await this.emplooyeModel.countDocuments(filter);
-      const data = await this.emplooyeModel
-        .find(filter)
-        .skip((page - 1) * pageSize)
-        .limit(pageSize)
-        .sort({ hireDate: -1 }) // veya createdAt: -1
-        .exec();
-
-      return data;
-    } catch (err) {
-      console.error('❌ Personeller listelenirken hata:', err);
-      throw new InternalServerErrorException({ _message: err.message });
+    // Arama kriteri
+    if (search) {
+      filter.$or = [
+        { fullName: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } },
+        { departmentName: { $regex: search, $options: 'i' } },
+      ];
     }
+
+    if (beginDate || endDate) {
+      filter.hireDate = { $ne: null };
+      if (beginDate) filter.hireDate.$gte = new Date(beginDate);
+      if (endDate) filter.hireDate.$lte = new Date(endDate);
+    }
+
+    const totalCount = await this.emplooyeModel.countDocuments(filter);
+
+    const data = await this.emplooyeModel
+      .find(filter)
+      .collation({ locale: 'tr', strength: 1 }) // Türkçe diline göre büyük/küçük harf duyarsız arama
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .sort({ hireDate: -1 })
+      .exec();
+
+    return {
+      pageNumber: page,
+      totalPages: Math.ceil(totalCount / pageSize),
+      totalCount,
+      hasPreviousPage: page > 1,
+      hasNextPage: page * pageSize < totalCount,
+      items: data,
+    };
   }
 
   async findOne(id: string, companyId: string) {
-    try {
-      if (!companyId) {
-        throw new BadRequestException('Firma ID zorunludur');
-      }
+    this.ensureValidObjectId(id, 'Geçersiz personel ID');
 
-      if (!Types.ObjectId.isValid(id)) {
-        throw new BadRequestException('Geçersiz personel ID');
-      }
+    const employee = await this.emplooyeModel.findOne({ _id: id, companyId }).exec();
+    if (!employee) throw new NotFoundException('Personel bulunamadı');
 
-      const employee = await this.emplooyeModel.findOne({ _id: id, companyId }).exec();
-
-      if (!employee) {
-        throw new NotFoundException('Personel bulunamadı');
-      }
-
-      return {
-        message: 'Personel bulundu',
-        data: employee,
-      };
-    } catch (err) {
-      console.error('❌ Personel getirilirken hata:', err);
-      throw new InternalServerErrorException({ _message: err.message });
-    }
+    return {
+      statusCode: 200,
+      data: employee,
+    };
   }
 
   async update(id: string, dto: UpdateEmplooyeDto, companyId: string) {
-    try {
-      if (!companyId) {
-        throw new BadRequestException('Firma ID zorunludur');
-      }
+    this.ensureValidObjectId(id, 'Geçersiz personel ID');
 
-      if (!Types.ObjectId.isValid(id)) {
-        throw new BadRequestException('Geçersiz personel ID');
-      }
+    const updated = await this.emplooyeModel.findOneAndUpdate({ _id: id, companyId }, dto, {
+      new: true,
+    });
 
-      const updated = await this.emplooyeModel.findOneAndUpdate({ _id: id, companyId }, dto, {
-        new: true,
-      });
+    if (!updated) throw new NotFoundException('Güncellenecek personel bulunamadı');
 
-      if (!updated) {
-        throw new NotFoundException('Güncellenecek personel bulunamadı');
-      }
-
-      return {
-        message: 'Personel güncellendi',
-        data: updated,
-      };
-    } catch (err) {
-      console.error('❌ Personel güncellenirken hata:', err);
-      throw new InternalServerErrorException({ _message: err.message });
-    }
+    return {
+      statusCode: 200,
+      message: 'Personel güncellendi',
+      data: updated,
+    };
   }
 
   async remove(id: string, companyId: string) {
-    try {
-      if (!companyId) {
-        throw new BadRequestException('Firma ID zorunludur');
-      }
+    this.ensureValidObjectId(id, 'Geçersiz personel ID');
 
-      if (!Types.ObjectId.isValid(id)) {
-        throw new BadRequestException('Geçersiz personel ID');
-      }
+    const deleted = await this.emplooyeModel.findOneAndDelete({ _id: id, companyId });
+    if (!deleted) throw new NotFoundException('Silinecek personel bulunamadı');
 
-      const deleted = await this.emplooyeModel.findOneAndDelete({ _id: id, companyId });
+    return {
+      statusCode: 200,
+      message: 'Personel silindi',
+      data: { id },
+    };
+  }
 
-      if (!deleted) {
-        throw new NotFoundException('Silinecek personel bulunamadı');
-      }
-
-      return {
-        message: 'Personel silindi',
-        data: { id },
-      };
-    } catch (err) {
-      console.error('❌ Personel silinirken hata:', err);
-      throw new InternalServerErrorException({ _message: err.message });
+  private ensureValidObjectId(id: string, message = 'Geçersiz ID') {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException(message);
     }
   }
 }

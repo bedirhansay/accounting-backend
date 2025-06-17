@@ -31,9 +31,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     });
 
     res.status(status).json({
+      success: false,
       statusCode: status,
       message,
-      error: message,
+      errors: exception instanceof HttpException ? ((exception.getResponse() as any)?.errors ?? null) : null,
     });
   }
 }

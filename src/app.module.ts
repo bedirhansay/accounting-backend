@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { GlobalExceptionFilter } from './common/exception/global.exception';
 import { AuthModule } from './modules/auth/auth.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { CompaniesModule } from './modules/companies/companies.module';
@@ -28,6 +29,6 @@ import { UsersModule } from './modules/users/users.module';
     EmplooyeModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, GlobalExceptionFilter],
 })
 export class AppModule {}
