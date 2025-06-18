@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company-decarator';
 
@@ -17,6 +17,7 @@ import { FuelService } from './fuel.service';
 
 @ApiTags('Fuels')
 @ApiBearerAuth()
+@ApiSecurity('x-company-id')
 @ApiExtraModels(
   FuelDTO,
   CreateFuelDto,

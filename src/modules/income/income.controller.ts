@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Header, Param, Patch, Post, Query, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 
 import { CurrentCompany } from '../../common/decorator/company-decarator';
@@ -18,6 +18,7 @@ import { IncomeService } from './income.service';
 
 @ApiTags('Incomes')
 @ApiBearerAuth()
+@ApiSecurity('x-company-id')
 @ApiExtraModels(
   IncomeDto,
   CreateIncomeDto,

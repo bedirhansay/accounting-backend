@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company-decarator';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request';
@@ -15,6 +15,7 @@ import { PaymentsService } from './payments.service';
 
 @ApiTags('Payments')
 @ApiBearerAuth()
+@ApiSecurity('x-company-id')
 @ApiExtraModels(PaymentDto, OperationResultDto, PaymentDto, CreatePaymentDto, UpdatePaymentDto)
 @UseGuards(CompanyGuard)
 @Controller('payments')

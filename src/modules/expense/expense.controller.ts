@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiQuery, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company-decarator';
 import { CompanyGuard } from '../../common/guards/company-quard';
@@ -16,6 +16,7 @@ import { ExpenseService } from './expense.service';
 
 @ApiTags('Expenses')
 @ApiBearerAuth()
+@ApiSecurity('x-company-id')
 @ApiExtraModels(
   StandardResponseDto,
   PaginatedResponseDto,

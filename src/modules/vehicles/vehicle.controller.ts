@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiExtraModels, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company-decarator';
 
@@ -15,6 +15,8 @@ import { VehicleDto } from './dto/vehicle.dto';
 import { VehicleService } from './vehicle.service';
 
 @ApiTags('Vehicles')
+@ApiBearerAuth()
+@ApiSecurity('x-company-id')
 @ApiExtraModels(
   VehicleDto,
   CreateVehicleDto,
