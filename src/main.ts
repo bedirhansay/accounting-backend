@@ -18,7 +18,7 @@ async function bootstrap() {
 
   // Global prefix ayarı
   app.setGlobalPrefix('api', {
-    exclude: ['/api-json', '/swagger.html', '/redoc.html'],
+    exclude: ['/api-json', '/swagger', '/redoc'],
   });
 
   // Swagger yapılandırması

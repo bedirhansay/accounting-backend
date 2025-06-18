@@ -12,11 +12,11 @@
   ],
   "routes": [
     {
-      "src": "/swagger.html",
+      "src": "/swagger",
       "dest": "/public/swagger.html"
     },
     {
-      "src": "/redoc.html",
+      "src": "/redoc",
       "dest": "/public/redoc.html"
     },
     {
