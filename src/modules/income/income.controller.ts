@@ -38,6 +38,15 @@ export class IncomeController {
     return this.incomeService.remove(id, companyId);
   }
 
+  @Get(':id/incomes')
+  getCustomerIncomes(
+    @Param('id') id: string,
+    @Query() query: PaginatedDateSearchDTO,
+    @CurrentCompany() companyId: string
+  ) {
+    return this.incomeService.getIncomesByCustomer(id, query, companyId);
+  }
+
   @Get('export')
   @Header('Content-Type', 'application/zip')
   @Header('Content-Disposition', 'attachment; filename=incomes.zip')

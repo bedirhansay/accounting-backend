@@ -5,7 +5,7 @@ import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
 import { Model, Types } from 'mongoose';
 
-import { DateRangeDTO, IListDTO } from '../../common/DTO/query-request-dto';
+import { DateRangeDTO, IListDTO, PaginatedDateSearchDTO } from '../../common/DTO/query-request-dto';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
 import { Income, IncomeDocument } from './income.schema';
@@ -183,6 +183,42 @@ export class IncomeService {
     }
 
     await archive.finalize();
+  }
+
+  async getIncomesByCustomer(customerId: string, query: PaginatedDateSearchDTO, companyId: string) {
+    this.ensureValidObjectId(customerId, 'Geçersiz müşteri ID');
+
+    const { page, pageSize, search, beginDate, endDate } = query;
+
+    const filter: any = { customerId, companyId };
+
+    if (search) {
+      filter.description = { $regex: search, $options: 'i' };
+    }
+
+    if (beginDate || endDate) {
+      filter.operationDate = {};
+      if (beginDate) filter.operationDate.$gte = new Date(beginDate);
+      if (endDate) filter.operationDate.$lte = new Date(endDate);
+    }
+
+    const totalCount = await this.incomeModel.countDocuments(filter);
+
+    const incomes = await this.incomeModel
+      .find(filter)
+      .sort({ operationDate: -1 })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .exec();
+
+    return {
+      pageNumber: page,
+      totalPages: Math.ceil(totalCount / pageSize),
+      totalCount,
+      hasPreviousPage: page > 1,
+      hasNextPage: page * pageSize < totalCount,
+      items: incomes,
+    };
   }
 
   private ensureValidObjectId(id: string, message = 'Geçersiz ID') {

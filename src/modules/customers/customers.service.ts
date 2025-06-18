@@ -2,7 +2,8 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { PaginatedDateSearchDTO } from '../../common/DTO/query-request-dto';
-import { PaymentDocument } from '../payments/payment.schema';
+import { Income, IncomeDocument } from '../income/income.schema';
+import { Payment, PaymentDocument } from '../payments/payment.schema';
 import { Customer, CustomerDocument } from './customer.schema';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
@@ -13,8 +14,9 @@ export class CustomersService {
     @InjectModel(Customer.name)
     private readonly customerModel: Model<CustomerDocument>,
 
-    @InjectModel(Customer.name)
-    private readonly paymentModel: Model<PaymentDocument>
+    @InjectModel(Payment.name)
+    private readonly paymentModel: Model<PaymentDocument>,
+
   ) {}
 
   async create(dto: CreateCustomerDto & { companyId: string }) {
