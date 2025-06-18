@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Swagger UI</title>
+    <link href="./swagger-ui.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="swagger-ui"></div>
+    <script src="./swagger-ui-bundle.js"></script>
+    <script src="./swagger-ui-standalone-preset.js"></script>
+    <script>
+      window.onload = () => {
+        SwaggerUIBundle({
+          url: '/swagger-json', // veya /swagger-docs.json
+          dom_id: '#swagger-ui',
+          presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+          layout: 'BaseLayout',
+        });
+      };
+    </script>
+  </body>
+</html>

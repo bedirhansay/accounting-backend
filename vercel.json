@@ -4,9 +4,17 @@
     {
       "src": "src/main.ts",
       "use": "@vercel/node"
+    },
+    {
+      "src": "public/**/*",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
+    {
+      "src": "/swagger-ui/(.*)",
+      "dest": "/public/swagger-ui/$1"
+    },
     {
       "src": "/(.*)",
       "dest": "src/main.ts",

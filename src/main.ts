@@ -1,22 +1,25 @@
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as express from 'express';
+import { createWriteStream } from 'fs';
+import { get } from 'http';
+import { join } from 'path';
 import { AppModule } from './app.module';
-import { GlobalExceptionFilter } from './common/exception/global.exception';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // CORS yapılandırması
+  // ✅ CORS ayarları
   app.enableCors({
-    origin: '*', // Prod ortamında domainleri buraya yazmalısın
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-company-id'],
     credentials: true,
   });
 
-  // Swagger dokümantasyon konfigürasyonu
+  // ✅ Swagger konfigürasyonu
   const config = new DocumentBuilder()
-    .setTitle('API Dokümantasyonu')
+    .setTitle('Accounting API')
     .setDescription('NestJS için Swagger API dokümantasyonu')
     .setVersion('1.0')
     .addBearerAuth(
@@ -27,16 +30,40 @@ async function bootstrap() {
         name: 'Authorization',
         in: 'header',
       },
-      'Bearer' // Swagger UI’da gösterilecek security scheme adı
+      'Bearer'
     )
     .build();
 
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, document); // http://localhost:3000/api
 
-  const exceptionFilter = app.get(GlobalExceptionFilter);
-  app.useGlobalFilters(exceptionFilter);
+  // ✅ swagger-static klasörünü dışa servis et
+  app.use('/swagger-static', express.static(join(__dirname, '..', 'swagger-static')));
 
-  await app.listen(process.env.PORT || 3000);
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+
+  // ✅ Geliştirme ortamındayken Swagger UI dosyalarını indir
+  if (process.env.NODE_ENV === 'development') {
+    const serverUrl = `http://localhost:${port}`;
+
+    const filesToDownload = [
+      'swagger-ui-bundle.js',
+      'swagger-ui-init.js',
+      'swagger-ui-standalone-preset.js',
+      'swagger-ui.css',
+    ];
+
+    filesToDownload.forEach((filename) => {
+      const fileUrl = `${serverUrl}/api/${filename}`;
+      const localPath = join(__dirname, '..', 'swagger-static', filename);
+
+      get(fileUrl, (res) => {
+        res.pipe(createWriteStream(localPath));
+        console.log(`✅ ${filename} dosyası indirildi ve kaydedildi -> /swagger-static/${filename}`);
+      });
+    });
+  }
 }
+
 bootstrap();

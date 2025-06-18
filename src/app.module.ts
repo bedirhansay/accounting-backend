@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { GlobalExceptionFilter } from './common/exception/global.exception';
@@ -9,13 +11,13 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { EmplooyeModule } from './modules/emplooye/employee.module';
-import { LoggerModule } from './modules/logger/logger.module';
-import { UsersModule } from './modules/users/users.module';
-import { FuelModule } from './modules/fuel/fuel.module';
-import { VehiclesModule } from './modules/vehicles/vehicle.module';
 import { ExpenseModule } from './modules/expense/expense.module';
+import { FuelModule } from './modules/fuel/fuel.module';
 import { IncomeModule } from './modules/income/income.module';
+import { LoggerModule } from './modules/logger/logger.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { UsersModule } from './modules/users/users.module';
+import { VehiclesModule } from './modules/vehicles/vehicle.module';
 
 @Module({
   imports: [
@@ -26,6 +28,10 @@ import { PaymentsModule } from './modules/payments/payments.module';
         uri: process.env.MONGO_URI,
         dbName: process.env.MONGO_DB,
       }),
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'swagger-static'),
+      serveRoot: process.env.NODE_ENV === 'development' ? '/' : '/swagger',
     }),
     UsersModule,
     AuthModule,
