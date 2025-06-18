@@ -5,7 +5,7 @@ export class PaginationDTO {
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  page: number;
+  pageNumber: number;
 
   @Type(() => Number)
   @IsNumber()

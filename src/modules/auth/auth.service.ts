@@ -30,16 +30,17 @@ export class AuthService {
       }
 
       const payload = {
-        sub: user._id,
+        id: user._id,
         email: user.email,
         username: user.username,
       };
 
       const token = await this.jwtService.signAsync(payload);
 
+      console.log(token);
+
       return {
         status: 200,
-        message: 'Giriş başarılı',
         token,
         user: {
           id: user._id,

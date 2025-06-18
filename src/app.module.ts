@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { GlobalExceptionFilter } from './common/exception/global.exception';
+import { JwtAuthGuard } from './common/guards/jwt-quard';
 import { AuthModule } from './modules/auth/auth.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { CompaniesModule } from './modules/companies/companies.module';
@@ -12,6 +14,7 @@ import { EmplooyeModule } from './modules/emplooye/employee.module';
 import { ExpenseModule } from './modules/expense/expense.module';
 import { FuelModule } from './modules/fuel/fuel.module';
 import { IncomeModule } from './modules/income/income.module';
+import { CustomJwtModule } from './modules/jwt-module/jwt.module';
 import { LoggerModule } from './modules/logger/logger.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { UsersModule } from './modules/users/users.module';
@@ -20,14 +23,16 @@ import { VehiclesModule } from './modules/vehicles/vehicle.module';
 @Module({
   imports: [
     LoggerModule,
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     MongooseModule.forRootAsync({
       useFactory: async () => ({
         uri: process.env.MONGO_URI,
         dbName: process.env.MONGO_DB,
       }),
     }),
-
+    CustomJwtModule,
     UsersModule,
     AuthModule,
     CategoriesModule,
@@ -42,6 +47,13 @@ import { VehiclesModule } from './modules/vehicles/vehicle.module';
     PaymentsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, GlobalExceptionFilter],
+  providers: [
+    AppService,
+    GlobalExceptionFilter,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
 export class AppModule {}

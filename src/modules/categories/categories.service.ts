@@ -1,6 +1,8 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { PaginatedSearchDTO } from '../../common/DTO/request';
+import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
 import { Category, CategoryDocument } from './categories.schema';
 import { CategoryType } from './dto/category.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -13,7 +15,7 @@ export class CategoriesService {
     private readonly categoryModel: Model<CategoryDocument>
   ) {}
 
-  async create(dto: CreateCategoryDto, companyId: string) {
+  async create(dto: CreateCategoryDto, companyId: string): Promise<Promise<OperationResultDto>> {
     const allowedTypes = Object.values(CategoryType);
     if (!allowedTypes.includes(dto.type)) {
       throw new BadRequestException(`Kategori tipi geçersiz. Sadece: ${allowedTypes.join(', ')}`);
@@ -31,46 +33,42 @@ export class CategoriesService {
     const created = await new this.categoryModel({ ...dto, companyId }).save();
 
     return {
-      success: true,
-      message: 'Kategori başarıyla oluşturuldu',
-      data: {
-        id: created._id,
-        name: created.name,
-        type: created.type,
-        companyId: created.companyId,
-      },
+      statusCode: 201,
+      id: created.id.toString(),
     };
   }
 
-  async findAll(companyId: string, query: { page: number; pageSize: number }) {
-    const { page, pageSize } = query;
+  async findAll(companyId: string, query: PaginatedSearchDTO): Promise<PaginatedResponseDto<Category>> {
+    const { pageNumber, pageSize, search } = query;
 
-    const filter = { companyId };
+    const filter: any = { companyId };
+
+    if (search) {
+      filter.$or = [{ name: { $regex: search, $options: 'i' } }];
+    }
 
     const totalCount = await this.categoryModel.countDocuments(filter);
 
     const categories = await this.categoryModel
       .find(filter)
       .sort({ createdAt: -1 })
-      .skip((page - 1) * pageSize)
+      .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
       .exec();
 
     return {
-      success: true,
-      message: 'Kategori listesi getirildi',
       data: {
         items: categories,
-        pageNumber: page,
+        pageNumber: pageNumber,
         totalPages: Math.ceil(totalCount / pageSize),
         totalCount,
-        hasPreviousPage: page > 1,
-        hasNextPage: page * pageSize < totalCount,
+        hasPreviousPage: pageNumber > 1,
+        hasNextPage: pageNumber * pageSize < totalCount,
       },
     };
   }
 
-  async findOne(id: string, companyId: string) {
+  async findOne(id: string, companyId: string): Promise<StandardResponseDto<Category>> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Geçersiz kategori ID');
     }
@@ -79,13 +77,11 @@ export class CategoriesService {
     if (!category) throw new NotFoundException('Kategori bulunamadı');
 
     return {
-      success: true,
-      message: 'Kategori bulundu',
       data: category,
     };
   }
 
-  async update(id: string, dto: UpdateCategoryDto, companyId: string) {
+  async update(id: string, dto: UpdateCategoryDto, companyId: string): Promise<OperationResultDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Geçersiz kategori ID');
     }
@@ -95,13 +91,12 @@ export class CategoriesService {
     if (!updated) throw new NotFoundException('Güncellenecek kategori bulunamadı');
 
     return {
-      success: true,
-      message: 'Kategori güncellendi',
-      data: updated,
+      statusCode: 200,
+      id: updated.id.toString(),
     };
   }
 
-  async remove(id: string, companyId: string) {
+  async remove(id: string, companyId: string): Promise<OperationResultDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Geçersiz kategori ID');
     }
@@ -113,9 +108,8 @@ export class CategoriesService {
     }
 
     return {
-      success: true,
-      message: 'Kategori silindi',
-      data: { id },
+      statusCode: 200,
+      id: deleted.id.toString(),
     };
   }
 }

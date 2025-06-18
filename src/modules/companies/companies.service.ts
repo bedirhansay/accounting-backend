@@ -1,6 +1,8 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { PaginationDTO } from '../../common/DTO/request';
+import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
 import { Company, CompanyDocument } from './company.schema';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -12,7 +14,7 @@ export class CompaniesService {
     private readonly companyModel: Model<CompanyDocument>
   ) {}
 
-  async create(createCompanyDto: CreateCompanyDto) {
+  async create(createCompanyDto: CreateCompanyDto): Promise<OperationResultDto> {
     const existing = await this.companyModel.findOne({ name: createCompanyDto.name });
     if (existing) {
       throw new ConflictException('Bu isimde bir firma zaten var.');
@@ -22,37 +24,35 @@ export class CompaniesService {
 
     return {
       statusCode: 201,
-      data: { id: created._id },
+      id: created.id.toString(),
     };
   }
 
-  async findAll(query: { page: number; pageSize: number }) {
-    const { page, pageSize } = query;
+  async findAll(query: PaginationDTO): Promise<PaginatedResponseDto<Company>> {
+    const { pageNumber, pageSize } = query;
 
     const totalCount = await this.companyModel.countDocuments();
     const items = await this.companyModel
       .find()
       .sort({ createdAt: -1 })
-      .skip((page - 1) * pageSize)
+      .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
       .lean()
       .exec();
 
     return {
-      success: true,
-      message: 'Şirket listesi getirildi',
       data: {
         items,
-        pageNumber: page,
+        pageNumber: pageNumber,
         totalPages: Math.ceil(totalCount / pageSize),
         totalCount,
-        hasPreviousPage: page > 1,
-        hasNextPage: page * pageSize < totalCount,
+        hasPreviousPage: pageNumber > 1,
+        hasNextPage: pageNumber * pageSize < totalCount,
       },
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<StandardResponseDto<Company>> {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException('Geçersiz firma ID');
     }
@@ -68,7 +68,7 @@ export class CompaniesService {
     };
   }
 
-  async update(id: string, updateCompanyDto: UpdateCompanyDto) {
+  async update(id: string, updateCompanyDto: UpdateCompanyDto): Promise<OperationResultDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException('Geçersiz firma ID');
     }
@@ -81,12 +81,11 @@ export class CompaniesService {
 
     return {
       statusCode: 200,
-      message: 'Firma güncellendi',
-      data: updated,
+      id: updated.id.toString(),
     };
   }
 
-  async remove(id: string) {
+  async remove(id: string): Promise<OperationResultDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException('Geçersiz firma ID');
     }
@@ -98,8 +97,7 @@ export class CompaniesService {
 
     return {
       statusCode: 200,
-      message: 'Firma silindi',
-      data: { id },
+      id: deleted.id.toString(),
     };
   }
 }

@@ -9,8 +9,9 @@ async function bootstrap() {
 
   app.enableCors({
     origin: '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-company-id'],
+    credentials: false,
   });
 
   // Statik dosya sunumu için absolute path kullan
@@ -20,13 +21,29 @@ async function bootstrap() {
   app.setGlobalPrefix('api', {
     exclude: ['/api-json', '/swagger', '/redoc'],
   });
-
   // Swagger yapılandırması
   const config = new DocumentBuilder()
     .setTitle('API Dokümantasyonu')
     .setDescription('Muhasebe API dokümantasyonu')
     .setVersion('1.0')
-    .addBearerAuth()
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        in: 'header',
+        name: 'Authorization',
+      },
+      'Bearer'
+    )
+    .addApiKey(
+      {
+        type: 'apiKey',
+        name: 'x-company-id',
+        in: 'header',
+      },
+      'x-company-id'
+    )
     .addServer(process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
     .build();
 

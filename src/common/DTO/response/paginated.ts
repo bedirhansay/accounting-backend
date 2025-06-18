@@ -1,12 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class PaginatedResponseDto<T> {
-  @ApiProperty({ example: true })
-  success: boolean;
-
-  @ApiProperty({ example: 'Veriler başarıyla getirildi' })
-  message?: string;
-
   @ApiProperty({
     description: 'Sayfalı veri yapısı',
     type: 'object',

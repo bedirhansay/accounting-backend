@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { PaginatedDateSearchDTO } from '../../common/DTO/request';
+import { IListDTO, PaginatedDateSearchDTO } from '../../common/DTO/request';
+import { OperationResultDto, PaginatedResponseDto } from '../../common/DTO/response';
 import { ensureValidObjectId } from '../../common/utils/object-id';
-import { PaginatedListDTO } from '../../interface/paginated-list';
 import { CreateFuelDto } from './dto/create-fuel.dto';
 import { UpdateFuelDto } from './dto/update-fuel.dto';
 import { Fuel, FuelDocument } from './fuel.schema';
@@ -15,22 +15,22 @@ export class FuelService {
     private readonly fuelModel: Model<FuelDocument>
   ) {}
 
-  async create(dto: CreateFuelDto & { companyId: string }) {
+  async create(dto: CreateFuelDto & { companyId: string }): Promise<OperationResultDto> {
     try {
       const created = new this.fuelModel(dto);
       await created.save();
 
       return {
         statusCode: 201,
-        data: { id: created._id },
+        id: created.id.toString(),
       };
     } catch (err) {
-      console.error('⛽ Yakıt eklenirken hata:', err);
       throw new InternalServerErrorException({ _message: err.message });
     }
   }
-  async findAll(params: PaginatedListDTO & { companyId: string }) {
-    const { page, pageSize, search, beginDate, endDate, companyId } = params;
+
+  async findAll(params: IListDTO): Promise<PaginatedResponseDto<Fuel>> {
+    const { pageNumber, pageSize, search, beginDate, endDate, companyId } = params;
 
     const filter: any = { companyId };
 
@@ -52,21 +52,23 @@ export class FuelService {
     const data = await this.fuelModel
       .find(filter)
       .sort({ operationDate: -1 })
-      .skip((page - 1) * pageSize)
+      .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
       .exec();
 
     return {
-      page,
-      totalPages: Math.ceil(totalCount / pageSize),
-      totalCount,
-      hasPreviousPage: page > 1,
-      hasNextPage: page * pageSize < totalCount,
-      items: data,
+      data: {
+        pageNumber,
+        totalPages: Math.ceil(totalCount / pageSize),
+        totalCount,
+        hasPreviousPage: pageNumber > 1,
+        hasNextPage: pageNumber * pageSize < totalCount,
+        items: data,
+      },
     };
   }
 
-  async findOne(id: string, companyId: string) {
+  async findOne(id: string, companyId: string): Promise<OperationResultDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Geçersiz yakıt ID');
     }
@@ -75,12 +77,12 @@ export class FuelService {
     if (!fuel) throw new NotFoundException('Yakıt kaydı bulunamadı');
 
     return {
-      message: 'Yakıt kaydı bulundu',
-      data: fuel,
+      statusCode: 201,
+      id: fuel.id.toString(),
     };
   }
 
-  async update(id: string, dto: UpdateFuelDto, companyId: string) {
+  async update(id: string, dto: UpdateFuelDto, companyId: string): Promise<OperationResultDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Geçersiz yakıt ID');
     }
@@ -90,12 +92,12 @@ export class FuelService {
     if (!updated) throw new NotFoundException('Güncellenecek yakıt kaydı bulunamadı');
 
     return {
-      message: 'Yakıt kaydı güncellendi',
-      data: updated,
+      statusCode: 201,
+      id: updated.id.toString(),
     };
   }
 
-  async remove(id: string, companyId: string) {
+  async remove(id: string, companyId: string): Promise<OperationResultDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Geçersiz yakıt ID');
     }
@@ -107,14 +109,19 @@ export class FuelService {
     }
 
     return {
-      message: 'Yakıt kaydı silindi',
-      data: { id },
+      statusCode: 201,
+      id: deleted.id.toString(),
     };
   }
-  async getFuels(vehicleId: string, companyId: string, query: PaginatedDateSearchDTO) {
+
+  async getFuels(
+    vehicleId: string,
+    companyId: string,
+    query: PaginatedDateSearchDTO
+  ): Promise<PaginatedResponseDto<Fuel>> {
     ensureValidObjectId(vehicleId, 'Geçersiz araç ID');
 
-    const { page, pageSize, search, beginDate, endDate } = query;
+    const { pageNumber, pageSize, search, beginDate, endDate } = query;
     const filter: any = { vehicleId, companyId };
 
     if (search) {
@@ -136,16 +143,18 @@ export class FuelService {
     const fuels = await this.fuelModel
       .find(filter)
       .sort({ operationDate: -1 })
-      .skip((page - 1) * pageSize)
+      .skip((pageNumber - 1) * pageSize)
       .limit(pageSize);
 
     return {
-      page,
-      totalPages: Math.ceil(totalCount / pageSize),
-      totalCount,
-      hasPreviousPage: page > 1,
-      hasNextPage: page * pageSize < totalCount,
-      items: fuels,
+      data: {
+        pageNumber,
+        totalPages: Math.ceil(totalCount / pageSize),
+        totalCount,
+        hasPreviousPage: pageNumber > 1,
+        hasNextPage: pageNumber * pageSize < totalCount,
+        items: fuels,
+      },
     };
   }
 }

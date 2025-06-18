@@ -1,7 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { IListDTO } from '../../common/DTO/request';
+import { OperationResultDto, StandardResponseDto } from '../../common/DTO/response';
+import { ensureValidObjectId } from '../../common/utils/object-id';
 import { CreateEmployeeDto } from './dto/create-emplooye.dto';
 import { UpdateEmplooyeDto } from './dto/update-emplooye.dto';
 import { Emplooye, EmplooyeDocument } from './employee.schema';
@@ -13,7 +15,7 @@ export class EmployeeService {
     private readonly emplooyeModel: Model<EmplooyeDocument>
   ) {}
 
-  async create(dto: CreateEmployeeDto, companyId: string) {
+  async create(dto: CreateEmployeeDto, companyId: string): Promise<OperationResultDto> {
     const existing = await this.emplooyeModel.findOne({ fullName: dto.fullName, companyId });
 
     if (existing) {
@@ -23,12 +25,12 @@ export class EmployeeService {
 
     return {
       statusCode: 201,
-      data: { id: created._id },
+      id: created.id.toString(),
     };
   }
 
   async findAll(params: IListDTO) {
-    const { page, pageSize, search, beginDate, endDate, companyId } = params;
+    const { pageNumber, pageSize, search, beginDate, endDate, companyId } = params;
 
     const filter: any = { companyId };
 
@@ -51,23 +53,23 @@ export class EmployeeService {
     const data = await this.emplooyeModel
       .find(filter)
       .collation({ locale: 'tr', strength: 1 })
-      .skip((page - 1) * pageSize)
+      .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
       .sort({ hireDate: -1 })
       .exec();
 
     return {
-      pageNumber: page,
+      pageNumber: pageNumber,
       totalPages: Math.ceil(totalCount / pageSize),
       totalCount,
-      hasPreviousPage: page > 1,
-      hasNextPage: page * pageSize < totalCount,
+      hasPreviousPage: pageNumber > 1,
+      hasNextPage: pageNumber * pageSize < totalCount,
       items: data,
     };
   }
 
-  async findOne(id: string, companyId: string) {
-    this.ensureValidObjectId(id, 'Geçersiz personel ID');
+  async findOne(id: string, companyId: string): Promise<StandardResponseDto<Emplooye>> {
+    ensureValidObjectId(id, 'Geçersiz personel ID');
 
     const employee = await this.emplooyeModel.findOne({ _id: id, companyId }).exec();
     if (!employee) throw new NotFoundException('Personel bulunamadı');
@@ -78,8 +80,8 @@ export class EmployeeService {
     };
   }
 
-  async update(id: string, dto: UpdateEmplooyeDto, companyId: string) {
-    this.ensureValidObjectId(id, 'Geçersiz personel ID');
+  async update(id: string, dto: UpdateEmplooyeDto, companyId: string): Promise<OperationResultDto> {
+    ensureValidObjectId(id, 'Geçersiz personel ID');
 
     const updated = await this.emplooyeModel.findOneAndUpdate({ _id: id, companyId }, dto, {
       new: true,
@@ -89,27 +91,19 @@ export class EmployeeService {
 
     return {
       statusCode: 200,
-      message: 'Personel güncellendi',
-      data: updated,
+      id: updated.id.toString(),
     };
   }
 
-  async remove(id: string, companyId: string) {
-    this.ensureValidObjectId(id, 'Geçersiz personel ID');
+  async remove(id: string, companyId: string): Promise<OperationResultDto> {
+    ensureValidObjectId(id, 'Geçersiz personel ID');
 
     const deleted = await this.emplooyeModel.findOneAndDelete({ _id: id, companyId });
     if (!deleted) throw new NotFoundException('Silinecek personel bulunamadı');
 
     return {
-      statusCode: 200,
-      message: 'Personel silindi',
-      data: { id },
+      statusCode: 204,
+      id: id,
     };
-  }
-
-  private ensureValidObjectId(id: string, message = 'Geçersiz ID') {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException(message);
-    }
   }
 }

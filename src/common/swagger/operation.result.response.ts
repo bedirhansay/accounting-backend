@@ -1,16 +1,17 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
-import { StandardResponseDto } from '../DTO/response';
+import { OperationResultDto } from '../DTO/response/operation.result';
 
-export const ApiStandardResponse = (type: any, desc: string = 'Başarılı') =>
+export const ApiOperationResultResponse = (desc: string = 'Başarılı') =>
   applyDecorators(
     ApiOkResponse({
+      description: desc,
       schema: {
         allOf: [
-          { $ref: getSchemaPath(StandardResponseDto) },
+          { $ref: getSchemaPath(OperationResultDto) },
           {
             properties: {
-              data: { $ref: getSchemaPath(type) },
+              id: { type: 'string', example: '65341a13d8a4e2...' },
               statusCode: { type: 'number', example: 200 },
             },
           },

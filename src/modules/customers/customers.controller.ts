@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiParam, ApiQuery, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company-decarator';
 import { CompanyGuard } from '../../common/guards/company-quard';
@@ -10,11 +10,13 @@ import { CustomerDto } from './dto/customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 import { PaginatedSearchDTO } from '../../common/DTO/request';
+import { ApiStandardResponse } from '../../common/swagger';
+import { ApiOperationResultResponse } from '../../common/swagger/operation.result.response';
 import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
-import { ApiStandardResponse } from '../../common/swagger/standart.response.decorator';
 
 @ApiTags('Customers')
-@ApiBearerAuth() // Global token zorunluluğunu belirtir
+@ApiBearerAuth()
+@ApiSecurity('x-company-id')
 @ApiHeader({
   name: 'x-company-id',
   description: 'Firma kimliği',
@@ -26,21 +28,26 @@ export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Yeni müşteri oluştur' })
-  @ApiStandardResponse(CustomerDto)
+  @ApiOperation({ summary: 'Yeni müşteri oluştur', operationId: 'createCustomer' })
+  @ApiOperationResultResponse()
   create(@Body() createCustomerDto: CreateCustomerDto, @CurrentCompany() companyId: string) {
     return this.customersService.create({ ...createCustomerDto, companyId });
   }
 
   @Get()
-  @ApiOperation({ summary: 'Tüm müşterileri listele' })
+  @ApiOperation({ summary: 'Tüm müşterileri listele', operationId: 'getAllCustomers' })
+  @ApiQuery({ name: 'page', required: true, description: 'Sayfa numarası', type: Number })
+  @ApiQuery({ name: 'pageSize', required: true, description: 'Sayfa başına kayıt sayısı', type: Number })
+  @ApiQuery({ name: 'search', required: false, description: 'İsim ile arama yapılır', type: String })
+  @ApiQuery({ name: 'beginDate', required: false, description: 'Sayfa başına kayıt sayısı', type: Number })
+  @ApiQuery({ name: 'endDate', required: false, description: 'İsim ile arama yapılır', type: String })
   @ApiPaginatedResponse(CustomerDto)
   findAll(@Query() query: PaginatedSearchDTO, @CurrentCompany() companyId: string) {
     return this.customersService.findAll(companyId, query);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Müşteri detayı getir' })
+  @ApiOperation({ summary: 'Müşteri detayı getir', operationId: 'getCustomerById' })
   @ApiParam({ name: 'id', description: 'Müşteri ID' })
   @ApiStandardResponse(CustomerDto)
   findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
@@ -48,17 +55,17 @@ export class CustomersController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Müşteri bilgilerini güncelle' })
+  @ApiOperation({ summary: 'Müşteri bilgilerini güncelle', operationId: 'updateCustomer' })
   @ApiParam({ name: 'id', description: 'Müşteri ID' })
-  @ApiStandardResponse(CustomerDto)
+  @ApiOperationResultResponse()
   update(@Param('id') id: string, @Body() updateCustomerDto: UpdateCustomerDto, @CurrentCompany() companyId: string) {
     return this.customersService.update(id, updateCustomerDto, companyId);
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Müşteriyi sil' })
+  @ApiOperation({ summary: 'Müşteriyi sil', operationId: 'deleteCustomer' })
   @ApiParam({ name: 'id', description: 'Müşteri ID' })
-  @ApiStandardResponse(CustomerDto)
+  @ApiOperationResultResponse()
   remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.customersService.remove(id, companyId);
   }
