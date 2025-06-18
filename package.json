@@ -17,7 +17,8 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "openapi:generate": "nest build && node scripts/generate-openapi-spec.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -51,6 +52,7 @@
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/serve-static": "^5.0.3",
     "@nestjs/testing": "^11.0.1",
+    "@openapitools/openapi-generator-cli": "^2.20.2",
     "@swc/cli": "^0.6.0",
     "@swc/core": "^1.10.7",
     "@types/archiver": "^6.0.3",
@@ -62,6 +64,7 @@
     "@types/node": "^22.10.7",
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^6.0.2",
+    "axios": "^1.10.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",

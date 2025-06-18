@@ -1,0 +1,3857 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/users": {
+      "post": {
+        "operationId": "UsersController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Kullanıcı başarıyla oluşturuldu",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/UserDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Yeni kullanıcı oluştur",
+        "tags": [
+          "Kullanıcılar"
+        ]
+      },
+      "get": {
+        "operationId": "UsersController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Liste getirildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/UserDto"
+                              }
+                            },
+                            "pageNumber": {
+                              "type": "number",
+                              "example": 1
+                            },
+                            "totalPages": {
+                              "type": "number",
+                              "example": 5
+                            },
+                            "totalCount": {
+                              "type": "number",
+                              "example": 50
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean",
+                              "example": false
+                            },
+                            "hasNextPage": {
+                              "type": "boolean",
+                              "example": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Tüm kullanıcıları listele",
+        "tags": [
+          "Kullanıcılar"
+        ]
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "operationId": "UsersController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Kullanıcı bulundu",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/UserDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "ID ile kullanıcı getir",
+        "tags": [
+          "Kullanıcılar"
+        ]
+      },
+      "patch": {
+        "operationId": "UsersController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Kullanıcı güncellendi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/UserDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Kullanıcı bilgilerini güncelle",
+        "tags": [
+          "Kullanıcılar"
+        ]
+      },
+      "delete": {
+        "operationId": "UsersController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Kullanıcı silindi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/UserDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Kullanıcı sil",
+        "tags": [
+          "Kullanıcılar"
+        ]
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/categories": {
+      "post": {
+        "operationId": "CategoriesController_create",
+        "parameters": [
+          {
+            "name": "x-company-id",
+            "in": "header",
+            "description": "Firma kimliği",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Kategori başarıyla oluşturuldu",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/OperationResultDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Yeni kategori oluştur",
+        "tags": [
+          "Categories"
+        ]
+      },
+      "get": {
+        "operationId": "CategoriesController_findAll",
+        "parameters": [
+          {
+            "name": "x-company-id",
+            "in": "header",
+            "description": "Firma kimliği",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Kategori listesi getirildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/CategoryDto"
+                              }
+                            },
+                            "pageNumber": {
+                              "type": "number",
+                              "example": 1
+                            },
+                            "totalPages": {
+                              "type": "number",
+                              "example": 5
+                            },
+                            "totalCount": {
+                              "type": "number",
+                              "example": 50
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean",
+                              "example": false
+                            },
+                            "hasNextPage": {
+                              "type": "boolean",
+                              "example": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Tüm kategorileri listele",
+        "tags": [
+          "Categories"
+        ]
+      }
+    },
+    "/categories/{id}": {
+      "get": {
+        "operationId": "CategoriesController_findOne",
+        "parameters": [
+          {
+            "name": "x-company-id",
+            "in": "header",
+            "description": "Firma kimliği",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Kategori ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Kategori bulundu",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/CategoryDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "ID ile kategori getir",
+        "tags": [
+          "Categories"
+        ]
+      },
+      "patch": {
+        "operationId": "CategoriesController_update",
+        "parameters": [
+          {
+            "name": "x-company-id",
+            "in": "header",
+            "description": "Firma kimliği",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Kategori ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Kategori başarıyla güncellendi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/OperationResultDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Kategori güncelle",
+        "tags": [
+          "Categories"
+        ]
+      },
+      "delete": {
+        "operationId": "CategoriesController_remove",
+        "parameters": [
+          {
+            "name": "x-company-id",
+            "in": "header",
+            "description": "Firma kimliği",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Kategori ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Kategori başarıyla silindi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/OperationResultDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Kategori sil",
+        "tags": [
+          "Categories"
+        ]
+      }
+    },
+    "/companies": {
+      "post": {
+        "operationId": "CompaniesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCompanyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/CompanyDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Yeni bir şirket oluştur",
+        "tags": [
+          "Companies"
+        ]
+      },
+      "get": {
+        "operationId": "CompaniesController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Liste getirildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/CompanyDto"
+                              }
+                            },
+                            "pageNumber": {
+                              "type": "number",
+                              "example": 1
+                            },
+                            "totalPages": {
+                              "type": "number",
+                              "example": 5
+                            },
+                            "totalCount": {
+                              "type": "number",
+                              "example": 50
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean",
+                              "example": false
+                            },
+                            "hasNextPage": {
+                              "type": "boolean",
+                              "example": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Tüm şirketleri getir",
+        "tags": [
+          "Companies"
+        ]
+      }
+    },
+    "/companies/{id}": {
+      "get": {
+        "operationId": "CompaniesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Şirket ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/CompanyDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "ID ile bir şirketi getir",
+        "tags": [
+          "Companies"
+        ]
+      },
+      "patch": {
+        "operationId": "CompaniesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Şirket ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCompanyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/CompanyDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Şirket bilgilerini güncelle",
+        "tags": [
+          "Companies"
+        ]
+      },
+      "delete": {
+        "operationId": "CompaniesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Şirket ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/CompanyDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Şirketi sil",
+        "tags": [
+          "Companies"
+        ]
+      }
+    },
+    "/employees": {
+      "post": {
+        "operationId": "EmployeeController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEmployeeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Çalışan başarıyla oluşturuldu",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/EmployeeDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Yeni çalışan oluştur",
+        "tags": [
+          "Çalışanlar"
+        ]
+      },
+      "get": {
+        "operationId": "EmployeeController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Çalışan listesi başarıyla getirildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/EmployeeDto"
+                              }
+                            },
+                            "pageNumber": {
+                              "type": "number",
+                              "example": 1
+                            },
+                            "totalPages": {
+                              "type": "number",
+                              "example": 5
+                            },
+                            "totalCount": {
+                              "type": "number",
+                              "example": 50
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean",
+                              "example": false
+                            },
+                            "hasNextPage": {
+                              "type": "boolean",
+                              "example": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Tüm çalışanları listele",
+        "tags": [
+          "Çalışanlar"
+        ]
+      }
+    },
+    "/employees/{id}": {
+      "get": {
+        "operationId": "EmployeeController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Çalışan ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Çalışan başarıyla getirildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/EmployeeDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "ID ile çalışan detayı getir",
+        "tags": [
+          "Çalışanlar"
+        ]
+      },
+      "patch": {
+        "operationId": "EmployeeController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Çalışan ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEmplooyeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Çalışan başarıyla güncellendi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/EmployeeDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Çalışan bilgilerini güncelle",
+        "tags": [
+          "Çalışanlar"
+        ]
+      },
+      "delete": {
+        "operationId": "EmployeeController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Çalışan ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Çalışan başarıyla silindi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/EmployeeDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Çalışanı sil",
+        "tags": [
+          "Çalışanlar"
+        ]
+      }
+    },
+    "/customers": {
+      "post": {
+        "operationId": "CustomersController_create",
+        "parameters": [
+          {
+            "name": "x-company-id",
+            "in": "header",
+            "description": "Firma kimliği",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCustomerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/CustomerDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Yeni müşteri oluştur",
+        "tags": [
+          "Müşteriler"
+        ]
+      },
+      "get": {
+        "operationId": "CustomersController_findAll",
+        "parameters": [
+          {
+            "name": "x-company-id",
+            "in": "header",
+            "description": "Firma kimliği",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste getirildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/CustomerDto"
+                              }
+                            },
+                            "pageNumber": {
+                              "type": "number",
+                              "example": 1
+                            },
+                            "totalPages": {
+                              "type": "number",
+                              "example": 5
+                            },
+                            "totalCount": {
+                              "type": "number",
+                              "example": 50
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean",
+                              "example": false
+                            },
+                            "hasNextPage": {
+                              "type": "boolean",
+                              "example": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Tüm müşterileri listele",
+        "tags": [
+          "Müşteriler"
+        ]
+      }
+    },
+    "/customers/{id}": {
+      "get": {
+        "operationId": "CustomersController_findOne",
+        "parameters": [
+          {
+            "name": "x-company-id",
+            "in": "header",
+            "description": "Firma kimliği",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Müşteri ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/CustomerDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Müşteri detayı getir",
+        "tags": [
+          "Müşteriler"
+        ]
+      },
+      "patch": {
+        "operationId": "CustomersController_update",
+        "parameters": [
+          {
+            "name": "x-company-id",
+            "in": "header",
+            "description": "Firma kimliği",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Müşteri ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCustomerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/CustomerDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Müşteri bilgilerini güncelle",
+        "tags": [
+          "Müşteriler"
+        ]
+      },
+      "delete": {
+        "operationId": "CustomersController_remove",
+        "parameters": [
+          {
+            "name": "x-company-id",
+            "in": "header",
+            "description": "Firma kimliği",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Müşteri ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/CustomerDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Müşteriyi sil",
+        "tags": [
+          "Müşteriler"
+        ]
+      }
+    },
+    "/fuels": {
+      "post": {
+        "operationId": "FuelController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFuelDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/FuelDTO"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Yeni yakıt kaydı oluştur",
+        "tags": [
+          "Yakıtlar"
+        ]
+      },
+      "get": {
+        "operationId": "FuelController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Liste getirildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/FuelDTO"
+                              }
+                            },
+                            "pageNumber": {
+                              "type": "number",
+                              "example": 1
+                            },
+                            "totalPages": {
+                              "type": "number",
+                              "example": 5
+                            },
+                            "totalCount": {
+                              "type": "number",
+                              "example": 50
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean",
+                              "example": false
+                            },
+                            "hasNextPage": {
+                              "type": "boolean",
+                              "example": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Yakıt kayıtlarını sayfalı şekilde listele",
+        "tags": [
+          "Yakıtlar"
+        ]
+      }
+    },
+    "/fuels/{id}": {
+      "get": {
+        "operationId": "FuelController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Yakıt ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/FuelDTO"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "ID ile yakıt kaydı getir",
+        "tags": [
+          "Yakıtlar"
+        ]
+      },
+      "patch": {
+        "operationId": "FuelController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Yakıt ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFuelDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/FuelDTO"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Yakıt kaydını güncelle",
+        "tags": [
+          "Yakıtlar"
+        ]
+      },
+      "delete": {
+        "operationId": "FuelController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Yakıt ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/FuelDTO"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Yakıt kaydını sil",
+        "tags": [
+          "Yakıtlar"
+        ]
+      }
+    },
+    "/fuels/{vehicleId}/fuels": {
+      "get": {
+        "operationId": "FuelController_getFuelsByVehicle",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "required": true,
+            "in": "path",
+            "description": "Araç ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste getirildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/FuelDTO"
+                              }
+                            },
+                            "pageNumber": {
+                              "type": "number",
+                              "example": 1
+                            },
+                            "totalPages": {
+                              "type": "number",
+                              "example": 5
+                            },
+                            "totalCount": {
+                              "type": "number",
+                              "example": 50
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean",
+                              "example": false
+                            },
+                            "hasNextPage": {
+                              "type": "boolean",
+                              "example": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Araca ait yakıt işlemleri",
+        "tags": [
+          "Yakıtlar"
+        ]
+      }
+    },
+    "/vehicles": {
+      "post": {
+        "operationId": "VehicleController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVehicleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Araç başarıyla oluşturuldu",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/OperationResultDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Vehicles"
+        ]
+      },
+      "get": {
+        "operationId": "VehicleController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Liste getirildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/VehicleDto"
+                              }
+                            },
+                            "pageNumber": {
+                              "type": "number",
+                              "example": 1
+                            },
+                            "totalPages": {
+                              "type": "number",
+                              "example": 5
+                            },
+                            "totalCount": {
+                              "type": "number",
+                              "example": 50
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean",
+                              "example": false
+                            },
+                            "hasNextPage": {
+                              "type": "boolean",
+                              "example": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Araçları listele",
+        "tags": [
+          "Vehicles"
+        ]
+      }
+    },
+    "/vehicles/{id}": {
+      "get": {
+        "operationId": "VehicleController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Araç ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/VehicleDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "ID ile araç getir",
+        "tags": [
+          "Vehicles"
+        ]
+      },
+      "patch": {
+        "operationId": "VehicleController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVehicleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Araç başarıyla güncellendi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/OperationResultDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Vehicles"
+        ]
+      },
+      "delete": {
+        "operationId": "VehicleController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Araç başarıyla silindi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/OperationResultDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Vehicles"
+        ]
+      }
+    },
+    "/expense": {
+      "post": {
+        "operationId": "ExpenseController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExpenseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/ExpenseDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Yeni gider oluştur",
+        "tags": [
+          "Giderler"
+        ]
+      },
+      "get": {
+        "operationId": "ExpenseController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Liste getirildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/ExpenseDto"
+                              }
+                            },
+                            "pageNumber": {
+                              "type": "number",
+                              "example": 1
+                            },
+                            "totalPages": {
+                              "type": "number",
+                              "example": 5
+                            },
+                            "totalCount": {
+                              "type": "number",
+                              "example": 50
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean",
+                              "example": false
+                            },
+                            "hasNextPage": {
+                              "type": "boolean",
+                              "example": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Tüm giderleri listele",
+        "tags": [
+          "Giderler"
+        ]
+      }
+    },
+    "/expense/{id}": {
+      "get": {
+        "operationId": "ExpenseController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Gider ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/ExpenseDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "ID ile gider detayı getir",
+        "tags": [
+          "Giderler"
+        ]
+      },
+      "patch": {
+        "operationId": "ExpenseController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Gider ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExpenseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/ExpenseDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Gider güncelle",
+        "tags": [
+          "Giderler"
+        ]
+      },
+      "delete": {
+        "operationId": "ExpenseController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Gider ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/ExpenseDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Gider sil",
+        "tags": [
+          "Giderler"
+        ]
+      }
+    },
+    "/expense/{vehicleId}/expenses": {
+      "get": {
+        "operationId": "ExpenseController_getExpensesByVehicle",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "required": true,
+            "in": "path",
+            "description": "Araç ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste getirildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/ExpenseDto"
+                              }
+                            },
+                            "pageNumber": {
+                              "type": "number",
+                              "example": 1
+                            },
+                            "totalPages": {
+                              "type": "number",
+                              "example": 5
+                            },
+                            "totalCount": {
+                              "type": "number",
+                              "example": 50
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean",
+                              "example": false
+                            },
+                            "hasNextPage": {
+                              "type": "boolean",
+                              "example": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Araca ait giderler",
+        "tags": [
+          "Giderler"
+        ]
+      }
+    },
+    "/incomes": {
+      "post": {
+        "operationId": "IncomeController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIncomeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/IncomeDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Yeni gelir oluştur",
+        "tags": [
+          "Incomes"
+        ]
+      },
+      "get": {
+        "operationId": "IncomeController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Liste getirildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/IncomeDto"
+                              }
+                            },
+                            "pageNumber": {
+                              "type": "number",
+                              "example": 1
+                            },
+                            "totalPages": {
+                              "type": "number",
+                              "example": 5
+                            },
+                            "totalCount": {
+                              "type": "number",
+                              "example": 50
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean",
+                              "example": false
+                            },
+                            "hasNextPage": {
+                              "type": "boolean",
+                              "example": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Gelirleri sayfalı listele",
+        "tags": [
+          "Incomes"
+        ]
+      }
+    },
+    "/incomes/{id}": {
+      "get": {
+        "operationId": "IncomeController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Gelir ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/IncomeDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "ID ile gelir detayı getir",
+        "tags": [
+          "Incomes"
+        ]
+      },
+      "patch": {
+        "operationId": "IncomeController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Gelir ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateIncomeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/IncomeDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Gelir kaydını güncelle",
+        "tags": [
+          "Incomes"
+        ]
+      },
+      "delete": {
+        "operationId": "IncomeController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Gelir ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/IncomeDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Gelir kaydını sil",
+        "tags": [
+          "Incomes"
+        ]
+      }
+    },
+    "/incomes/{id}/incomes": {
+      "get": {
+        "operationId": "IncomeController_getCustomerIncomes",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Müşteri ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste getirildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/IncomeDto"
+                              }
+                            },
+                            "pageNumber": {
+                              "type": "number",
+                              "example": 1
+                            },
+                            "totalPages": {
+                              "type": "number",
+                              "example": 5
+                            },
+                            "totalCount": {
+                              "type": "number",
+                              "example": 50
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean",
+                              "example": false
+                            },
+                            "hasNextPage": {
+                              "type": "boolean",
+                              "example": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Müşteriye ait gelirleri listele",
+        "tags": [
+          "Incomes"
+        ]
+      }
+    },
+    "/incomes/export": {
+      "get": {
+        "operationId": "IncomeController_exportIncomes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Gelirleri zip dosyası olarak dışa aktar",
+        "tags": [
+          "Incomes"
+        ]
+      }
+    },
+    "/payments": {
+      "post": {
+        "operationId": "PaymentsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/PaymentDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Yeni ödeme oluştur",
+        "tags": [
+          "Payments"
+        ]
+      },
+      "get": {
+        "operationId": "PaymentsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Liste getirildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/PaymentDto"
+                              }
+                            },
+                            "pageNumber": {
+                              "type": "number",
+                              "example": 1
+                            },
+                            "totalPages": {
+                              "type": "number",
+                              "example": 5
+                            },
+                            "totalCount": {
+                              "type": "number",
+                              "example": 50
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean",
+                              "example": false
+                            },
+                            "hasNextPage": {
+                              "type": "boolean",
+                              "example": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ödemeleri listele",
+        "tags": [
+          "Payments"
+        ]
+      }
+    },
+    "/payments/{id}": {
+      "get": {
+        "operationId": "PaymentsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Ödeme ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/PaymentDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "ID ile ödeme getir",
+        "tags": [
+          "Payments"
+        ]
+      },
+      "patch": {
+        "operationId": "PaymentsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Ödeme ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/PaymentDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ödeme güncelle",
+        "tags": [
+          "Payments"
+        ]
+      },
+      "delete": {
+        "operationId": "PaymentsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Ödeme ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "İşlem başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StandardResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/PaymentDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ödemeyi sil",
+        "tags": [
+          "Payments"
+        ]
+      }
+    },
+    "/payments/{customerId}/payments": {
+      "get": {
+        "operationId": "PaymentsController_getPaymentsByCustomer",
+        "parameters": [
+          {
+            "name": "customerId",
+            "required": true,
+            "in": "path",
+            "description": "Müşteri ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste getirildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/PaymentDto"
+                              }
+                            },
+                            "pageNumber": {
+                              "type": "number",
+                              "example": 1
+                            },
+                            "totalPages": {
+                              "type": "number",
+                              "example": 5
+                            },
+                            "totalCount": {
+                              "type": "number",
+                              "example": 50
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean",
+                              "example": false
+                            },
+                            "hasNextPage": {
+                              "type": "boolean",
+                              "example": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Müşteriye ait ödemeleri listele",
+        "tags": [
+          "Payments"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "API Dokümantasyonu",
+    "description": "Muhasebe API dokümantasyonu",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "StandardResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "İşlem başarılı"
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "UserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "64f5f1a134abc3f1c2d8b234"
+          },
+          "username": {
+            "type": "string",
+            "example": "johndoe"
+          },
+          "email": {
+            "type": "string",
+            "example": "johndoe@example.com"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-06-18T12:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-06-18T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "email",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateUserDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "OperationResultDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "id": {
+            "type": "string",
+            "example": "65341a13d8a4e2..."
+          },
+          "message": {
+            "type": "string",
+            "example": "İşlem başarılı"
+          }
+        },
+        "required": [
+          "success",
+          "id",
+          "message"
+        ]
+      },
+      "CreateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Kategori adı",
+            "example": "Elektrik Gideri"
+          },
+          "description": {
+            "type": "string",
+            "description": "Kategoriye ait açıklama",
+            "example": "Aylık düzenli elektrik faturaları"
+          },
+          "type": {
+            "type": "string",
+            "description": "Kategori tipi (income = gelir, expense = gider)",
+            "enum": [
+              "income",
+              "expense"
+            ],
+            "example": "expense"
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ]
+      },
+      "CategoryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "64f5f1a134abc3f1c2d8b234"
+          },
+          "name": {
+            "type": "string",
+            "example": "Gelir - Satış"
+          },
+          "description": {
+            "type": "string",
+            "example": "Ürün satışlarından elde edilen gelir"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "income",
+              "expense"
+            ],
+            "example": "income"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2024-01-01T12:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2024-01-01T12:05:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateCategoryDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CompanyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "64fc94c97ab0c123456789ab"
+          },
+          "name": {
+            "type": "string",
+            "example": "Mersel Yazılım A.Ş."
+          },
+          "address": {
+            "type": "string",
+            "example": "İstanbul, Türkiye"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+90 212 123 45 67"
+          },
+          "email": {
+            "type": "string",
+            "example": "info@mersel.com"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2024-01-01T12:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2024-01-05T14:45:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "address",
+          "phone",
+          "email",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateCompanyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Şirketin adı",
+            "example": "Torunoglu A.Ş."
+          },
+          "address": {
+            "type": "string",
+            "description": "Şirketin adresi",
+            "example": "İstanbul, Türkiye"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Şirketin telefon numarası",
+            "example": "+90 555 55 67"
+          },
+          "email": {
+            "type": "string",
+            "description": "Şirketin e-posta adresi",
+            "example": "info@gmail.com"
+          }
+        },
+        "required": [
+          "name",
+          "address",
+          "phone",
+          "email"
+        ]
+      },
+      "UpdateCompanyDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "PaginatedResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Veriler başarıyla getirildi"
+          },
+          "data": {
+            "type": "object",
+            "description": "Sayfalı veri yapısı",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {}
+              },
+              "pageNumber": {
+                "type": "number",
+                "example": 1
+              },
+              "totalPages": {
+                "type": "number",
+                "example": 10
+              },
+              "totalCount": {
+                "type": "number",
+                "example": 100
+              },
+              "hasPreviousPage": {
+                "type": "boolean",
+                "example": false
+              },
+              "hasNextPage": {
+                "type": "boolean",
+                "example": true
+              }
+            }
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "data"
+        ]
+      },
+      "EmployeeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "64f5f1a134abc3f1c2d8b234",
+            "description": "Çalışan ID değeri"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Ahmet Yılmaz",
+            "description": "Çalışanın tam adı"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+90 532 123 45 67",
+            "description": "Telefon numarası"
+          },
+          "departmentName": {
+            "type": "string",
+            "example": "Muhasebe",
+            "description": "Departman adı"
+          },
+          "hireDate": {
+            "type": "string",
+            "example": "2024-06-01T00:00:00.000Z",
+            "description": "İşe giriş tarihi"
+          },
+          "terminationDate": {
+            "type": "object",
+            "example": "2024-12-01T00:00:00.000Z",
+            "description": "İşten ayrılış tarihi"
+          },
+          "salary": {
+            "type": "number",
+            "example": 15000,
+            "description": "Maaş (₺)"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true,
+            "description": "Çalışan aktif mi?"
+          },
+          "notes": {
+            "type": "string",
+            "example": "Kıdemli çalışan",
+            "description": "Notlar"
+          },
+          "companyId": {
+            "type": "string",
+            "example": "64f5f1a134abc3f1c2d8a111",
+            "description": "Bağlı olduğu firma ID"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2024-06-01T12:00:00.000Z",
+            "description": "Oluşturulma tarihi"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2024-06-05T08:30:00.000Z",
+            "description": "Güncellenme tarihi"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "phone",
+          "departmentName",
+          "hireDate",
+          "salary",
+          "isActive",
+          "companyId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateEmployeeDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateEmplooyeDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CustomerDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "64f5f1a134abc3f1c2d8b234"
+          },
+          "name": {
+            "type": "string",
+            "example": "Ahmet Yılmaz"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+90 532 123 45 67"
+          },
+          "description": {
+            "type": "string",
+            "example": "Düzenli müşteri"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2024-01-01T12:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2024-01-02T15:45:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "phone",
+          "description",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateCustomerDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Müşterinin adı",
+            "example": "Ahmet Yılmaz"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Müşterinin telefon numarası",
+            "example": "+90 532 123 45 67"
+          },
+          "description": {
+            "type": "string",
+            "description": "Müşteri hakkında açıklama",
+            "example": "Düzenli alışveriş yapan müşteri"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateCustomerDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "FuelDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "666abc123def4567890fedcba",
+            "description": "Yakıt kaydının ID’si"
+          },
+          "totalPrice": {
+            "type": "number",
+            "example": 1500.5,
+            "description": "Toplam yakıt tutarı"
+          },
+          "fuelType": {
+            "type": "string",
+            "example": "diesel",
+            "description": "Yakıt türü (örnek: diesel, gasoline, lpg)"
+          },
+          "invoiceNo": {
+            "type": "string",
+            "example": "INV-2025-001",
+            "description": "Fatura numarası"
+          },
+          "description": {
+            "type": "string",
+            "example": "Uzun yol dolumu",
+            "description": "Yakıtla ilgili açıklama"
+          },
+          "operationDate": {
+            "type": "string",
+            "example": "2025-06-18T10:00:00.000Z",
+            "description": "İşlem tarihi"
+          },
+          "driverId": {
+            "type": "string",
+            "example": "665fab123abc1234567890ef",
+            "description": "Sürücü ID’si"
+          },
+          "vehicleId": {
+            "type": "string",
+            "example": "665fab999carabc1234567890",
+            "description": "Araç ID’si"
+          },
+          "companyId": {
+            "type": "string",
+            "example": "665fab321companyid987654321",
+            "description": "Firma ID’si"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2025-06-18T12:34:56.000Z",
+            "description": "Kayıt oluşturulma zamanı"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2025-06-19T08:15:00.000Z",
+            "description": "Son güncelleme zamanı"
+          }
+        },
+        "required": [
+          "id",
+          "totalPrice",
+          "fuelType",
+          "invoiceNo",
+          "operationDate",
+          "driverId",
+          "vehicleId",
+          "companyId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateFuelDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateFuelDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "VehicleDto": {
+        "type": "object",
+        "properties": {
+          "plateNumber": {
+            "type": "string",
+            "example": "TR34ABC123",
+            "description": "Plaka numarası"
+          },
+          "brand": {
+            "type": "string",
+            "example": "Ford",
+            "description": "Araç markası"
+          },
+          "model": {
+            "type": "string",
+            "example": "Transit",
+            "description": "Araç modeli"
+          },
+          "inspectionDate": {
+            "type": "string",
+            "example": "2025-06-01T00:00:00.000Z",
+            "description": "Muayene tarihi"
+          },
+          "insuranceDate": {
+            "type": "string",
+            "example": "2025-07-01T00:00:00.000Z",
+            "description": "Sigorta bitiş tarihi"
+          },
+          "driverId": {
+            "type": "string",
+            "example": "662ff3f108dc5e1b3472cd9e",
+            "description": "Sürücü ID"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true,
+            "description": "Araç aktif mi?"
+          },
+          "description": {
+            "type": "string",
+            "example": "Servis aracı",
+            "description": "Açıklama"
+          },
+          "id": {
+            "type": "string",
+            "example": "665b776f58e4d5be07e7e8c4",
+            "description": "Araç ID"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2025-06-18T12:00:00.000Z",
+            "description": "Oluşturulma tarihi"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2025-06-18T12:00:00.000Z",
+            "description": "Güncellenme tarihi"
+          },
+          "companyId": {
+            "type": "string",
+            "example": "665a1234bcf8f47e4b76cdef",
+            "description": "Firma ID"
+          }
+        },
+        "required": [
+          "plateNumber",
+          "brand",
+          "model",
+          "inspectionDate",
+          "insuranceDate",
+          "driverId",
+          "isActive",
+          "id",
+          "createdAt",
+          "updatedAt",
+          "companyId"
+        ]
+      },
+      "CreateVehicleDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateVehicleDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "ExpenseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "666abc123def4567890fedcba",
+            "description": "Gider ID"
+          },
+          "operationDate": {
+            "type": "string",
+            "example": "2025-06-18T12:00:00.000Z",
+            "description": "İşlem tarihi"
+          },
+          "category": {
+            "type": "string",
+            "example": "Kategori adı",
+            "description": "Giderin kategorisi"
+          },
+          "amount": {
+            "type": "number",
+            "example": 1500.75,
+            "description": "Gider miktarı"
+          },
+          "description": {
+            "type": "string",
+            "example": "Fatura ödemesi",
+            "description": "Açıklama"
+          },
+          "paymentType": {
+            "type": "string",
+            "example": "credit_card",
+            "description": "Ödeme tipi"
+          },
+          "isPaid": {
+            "type": "boolean",
+            "example": true,
+            "description": "Ödeme yapıldı mı?"
+          },
+          "relatedToId": {
+            "type": "string",
+            "example": "664eab32123e1a0001bb1234",
+            "description": "İlgili belge ya da nesne ID’si"
+          },
+          "companyId": {
+            "type": "string",
+            "example": "665fab123abc1234567890ef",
+            "description": "Firma ID’si"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2025-06-18T12:34:56.000Z",
+            "description": "Kayıt oluşturulma tarihi"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2025-06-19T08:15:00.000Z",
+            "description": "Son güncelleme tarihi"
+          }
+        },
+        "required": [
+          "id",
+          "operationDate",
+          "category",
+          "amount",
+          "description",
+          "paymentType",
+          "isPaid",
+          "companyId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateExpenseDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateExpenseDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "IncomeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "665f1c48fbb89c0012345678",
+            "description": "Gelirin ID bilgisi"
+          },
+          "customerId": {
+            "type": "string",
+            "example": "665f1c48fbb89c0011223344",
+            "description": "Müşteri ID bilgisi"
+          },
+          "categoryId": {
+            "type": "string",
+            "example": "665f1c48fbb89c0099887766",
+            "description": "Kategori ID bilgisi"
+          },
+          "unitCount": {
+            "type": "number",
+            "example": 5,
+            "description": "Birim sayısı"
+          },
+          "unitPrice": {
+            "type": "number",
+            "example": 120.5,
+            "description": "Birim fiyatı"
+          },
+          "totalAmount": {
+            "type": "number",
+            "example": 602.5,
+            "description": "Toplam tutar"
+          },
+          "description": {
+            "type": "string",
+            "example": "Açıklama örneği"
+          },
+          "operationDate": {
+            "type": "string",
+            "example": "2024-06-18T08:30:00.000Z",
+            "description": "İşlem tarihi (ISO format)"
+          },
+          "companyId": {
+            "type": "string",
+            "example": "665f1c48fbb89c0011aa22bb",
+            "description": "Şirket ID bilgisi"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-06-18T09:00:00.000Z",
+            "description": "Oluşturulma tarihi"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-06-18T09:05:00.000Z",
+            "description": "Güncellenme tarihi"
+          }
+        },
+        "required": [
+          "id",
+          "customerId",
+          "categoryId",
+          "unitCount",
+          "unitPrice",
+          "totalAmount",
+          "operationDate",
+          "companyId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateIncomeDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateIncomeDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "PaymentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "64f5f1a134abc3f1c2d8b234",
+            "description": "Ödemenin ID değeri"
+          },
+          "customerId": {
+            "type": "string",
+            "example": "64f5f1a134abc3f1c2d8b200",
+            "description": "Müşteri ID değeri"
+          },
+          "amount": {
+            "type": "number",
+            "example": 1000,
+            "description": "Ödeme miktarı (₺)"
+          },
+          "operationDate": {
+            "type": "string",
+            "example": "2024-06-01T12:00:00.000Z",
+            "description": "Ödeme işlem tarihi"
+          },
+          "description": {
+            "type": "string",
+            "example": "Nakit ödeme",
+            "description": "Açıklama"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2024-06-01T12:30:00.000Z",
+            "description": "Kayıt oluşturulma tarihi"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2024-06-01T12:35:00.000Z",
+            "description": "Kayıt güncellenme tarihi"
+          }
+        },
+        "required": [
+          "id",
+          "customerId",
+          "amount",
+          "operationDate",
+          "description",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreatePaymentDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdatePaymentDto": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  }
+}
