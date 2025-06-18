@@ -1,69 +1,48 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as express from 'express';
-import { createWriteStream } from 'fs';
-import { get } from 'http';
-import { join } from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // ✅ CORS ayarları
+  // CORS yapılandırması
   app.enableCors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-company-id'],
+    origin: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
 
-  // ✅ Swagger konfigürasyonu
+  // Statik dosya sunumu
+  app.useStaticAssets('public');
+
+  // Global prefix (örnek: /api)
+  app.setGlobalPrefix('api', {
+    exclude: ['/api-json', '/swagger.html', '/redoc.html'],
+  });
+
+  // Swagger config
   const config = new DocumentBuilder()
-    .setTitle('Accounting API')
-    .setDescription('NestJS için Swagger API dokümantasyonu')
+    .setTitle('API Dokümantasyonu')
+    .setDescription('Muhasebe API dokümantasyonu')
     .setVersion('1.0')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        name: 'Authorization',
-        in: 'header',
-      },
-      'Bearer'
-    )
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
 
-  app.use('/swagger-static', express.static(join(__dirname, '..', 'swagger-static')));
+  // /api-json endpoint'i
+  app
+    .getHttpAdapter()
+    .getInstance()
+    .get('/api-json', (req, res) => {
+      res.json(document);
+    });
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  console.log(process.env.NODE_ENV);
-  if (process.env.NODE_ENV === 'development') {
-    const serverUrl = `http://localhost:${port}`;
-
-    const filesToDownload = [
-      'swagger-ui-bundle.js',
-      'swagger-ui-init.js',
-      'swagger-ui-standalone-preset.js',
-      'swagger-ui.css',
-    ];
-
-    filesToDownload.forEach((filename) => {
-      const fileUrl = `${serverUrl}/api/${filename}`;
-      const localPath = join(__dirname, '..', '..', 'public', 'swagger-ui', filename);
-
-      get(fileUrl, (res) => {
-        res.pipe(createWriteStream(localPath));
-        console.log(
-          `✅ ${filename} ----------------------dosyası indirildi ve kaydedildi -> /public/swagger-ui/${filename}`
-        );
-      });
-    });
-  }
+  console.log(`Application is running on: http://localhost:${port}`);
+  console.log(`Swagger UI: http://localhost:${port}/swagger.html`);
+  console.log(`ReDoc: http://localhost:${port}/redoc.html`);
 }
-
 bootstrap();
