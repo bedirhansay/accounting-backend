@@ -19,16 +19,18 @@ async function bootstrap() {
     .setTitle('API Dokümantasyonu')
     .setDescription('NestJS için Swagger API dokümantasyonu')
     .setVersion('1.0')
-    .addBearerAuth() // JWT varsa
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+
+  app.setGlobalPrefix('api');
+
+  SwaggerModule.setup('docs', app, document);
 
   const exceptionFilter = app.get(GlobalExceptionFilter);
   app.useGlobalFilters(exceptionFilter);
 
-  app.setGlobalPrefix('api');
   await app.listen(3000);
 }
 bootstrap();
