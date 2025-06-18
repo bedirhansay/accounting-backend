@@ -1,7 +1,8 @@
 import { Body, Controller, Delete, Get, Header, Param, Patch, Post, Query, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
 import { CurrentCompany } from '../../common/decorator/company-decarator';
-import { FilterQueryDTO, IncomeExportQueryDTO } from '../../common/DTO/requestDTO/QueryDTO';
+
+import { PaginatedDateSearchDTO } from '../../common/DTO/query-request-dto';
 import { CompanyGuard } from '../../common/guards/company-quard';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
@@ -18,7 +19,7 @@ export class IncomeController {
   }
 
   @Get()
-  findAll(@Query() query: FilterQueryDTO, @CurrentCompany() companyId: string) {
+  findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
     return this.incomeService.findAll({ ...query, companyId });
   }
 
@@ -40,7 +41,11 @@ export class IncomeController {
   @Get('export')
   @Header('Content-Type', 'application/zip')
   @Header('Content-Disposition', 'attachment; filename=incomes.zip')
-  async exportIncomes(@Query() query: IncomeExportQueryDTO, @CurrentCompany() companyId: string, @Res() res: Response) {
+  async exportIncomes(
+    @Query() query: PaginatedDateSearchDTO,
+    @CurrentCompany() companyId: string,
+    @Res() res: Response
+  ) {
     await this.incomeService.exportGroupedIncomes(query, companyId, res);
   }
 }

@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CurrentCompany } from '../../common/decorator/company-decarator';
-import { FilterQueryDTO } from '../../common/DTO/requestDTO/QueryDTO';
+import { PaginatedDateSearchDTO } from '../../common/DTO/query-request-dto';
 import { CompanyGuard } from '../../common/guards/company-quard';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
@@ -17,7 +17,7 @@ export class VehicleController {
   }
 
   @Get()
-  findAll(@Query() query: FilterQueryDTO, @CurrentCompany() companyId: string) {
+  findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
     return this.vehicleService.findAll({ ...query, companyId });
   }
 
@@ -36,21 +36,19 @@ export class VehicleController {
     return this.vehicleService.remove(id, companyId);
   }
 
-  // Yakıt kayıtları listesi (filtreli)
   @Get(':vehicleId/fuels')
   getFuelsByVehicle(
     @Param('vehicleId') vehicleId: string,
-    @Query() query: FilterQueryDTO,
+    @Query() query: PaginatedDateSearchDTO,
     @CurrentCompany() companyId: string
   ) {
     return this.vehicleService.getFuels(vehicleId, companyId, query);
   }
 
-  // Masraf kayıtları listesi (filtreli)
   @Get(':vehicleId/expenses')
   getExpensesByVehicle(
     @Param('vehicleId') vehicleId: string,
-    @Query() query: FilterQueryDTO,
+    @Query() query: PaginatedDateSearchDTO,
     @CurrentCompany() companyId: string
   ) {
     return this.vehicleService.getExpenses(vehicleId, companyId, query);

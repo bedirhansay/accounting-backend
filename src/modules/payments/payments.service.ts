@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { FilterQueryDTO } from '../../common/DTO/requestDTO/QueryDTO';
+import { PaginatedDateSearchDTO } from '../../common/DTO/query-request-dto';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { Payment, PaymentDocument } from './payment.schema';
@@ -23,7 +23,7 @@ export class PaymentsService {
     };
   }
 
-  async findAll(params: FilterQueryDTO & { companyId: string }) {
+  async findAll(params: PaginatedDateSearchDTO & { companyId: string }) {
     const { page, pageSize, search, beginDate, endDate, companyId } = params;
 
     const filter: any = { companyId };

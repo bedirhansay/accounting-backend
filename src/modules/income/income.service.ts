@@ -4,7 +4,8 @@ import archiver from 'archiver';
 import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
 import { Model, Types } from 'mongoose';
-import { FilterQueryDTO, IncomeExportQueryDTO } from '../../common/DTO/requestDTO/QueryDTO';
+
+import { DateRangeDTO, IListDTO } from '../../common/DTO/query-request-dto';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
 import { Income, IncomeDocument } from './income.schema';
@@ -26,7 +27,7 @@ export class IncomeService {
     };
   }
 
-  async findAll(query: FilterQueryDTO & { companyId: string }) {
+  async findAll(query: IListDTO) {
     const { page, pageSize, search, beginDate, endDate, companyId } = query;
 
     const filter: any = { companyId };
@@ -44,6 +45,7 @@ export class IncomeService {
     const totalCount = await this.incomeModel.countDocuments(filter);
     const data = await this.incomeModel
       .find(filter)
+      .populate('customerId', 'name')
       .sort({ operationDate: -1 })
       .skip((page - 1) * pageSize)
       .limit(pageSize)
@@ -97,10 +99,15 @@ export class IncomeService {
     };
   }
 
-  async exportGroupedIncomes(query: IncomeExportQueryDTO, companyId: string, res: Response) {
+  async exportGroupedIncomes(query: DateRangeDTO, companyId: string, res: Response) {
     const { beginDate, endDate } = query;
-    const start = new Date(beginDate);
-    const end = new Date(endDate);
+
+    const now = new Date();
+    const defaultStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const defaultEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    const start = beginDate ? new Date(beginDate) : defaultStart;
+    const end = endDate ? new Date(endDate) : defaultEnd;
 
     type PopulatedIncome = Omit<Income, 'customerId'> & {
       customerId: { name: string };

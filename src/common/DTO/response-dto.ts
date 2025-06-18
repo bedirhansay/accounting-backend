@@ -11,3 +11,19 @@ export class PaginatedResponseDto<T> {
     hasNextPage: boolean;
   };
 }
+
+export class StandardResponseDto<T> {
+  success: boolean;
+  message?: string;
+  data: T;
+}
+
+export class ErrorResponseDto {
+  success: false;
+  statusCode: number;
+  message: string;
+  errors?: {
+    field?: string;
+    message: string;
+  }[];
+}

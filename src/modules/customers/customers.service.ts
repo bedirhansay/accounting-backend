@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { FilterQueryDTO } from '../../common/DTO/requestDTO/QueryDTO';
+import { PaginatedDateSearchDTO } from '../../common/DTO/query-request-dto';
 import { PaymentDocument } from '../payments/payment.schema';
 import { Customer, CustomerDocument } from './customer.schema';
 import { CreateCustomerDto } from './dto/create-customer.dto';
@@ -35,7 +35,7 @@ export class CustomersService {
     };
   }
 
-  async findAll(companyId: string, query: FilterQueryDTO) {
+  async findAll(companyId: string, query: PaginatedDateSearchDTO) {
     const { page, pageSize, search, beginDate, endDate } = query;
 
     const filter: any = { companyId };
@@ -118,7 +118,7 @@ export class CustomersService {
     }
   }
 
-  async getPaymentsByCustomer(customerId: string, query: FilterQueryDTO, companyId: string) {
+  async getPaymentsByCustomer(customerId: string, query: PaginatedDateSearchDTO, companyId: string) {
     this.ensureValidObjectId(customerId, 'Geçersiz müşteri ID');
 
     const { page, pageSize, search, beginDate, endDate } = query;

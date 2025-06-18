@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
-import { FilterQueryDTO } from '../../common/DTO/requestDTO/QueryDTO';
+import { IListDTO, PaginatedDateSearchDTO } from '../../common/DTO/query-request-dto';
 import { Expense, ExpenseDocument } from '../expense/expense.schema';
 import { Fuel, FuelDocument } from '../fuel/fuel.schema';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
@@ -32,7 +32,7 @@ export class VehicleService {
     };
   }
 
-  async findAll(params: FilterQueryDTO & { companyId: string }) {
+  async findAll(params: IListDTO) {
     const { page, pageSize, search, beginDate, endDate, companyId } = params;
 
     const filter: any = { companyId };
@@ -107,7 +107,7 @@ export class VehicleService {
     };
   }
 
-  async getFuels(vehicleId: string, companyId: string, query: FilterQueryDTO) {
+  async getFuels(vehicleId: string, companyId: string, query: PaginatedDateSearchDTO) {
     this.ensureValidObjectId(vehicleId, 'Geçersiz araç ID');
 
     const { page, pageSize, search, beginDate, endDate } = query;
@@ -145,7 +145,7 @@ export class VehicleService {
     };
   }
 
-  async getExpenses(vehicleId: string, companyId: string, query: FilterQueryDTO) {
+  async getExpenses(vehicleId: string, companyId: string, query: PaginatedDateSearchDTO) {
     this.ensureValidObjectId(vehicleId, 'Geçersiz araç ID');
 
     const { page, pageSize, search, beginDate, endDate } = query;

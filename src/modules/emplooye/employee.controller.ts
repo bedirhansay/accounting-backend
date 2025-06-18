@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CurrentCompany } from '../../common/decorator/company-decarator';
+import { PaginatedDateSearchDTO } from '../../common/DTO/query-request-dto';
 import { CompanyGuard } from '../../common/guards/company-quard';
-import { PaginatedListDTO } from '../../interface/paginated-list';
 import { CreateEmployeeDto } from './dto/create-emplooye.dto';
 import { UpdateEmplooyeDto } from './dto/update-emplooye.dto';
 import { EmployeeService } from './employee.service';
@@ -17,7 +17,7 @@ export class EmployeeController {
   }
 
   @Get()
-  findAll(@Query() query: PaginatedListDTO, @CurrentCompany() companyId: string) {
+  findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
     return this.employeeService.findAll({ ...query, companyId });
   }
 

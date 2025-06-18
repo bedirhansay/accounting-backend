@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { PaginatedListDTO } from '../../interface/paginated-list';
+import { IListDTO } from '../../common/DTO/query-request-dto';
 import { CreateEmployeeDto } from './dto/create-emplooye.dto';
 import { UpdateEmplooyeDto } from './dto/update-emplooye.dto';
 import { Emplooye, EmplooyeDocument } from './employee.schema';
@@ -27,7 +27,7 @@ export class EmployeeService {
     };
   }
 
-  async findAll(params: PaginatedListDTO & { companyId: string }) {
+  async findAll(params: IListDTO) {
     const { page, pageSize, search, beginDate, endDate, companyId } = params;
 
     const filter: any = { companyId };
