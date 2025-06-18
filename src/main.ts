@@ -35,15 +35,13 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document); // http://localhost:3000/api
+  SwaggerModule.setup('api', app, document);
 
-  // ✅ swagger-static klasörünü dışa servis et
   app.use('/swagger-static', express.static(join(__dirname, '..', 'swagger-static')));
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-
-  // ✅ Geliştirme ortamındayken Swagger UI dosyalarını indir
+  console.log(process.env.NODE_ENV);
   if (process.env.NODE_ENV === 'development') {
     const serverUrl = `http://localhost:${port}`;
 
@@ -56,11 +54,13 @@ async function bootstrap() {
 
     filesToDownload.forEach((filename) => {
       const fileUrl = `${serverUrl}/api/${filename}`;
-      const localPath = join(__dirname, '..', '..', 'public', 'swagger-ui', filename); // 🔄 güncelledik
+      const localPath = join(__dirname, '..', '..', 'public', 'swagger-ui', filename);
 
       get(fileUrl, (res) => {
         res.pipe(createWriteStream(localPath));
-        console.log(`✅ ${filename} dosyası indirildi ve kaydedildi -> /public/swagger-ui/${filename}`);
+        console.log(
+          `✅ ${filename} ----------------------dosyası indirildi ve kaydedildi -> /public/swagger-ui/${filename}`
+        );
       });
     });
   }
