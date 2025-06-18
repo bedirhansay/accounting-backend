@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import { PaginationDTO } from '../../common/DTO/request';
 import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
 import { Company, CompanyDocument } from './company.schema';
+import { CompanyDto } from './dto/company-dto';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 
@@ -28,7 +29,7 @@ export class CompaniesService {
     };
   }
 
-  async findAll(query: PaginationDTO): Promise<PaginatedResponseDto<Company>> {
+  async findAll(query: PaginationDTO): Promise<PaginatedResponseDto<CompanyDto>> {
     const { pageNumber, pageSize } = query;
 
     const totalCount = await this.companyModel.countDocuments();
@@ -37,13 +38,12 @@ export class CompaniesService {
       .sort({ createdAt: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
-      .lean()
       .exec();
 
     return {
       data: {
-        items,
-        pageNumber: pageNumber,
+        items: items as CompanyDto[],
+        pageNumber,
         totalPages: Math.ceil(totalCount / pageSize),
         totalCount,
         hasPreviousPage: pageNumber > 1,

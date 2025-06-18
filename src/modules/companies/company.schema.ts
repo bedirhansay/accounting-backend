@@ -9,13 +9,16 @@ export class Company {
   name: string;
 
   @Prop()
-  description: string;
-
-  @Prop()
   phone: string;
 
   @Prop()
-  email: string;
+  description: string;
+
+  @Prop()
+  createdAt: Date;
+
+  @Prop()
+  updatedAt?: Date;
 }
 
 export const CompanySchema = SchemaFactory.createForClass(Company);
