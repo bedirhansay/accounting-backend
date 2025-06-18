@@ -15,6 +15,8 @@ async function bootstrap() {
     credentials: true,
   });
 
+  app.setGlobalPrefix('api');
+
   const config = new DocumentBuilder()
     .setTitle('API Dokümantasyonu')
     .setDescription('NestJS için Swagger API dokümantasyonu')
@@ -24,9 +26,7 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
 
-  app.setGlobalPrefix('api');
-
-  SwaggerModule.setup('docs', app, document);
+  SwaggerModule.setup('api/docs', app, document);
 
   const exceptionFilter = app.get(GlobalExceptionFilter);
   app.useGlobalFilters(exceptionFilter);
