@@ -5,7 +5,7 @@ import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
 import { Model, Types } from 'mongoose';
 
-import { DateRangeDTO, IListDTO, PaginatedDateSearchDTO } from '../../common/DTO/query-request-dto';
+import { DateRangeDTO, IListDTO, PaginatedDateSearchDTO } from '../../common/DTO/request';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
 import { Income, IncomeDocument } from './income.schema';

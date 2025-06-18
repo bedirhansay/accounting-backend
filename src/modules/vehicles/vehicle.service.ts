@@ -2,20 +2,14 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
-import { IListDTO, PaginatedDateSearchDTO } from '../../common/DTO/query-request-dto';
-import { Expense, ExpenseDocument } from '../expense/expense.schema';
-import { Fuel, FuelDocument } from '../fuel/fuel.schema';
+import { IListDTO } from '../../common/DTO/request';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { Vehicle, VehicleDocument } from './vehicle.schema';
 
 @Injectable()
 export class VehicleService {
-  constructor(
-    @InjectModel(Vehicle.name) private readonly vehicleModel: Model<VehicleDocument>,
-    @InjectModel(Fuel.name) private readonly fuelModel: Model<FuelDocument>,
-    @InjectModel(Expense.name) private readonly expenseModel: Model<ExpenseDocument>
-  ) {}
+  constructor(@InjectModel(Vehicle.name) private readonly vehicleModel: Model<VehicleDocument>) {}
 
   async create(dto: CreateVehicleDto & { companyId: string }) {
     const existing = await this.vehicleModel.findOne({ plateNumber: dto.plateNumber, companyId: dto.companyId });
@@ -104,83 +98,6 @@ export class VehicleService {
     return {
       message: 'Araç silindi',
       data: { id },
-    };
-  }
-
-  async getFuels(vehicleId: string, companyId: string, query: PaginatedDateSearchDTO) {
-    this.ensureValidObjectId(vehicleId, 'Geçersiz araç ID');
-
-    const { page, pageSize, search, beginDate, endDate } = query;
-    const filter: any = { vehicleId, companyId };
-
-    if (search) {
-      filter.$or = [
-        { description: new RegExp(search, 'i') },
-        { invoiceNo: new RegExp(search, 'i') },
-        { fuelType: new RegExp(search, 'i') },
-      ];
-    }
-
-    if (beginDate || endDate) {
-      filter.operationDate = {};
-      if (beginDate) filter.operationDate.$gte = new Date(beginDate);
-      if (endDate) filter.operationDate.$lte = new Date(endDate);
-    }
-
-    const totalCount = await this.fuelModel.countDocuments(filter);
-
-    const fuels = await this.fuelModel
-      .find(filter)
-      .sort({ operationDate: -1 })
-      .skip((page - 1) * pageSize)
-      .limit(pageSize);
-
-    return {
-      page,
-      totalPages: Math.ceil(totalCount / pageSize),
-      totalCount,
-      hasPreviousPage: page > 1,
-      hasNextPage: page * pageSize < totalCount,
-      items: fuels,
-    };
-  }
-
-  async getExpenses(vehicleId: string, companyId: string, query: PaginatedDateSearchDTO) {
-    this.ensureValidObjectId(vehicleId, 'Geçersiz araç ID');
-
-    const { page, pageSize, search, beginDate, endDate } = query;
-
-    const filter: any = { vehicleId, companyId };
-
-    if (search) {
-      filter.$or = [
-        { description: new RegExp(search, 'i') },
-        { category: new RegExp(search, 'i') },
-        { paymentType: new RegExp(search, 'i') },
-      ];
-    }
-
-    if (beginDate || endDate) {
-      filter.expenseDate = {};
-      if (beginDate) filter.expenseDate.$gte = new Date(beginDate);
-      if (endDate) filter.expenseDate.$lte = new Date(endDate);
-    }
-
-    const totalCount = await this.expenseModel.countDocuments(filter);
-
-    const expenses = await this.expenseModel
-      .find(filter)
-      .sort({ expenseDate: -1 })
-      .skip((page - 1) * pageSize)
-      .limit(pageSize);
-
-    return {
-      page,
-      totalPages: Math.ceil(totalCount / pageSize),
-      totalCount,
-      hasPreviousPage: page > 1,
-      hasNextPage: page * pageSize < totalCount,
-      items: expenses,
     };
   }
 

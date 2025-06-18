@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { PaginatedDateSearchDTO } from '../../common/DTO/query-request-dto';
+
+import { PaginatedDateSearchDTO } from '../../common/DTO/request';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { Payment, PaymentDocument } from './payment.schema';
@@ -91,6 +92,42 @@ export class PaymentsService {
     return {
       message: 'Ödeme silindi',
       data: { id },
+    };
+  }
+
+  async getPaymentsByCustomer(customerId: string, query: PaginatedDateSearchDTO, companyId: string) {
+    this.ensureValidObjectId(customerId, 'Geçersiz müşteri ID');
+
+    const { page, pageSize, search, beginDate, endDate } = query;
+
+    const filter: any = { customerId, companyId };
+
+    if (search) {
+      filter.description = { $regex: search, $options: 'i' };
+    }
+
+    if (beginDate || endDate) {
+      filter.operationDate = {};
+      if (beginDate) filter.operationDate.$gte = new Date(beginDate);
+      if (endDate) filter.operationDate.$lte = new Date(endDate);
+    }
+
+    const totalCount = await this.paymentModel.countDocuments(filter);
+
+    const payments = await this.paymentModel
+      .find(filter)
+      .sort({ operationDate: -1 })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .exec();
+
+    return {
+      pageNumber: page,
+      totalPages: Math.ceil(totalCount / pageSize),
+      totalCount,
+      hasPreviousPage: page > 1,
+      hasNextPage: page * pageSize < totalCount,
+      items: payments,
     };
   }
 

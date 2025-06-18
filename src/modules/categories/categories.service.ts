@@ -2,7 +2,8 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Category, CategoryDocument } from './categories.schema';
-import { CategoryType, CreateCategoryDto } from './dto/create-category.dto';
+import { CategoryType } from './dto/category.dto';
+import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Injectable()
@@ -41,13 +42,31 @@ export class CategoriesService {
     };
   }
 
-  async findAll(companyId: string) {
-    const categories = await this.categoryModel.find({ companyId }).sort({ createdAt: -1 }).exec();
+  async findAll(companyId: string, query: { page: number; pageSize: number }) {
+    const { page, pageSize } = query;
+
+    const filter = { companyId };
+
+    const totalCount = await this.categoryModel.countDocuments(filter);
+
+    const categories = await this.categoryModel
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .exec();
 
     return {
       success: true,
       message: 'Kategori listesi getirildi',
-      data: categories,
+      data: {
+        items: categories,
+        pageNumber: page,
+        totalPages: Math.ceil(totalCount / pageSize),
+        totalCount,
+        hasPreviousPage: page > 1,
+        hasNextPage: page * pageSize < totalCount,
+      },
     };
   }
 

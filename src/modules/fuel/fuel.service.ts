@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { PaginatedDateSearchDTO } from '../../common/DTO/request';
+import { ensureValidObjectId } from '../../common/utils/object-id';
 import { PaginatedListDTO } from '../../interface/paginated-list';
 import { CreateFuelDto } from './dto/create-fuel.dto';
 import { UpdateFuelDto } from './dto/update-fuel.dto';
@@ -107,6 +109,43 @@ export class FuelService {
     return {
       message: 'Yakıt kaydı silindi',
       data: { id },
+    };
+  }
+  async getFuels(vehicleId: string, companyId: string, query: PaginatedDateSearchDTO) {
+    ensureValidObjectId(vehicleId, 'Geçersiz araç ID');
+
+    const { page, pageSize, search, beginDate, endDate } = query;
+    const filter: any = { vehicleId, companyId };
+
+    if (search) {
+      filter.$or = [
+        { description: new RegExp(search, 'i') },
+        { invoiceNo: new RegExp(search, 'i') },
+        { fuelType: new RegExp(search, 'i') },
+      ];
+    }
+
+    if (beginDate || endDate) {
+      filter.operationDate = {};
+      if (beginDate) filter.operationDate.$gte = new Date(beginDate);
+      if (endDate) filter.operationDate.$lte = new Date(endDate);
+    }
+
+    const totalCount = await this.fuelModel.countDocuments(filter);
+
+    const fuels = await this.fuelModel
+      .find(filter)
+      .sort({ operationDate: -1 })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize);
+
+    return {
+      page,
+      totalPages: Math.ceil(totalCount / pageSize),
+      totalCount,
+      hasPreviousPage: page > 1,
+      hasNextPage: page * pageSize < totalCount,
+      items: fuels,
     };
   }
 }

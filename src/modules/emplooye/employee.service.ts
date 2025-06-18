@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { IListDTO } from '../../common/DTO/query-request-dto';
+import { IListDTO } from '../../common/DTO/request';
 import { CreateEmployeeDto } from './dto/create-emplooye.dto';
 import { UpdateEmplooyeDto } from './dto/update-emplooye.dto';
 import { Emplooye, EmplooyeDocument } from './employee.schema';

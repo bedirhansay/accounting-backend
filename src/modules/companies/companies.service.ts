@@ -26,11 +26,29 @@ export class CompaniesService {
     };
   }
 
-  async findAll() {
-    const companies = await this.companyModel.find().exec();
+  async findAll(query: { page: number; pageSize: number }) {
+    const { page, pageSize } = query;
+
+    const totalCount = await this.companyModel.countDocuments();
+    const items = await this.companyModel
+      .find()
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .lean()
+      .exec();
+
     return {
-      statusCode: 200,
-      data: companies,
+      success: true,
+      message: 'Şirket listesi getirildi',
+      data: {
+        items,
+        pageNumber: page,
+        totalPages: Math.ceil(totalCount / pageSize),
+        totalCount,
+        hasPreviousPage: page > 1,
+        hasNextPage: page * pageSize < totalCount,
+      },
     };
   }
 

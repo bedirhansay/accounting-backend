@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { PaginatedDateSearchDTO } from '../../common/DTO/query-request-dto';
+import { PaginatedDateSearchDTO } from '../../common/DTO/request';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { Expense, ExpenseDocument } from './expense.schema';
@@ -99,6 +99,45 @@ export class ExpenseService {
     return {
       message: 'Gider silindi',
       data: { id },
+    };
+  }
+
+  async getExpenses(vehicleId: string, companyId: string, query: PaginatedDateSearchDTO) {
+    this.ensureValidObjectId(vehicleId, 'Geçersiz araç ID');
+
+    const { page, pageSize, search, beginDate, endDate } = query;
+
+    const filter: any = { vehicleId, companyId };
+
+    if (search) {
+      filter.$or = [
+        { description: new RegExp(search, 'i') },
+        { category: new RegExp(search, 'i') },
+        { paymentType: new RegExp(search, 'i') },
+      ];
+    }
+
+    if (beginDate || endDate) {
+      filter.expenseDate = {};
+      if (beginDate) filter.expenseDate.$gte = new Date(beginDate);
+      if (endDate) filter.expenseDate.$lte = new Date(endDate);
+    }
+
+    const totalCount = await this.expenseModel.countDocuments(filter);
+
+    const expenses = await this.expenseModel
+      .find(filter)
+      .sort({ expenseDate: -1 })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize);
+
+    return {
+      page,
+      totalPages: Math.ceil(totalCount / pageSize),
+      totalCount,
+      hasPreviousPage: page > 1,
+      hasNextPage: page * pageSize < totalCount,
+      items: expenses,
     };
   }
 

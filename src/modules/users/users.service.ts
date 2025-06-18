@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { PaginatedSearchDTO } from '../../common/DTO/request';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserDocument } from './user.schema';
@@ -24,12 +25,37 @@ export class UsersService {
     }
   }
 
-  async findAll() {
+  async findAll(query: PaginatedSearchDTO) {
     try {
-      const users = await this.userModel.find().exec();
+      const { page = 1, pageSize = 10, search } = query;
+
+      const filter: any = {};
+
+      if (search) {
+        filter.$or = [{ username: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }];
+      }
+
+      const totalCount = await this.userModel.countDocuments(filter);
+
+      const users = await this.userModel
+        .find(filter)
+        .sort({ createdAt: -1 }) 
+        .skip((page - 1) * pageSize)
+        .limit(pageSize)
+        .exec();
+
       return {
+        success: true,
         message: 'Tüm kullanıcılar listelendi',
-        data: users,
+        data: {
+          items: users,
+          pageNumber: page,
+          pageSize,
+          totalCount,
+          totalPages: Math.ceil(totalCount / pageSize),
+          hasPreviousPage: page > 1,
+          hasNextPage: page * pageSize < totalCount,
+        },
       };
     } catch (err) {
       console.error('❌ Kullanıcılar çekilirken hata:', err);

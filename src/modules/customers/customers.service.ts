@@ -1,8 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { PaginatedDateSearchDTO } from '../../common/DTO/query-request-dto';
-import { Income, IncomeDocument } from '../income/income.schema';
+import { PaginatedDateSearchDTO } from '../../common/DTO/request';
 import { Payment, PaymentDocument } from '../payments/payment.schema';
 import { Customer, CustomerDocument } from './customer.schema';
 import { CreateCustomerDto } from './dto/create-customer.dto';
@@ -15,8 +14,7 @@ export class CustomersService {
     private readonly customerModel: Model<CustomerDocument>,
 
     @InjectModel(Payment.name)
-    private readonly paymentModel: Model<PaymentDocument>,
-
+    private readonly paymentModel: Model<PaymentDocument>
   ) {}
 
   async create(dto: CreateCustomerDto & { companyId: string }) {
@@ -120,39 +118,5 @@ export class CustomersService {
     }
   }
 
-  async getPaymentsByCustomer(customerId: string, query: PaginatedDateSearchDTO, companyId: string) {
-    this.ensureValidObjectId(customerId, 'Geçersiz müşteri ID');
-
-    const { page, pageSize, search, beginDate, endDate } = query;
-
-    const filter: any = { customerId, companyId };
-
-    if (search) {
-      filter.description = { $regex: search, $options: 'i' };
-    }
-
-    if (beginDate || endDate) {
-      filter.operationDate = {};
-      if (beginDate) filter.operationDate.$gte = new Date(beginDate);
-      if (endDate) filter.operationDate.$lte = new Date(endDate);
-    }
-
-    const totalCount = await this.paymentModel.countDocuments(filter);
-
-    const payments = await this.paymentModel
-      .find(filter)
-      .sort({ operationDate: -1 })
-      .skip((page - 1) * pageSize)
-      .limit(pageSize)
-      .exec();
-
-    return {
-      pageNumber: page,
-      totalPages: Math.ceil(totalCount / pageSize),
-      totalCount,
-      hasPreviousPage: page > 1,
-      hasNextPage: page * pageSize < totalCount,
-      items: payments,
-    };
-  }
+  
 }
