@@ -1,3 +1,4 @@
+export * from './apply-query';
 export * from './error.response.decorator';
 export * from './operation-with-param';
 export * from './operation.result.response';

@@ -1,11 +1,13 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import archiver from 'archiver';
 import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
 import { DateRangeDTO, IListDTO, PaginatedDateSearchDTO } from '../../common/DTO/request';
+import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
+import { ensureValidObjectId } from '../../common/utils/object-id';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
 import { Income, IncomeDocument } from './income.schema';
@@ -17,18 +19,18 @@ export class IncomeService {
     private readonly incomeModel: Model<IncomeDocument>
   ) {}
 
-  async create(dto: CreateIncomeDto & { companyId: string }) {
+  async create(dto: CreateIncomeDto & { companyId: string }): Promise<OperationResultDto> {
     const created = new this.incomeModel(dto);
     await created.save();
 
     return {
       statusCode: 201,
-      data: { id: created._id },
+      id: created.id.toString(),
     };
   }
 
-  async findAll(query: IListDTO) {
-    const { page, pageSize, search, beginDate, endDate, companyId } = query;
+  async findAll(query: IListDTO): Promise<PaginatedResponseDto<Income>> {
+    const { pageNumber, pageSize, search, beginDate, endDate, companyId } = query;
 
     const filter: any = { companyId };
 
@@ -47,55 +49,57 @@ export class IncomeService {
       .find(filter)
       .populate('customerId', 'name')
       .sort({ operationDate: -1 })
-      .skip((page - 1) * pageSize)
+      .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
       .exec();
 
     return {
-      page,
-      totalPages: Math.ceil(totalCount / pageSize),
-      totalCount,
-      hasPreviousPage: page > 1,
-      hasNextPage: page * pageSize < totalCount,
-      items: data,
+      data: {
+        pageNumber,
+        totalPages: Math.ceil(totalCount / pageSize),
+        totalCount,
+        hasPreviousPage: pageNumber > 1,
+        hasNextPage: pageNumber * pageSize < totalCount,
+        items: data,
+      },
     };
   }
 
-  async findOne(id: string, companyId: string) {
-    this.ensureValidObjectId(id, 'Geçersiz gelir ID');
+  async findOne(id: string, companyId: string): Promise<StandardResponseDto<Income>> {
+    ensureValidObjectId(id, 'Geçersiz gelir ID');
 
     const income = await this.incomeModel.findOne({ _id: id, companyId }).exec();
     if (!income) throw new NotFoundException('Gelir kaydı bulunamadı');
 
     return {
-      message: 'Gelir kaydı bulundu',
+      statusCode: 200,
       data: income,
     };
   }
 
-  async update(id: string, dto: UpdateIncomeDto, companyId: string) {
-    this.ensureValidObjectId(id, 'Geçersiz gelir ID');
+  async update(id: string, dto: UpdateIncomeDto, companyId: string): Promise<OperationResultDto> {
+    ensureValidObjectId(id, 'Geçersiz gelir ID');
 
     const updated = await this.incomeModel.findOneAndUpdate({ _id: id, companyId }, dto, { new: true }).exec();
 
     if (!updated) throw new NotFoundException('Güncellenecek gelir kaydı bulunamadı');
 
     return {
-      message: 'Gelir kaydı güncellendi',
-      data: updated,
+      statusCode: 200,
+      id: updated.id.toString(),
     };
   }
 
-  async remove(id: string, companyId: string) {
-    this.ensureValidObjectId(id, 'Geçersiz gelir ID');
+  async remove(id: string, companyId: string): Promise<OperationResultDto> {
+    ensureValidObjectId(id, 'Geçersiz gelir ID');
 
     const deleted = await this.incomeModel.findOneAndDelete({ _id: id, companyId }).exec();
 
     if (!deleted) throw new NotFoundException('Silinecek gelir kaydı bulunamadı');
 
     return {
-      message: 'Gelir kaydı silindi',
-      data: { id },
+      statusCode: 204,
+      id: deleted.id.toString(),
     };
   }
 
@@ -176,7 +180,6 @@ export class IncomeService {
 
       const buffer = await workbook.xlsx.writeBuffer();
 
-      // ✅ Node.js için Buffer nesnesine dönüştür
       archive.append(Buffer.from(buffer), {
         name: `${customerName}.xlsx`,
       });
@@ -185,10 +188,14 @@ export class IncomeService {
     await archive.finalize();
   }
 
-  async getIncomesByCustomer(customerId: string, query: PaginatedDateSearchDTO, companyId: string) {
-    this.ensureValidObjectId(customerId, 'Geçersiz müşteri ID');
+  async getIncomesByCustomer(
+    customerId: string,
+    query: PaginatedDateSearchDTO,
+    companyId: string
+  ): Promise<PaginatedResponseDto<Income>> {
+    ensureValidObjectId(customerId, 'Geçersiz müşteri ID');
 
-    const { page, pageSize, search, beginDate, endDate } = query;
+    const { pageNumber, pageSize, search, beginDate, endDate } = query;
 
     const filter: any = { customerId, companyId };
 
@@ -207,23 +214,19 @@ export class IncomeService {
     const incomes = await this.incomeModel
       .find(filter)
       .sort({ operationDate: -1 })
-      .skip((page - 1) * pageSize)
+      .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
       .exec();
 
     return {
-      pageNumber: page,
-      totalPages: Math.ceil(totalCount / pageSize),
-      totalCount,
-      hasPreviousPage: page > 1,
-      hasNextPage: page * pageSize < totalCount,
-      items: incomes,
+      data: {
+        items: incomes,
+        pageNumber: pageNumber,
+        totalPages: Math.ceil(totalCount / pageSize),
+        totalCount,
+        hasPreviousPage: pageNumber > 1,
+        hasNextPage: pageNumber * pageSize < totalCount,
+      },
     };
-  }
-
-  private ensureValidObjectId(id: string, message = 'Geçersiz ID') {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException(message);
-    }
   }
 }

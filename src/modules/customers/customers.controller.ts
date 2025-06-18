@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader, ApiOperation, ApiParam, ApiQuery, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company-decarator';
 import { CompanyGuard } from '../../common/guards/company-quard';
@@ -10,7 +10,7 @@ import { CustomerDto } from './dto/customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 import { PaginatedSearchDTO } from '../../common/DTO/request';
-import { ApiStandardResponse } from '../../common/swagger';
+import { ApiPaginatedQuery, ApiStandardResponse } from '../../common/swagger';
 import { ApiOperationResultResponse } from '../../common/swagger/operation.result.response';
 import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
 
@@ -36,11 +36,7 @@ export class CustomersController {
 
   @Get()
   @ApiOperation({ summary: 'Tüm müşterileri listele', operationId: 'getAllCustomers' })
-  @ApiQuery({ name: 'page', required: true, description: 'Sayfa numarası', type: Number })
-  @ApiQuery({ name: 'pageSize', required: true, description: 'Sayfa başına kayıt sayısı', type: Number })
-  @ApiQuery({ name: 'search', required: false, description: 'İsim ile arama yapılır', type: String })
-  @ApiQuery({ name: 'beginDate', required: false, description: 'Sayfa başına kayıt sayısı', type: Number })
-  @ApiQuery({ name: 'endDate', required: false, description: 'İsim ile arama yapılır', type: String })
+  @ApiPaginatedQuery()
   @ApiPaginatedResponse(CustomerDto)
   findAll(@Query() query: PaginatedSearchDTO, @CurrentCompany() companyId: string) {
     return this.customersService.findAll(companyId, query);

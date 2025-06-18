@@ -1,8 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
 import { IListDTO } from '../../common/DTO/request';
+import { OperationResultDto, PaginatedResponseDto } from '../../common/DTO/response';
+import { ensureValidObjectId } from '../../common/utils/object-id';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { Vehicle, VehicleDocument } from './vehicle.schema';
@@ -11,7 +13,7 @@ import { Vehicle, VehicleDocument } from './vehicle.schema';
 export class VehicleService {
   constructor(@InjectModel(Vehicle.name) private readonly vehicleModel: Model<VehicleDocument>) {}
 
-  async create(dto: CreateVehicleDto & { companyId: string }) {
+  async create(dto: CreateVehicleDto & { companyId: string }): Promise<OperationResultDto> {
     const existing = await this.vehicleModel.findOne({ plateNumber: dto.plateNumber, companyId: dto.companyId });
     if (existing) {
       throw new BadRequestException('Bu plaka ile kayıtlı bir araç zaten var.');
@@ -22,12 +24,12 @@ export class VehicleService {
 
     return {
       statusCode: 201,
-      data: { id: created._id },
+      id: created.id.toString(),
     };
   }
 
-  async findAll(params: IListDTO) {
-    const { page, pageSize, search, beginDate, endDate, companyId } = params;
+  async findAll(params: IListDTO): Promise<PaginatedResponseDto<Vehicle>> {
+    const { pageNumber, pageSize, search, beginDate, endDate, companyId } = params;
 
     const filter: any = { companyId };
 
@@ -50,22 +52,24 @@ export class VehicleService {
     const data = await this.vehicleModel
       .find(filter)
       .sort({ createdAt: -1 })
-      .skip((page - 1) * pageSize)
+      .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
       .exec();
 
     return {
-      pageNumber: page,
-      totalPages: Math.ceil(totalCount / pageSize),
-      totalCount,
-      hasPreviousPage: page > 1,
-      hasNextPage: page * pageSize < totalCount,
-      items: data,
+      data: {
+        items: data,
+        pageNumber: pageNumber,
+        totalCount: totalCount,
+        totalPages: Math.ceil(totalCount / pageSize),
+        hasPreviousPage: pageNumber > 1,
+        hasNextPage: pageNumber * pageSize < totalCount,
+      },
     };
   }
 
   async findOne(id: string, companyId: string) {
-    this.ensureValidObjectId(id, 'Geçersiz araç ID');
+    ensureValidObjectId(id, 'Geçersiz araç ID');
     const vehicle = await this.vehicleModel.findOne({ _id: id, companyId });
 
     if (!vehicle) throw new NotFoundException('Araç bulunamadı');
@@ -75,35 +79,29 @@ export class VehicleService {
     };
   }
 
-  async update(id: string, dto: UpdateVehicleDto, companyId: string) {
-    this.ensureValidObjectId(id, 'Geçersiz araç ID');
+  async update(id: string, dto: UpdateVehicleDto, companyId: string): Promise<OperationResultDto> {
+    ensureValidObjectId(id, 'Geçersiz araç ID');
 
     const updated = await this.vehicleModel.findOneAndUpdate({ _id: id, companyId }, dto, { new: true });
 
     if (!updated) throw new NotFoundException('Güncellenecek araç bulunamadı');
 
     return {
-      message: 'Araç güncellendi',
-      data: updated,
+      statusCode: 204,
+      id: updated.id.toString(),
     };
   }
 
-  async remove(id: string, companyId: string) {
-    this.ensureValidObjectId(id, 'Geçersiz araç ID');
+  async remove(id: string, companyId: string): Promise<OperationResultDto> {
+    ensureValidObjectId(id, 'Geçersiz araç ID');
 
     const deleted = await this.vehicleModel.findOneAndDelete({ _id: id, companyId });
 
     if (!deleted) throw new NotFoundException('Silinecek araç bulunamadı');
 
     return {
-      message: 'Araç silindi',
-      data: { id },
+      statusCode: 204,
+      id: deleted.id.toString(),
     };
-  }
-
-  private ensureValidObjectId(id: string, message = 'Geçersiz ID') {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException(message);
-    }
   }
 }

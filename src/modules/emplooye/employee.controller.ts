@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company-decarator';
 
@@ -7,8 +7,7 @@ import { CompanyGuard } from '../../common/guards/company-quard';
 
 import { PaginatedDateSearchDTO } from '../../common/DTO/request';
 import { PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
-import { ApiOperationResultResponse } from '../../common/swagger';
-import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
+import { ApiOperationResultResponse, ApiPaginatedQuery } from '../../common/swagger';
 import { ApiStandardResponse } from '../../common/swagger/standart.response.decorator';
 import { CreateEmployeeDto } from './dto/create-emplooye.dto';
 import { EmployeeDto } from './dto/employee.dto';
@@ -32,12 +31,7 @@ export class EmployeeController {
 
   @Get()
   @ApiOperation({ summary: 'Tüm çalışanları listele', operationId: 'getAllEmployees' })
-  @ApiQuery({ name: 'page', required: true, description: 'Sayfa numarası', type: Number })
-  @ApiQuery({ name: 'pageSize', required: true, description: 'Sayfa başına kayıt sayısı', type: Number })
-  @ApiQuery({ name: 'search', required: false, description: 'İsim ile arama yapılır', type: String })
-  @ApiQuery({ name: 'beginDate', required: false, description: 'Sayfa başına kayıt sayısı', type: Number })
-  @ApiQuery({ name: 'endDate', required: false, description: 'İsim ile arama yapılır', type: String })
-  @ApiPaginatedResponse(EmployeeDto, 'Çalışan listesi başarıyla getirildi')
+  @ApiPaginatedQuery()
   findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
     return this.employeeService.findAll({ ...query, companyId });
   }
@@ -45,7 +39,7 @@ export class EmployeeController {
   @Get(':id')
   @ApiOperation({ summary: 'ID ile çalışan detayı getir', operationId: 'getEmployeeById' })
   @ApiParam({ name: 'id', description: 'Çalışan ID' })
-  @ApiStandardResponse(EmployeeDto, 'Çalışan başarıyla getirildi')
+  @ApiStandardResponse(EmployeeDto)
   findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.employeeService.findOne(id, companyId);
   }

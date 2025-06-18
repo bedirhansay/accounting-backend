@@ -4,8 +4,8 @@ import { ApiExtraModels, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger
 import { CurrentCompany } from '../../common/decorator/company-decarator';
 
 import { PaginatedDateSearchDTO } from '../../common/DTO/request';
-import { OperationResultDto } from '../../common/DTO/response';
 import { CompanyGuard } from '../../common/guards/company-quard';
+import { ApiOperationResultResponse, ApiPaginatedQuery } from '../../common/swagger';
 import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
 import { ApiStandardResponse } from '../../common/swagger/standart.response.decorator';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
@@ -21,19 +21,21 @@ export class VehicleController {
   constructor(private readonly vehicleService: VehicleService) {}
 
   @Post()
-  @ApiStandardResponse(OperationResultDto, 'Araç başarıyla oluşturuldu')
+  @ApiOperation({ summary: 'Araç  Oluştur', operationId: 'createVehicle' })
+  @ApiOperationResultResponse()
   create(@Body() dto: CreateVehicleDto, @CurrentCompany() companyId: string) {
     return this.vehicleService.create({ ...dto, companyId });
   }
   @Get()
-  @ApiOperation({ summary: 'Araçları listele' })
+  @ApiOperation({ summary: 'Araçları listele', operationId: 'getAllVehicles' })
+  @ApiPaginatedQuery()
   @ApiPaginatedResponse(VehicleDto)
   findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
     return this.vehicleService.findAll({ ...query, companyId });
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'ID ile araç getir' })
+  @ApiOperation({ summary: 'ID ile araç getir', operationId: 'getVehicleById' })
   @ApiParam({ name: 'id', description: 'Araç ID' })
   @ApiStandardResponse(VehicleDto)
   findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
@@ -41,13 +43,16 @@ export class VehicleController {
   }
 
   @Patch(':id')
-  @ApiStandardResponse(OperationResultDto, 'Araç başarıyla güncellendi')
+  @ApiOperation({ summary: 'ID ile araç güncelle', operationId: 'updateVehicle' })
+  @ApiParam({ name: 'id', description: 'Araç ID' })
+  @ApiOperationResultResponse()
   update(@Param('id') id: string, @Body() dto: UpdateVehicleDto, @CurrentCompany() companyId: string) {
     return this.vehicleService.update(id, dto, companyId);
   }
 
   @Delete(':id')
-  @ApiStandardResponse(OperationResultDto, 'Araç başarıyla silindi')
+  @ApiParam({ name: 'id', description: 'Araç ID' })
+  @ApiOperationResultResponse()
   remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.vehicleService.remove(id, companyId);
   }

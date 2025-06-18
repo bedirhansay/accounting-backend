@@ -2,7 +2,7 @@ import { applyDecorators } from '@nestjs/common';
 import { ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
 import { StandardResponseDto } from '../DTO/response';
 
-export const ApiStandardResponse = (type: any, desc: string = 'Başarılı') =>
+export const ApiStandardResponse = (type: any) =>
   applyDecorators(
     ApiOkResponse({
       schema: {
