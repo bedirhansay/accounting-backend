@@ -14,7 +14,7 @@ import { EmployeeDto } from './dto/employee.dto';
 import { UpdateEmplooyeDto } from './dto/update-emplooye.dto';
 import { EmployeeService } from './employee.service';
 
-@ApiTags('Çalışanlar')
+@ApiTags('Employees')
 @ApiBearerAuth()
 @ApiExtraModels(StandardResponseDto, PaginatedResponseDto, EmployeeDto)
 @UseGuards(CompanyGuard)

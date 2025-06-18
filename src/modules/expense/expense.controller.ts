@@ -13,7 +13,7 @@ import { ExpenseDto } from './dto/expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { ExpenseService } from './expense.service';
 
-@ApiTags('Giderler')
+@ApiTags('Expenses')
 @ApiBearerAuth()
 @ApiExtraModels(StandardResponseDto, PaginatedResponseDto, ExpenseDto)
 @UseGuards(CompanyGuard)

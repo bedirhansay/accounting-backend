@@ -13,7 +13,7 @@ import { FuelDTO } from './dto/fuel.dto';
 import { UpdateFuelDto } from './dto/update-fuel.dto';
 import { FuelService } from './fuel.service';
 
-@ApiTags('Yakıtlar')
+@ApiTags('Fuels')
 @ApiBearerAuth()
 @UseGuards(CompanyGuard)
 @Controller('fuels')

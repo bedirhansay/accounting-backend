@@ -4,17 +4,16 @@ import { ApiBearerAuth, ApiHeader, ApiOperation, ApiParam, ApiTags } from '@nest
 import { CurrentCompany } from '../../common/decorator/company-decarator';
 import { CompanyGuard } from '../../common/guards/company-quard';
 
-import { PaymentDto } from '../payments/dto/payment.dto';
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { CustomerDto } from './dto/customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
-import { PaginatedDateSearchDTO, PaginatedSearchDTO } from '../../common/DTO/request';
+import { PaginatedSearchDTO } from '../../common/DTO/request';
 import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
 import { ApiStandardResponse } from '../../common/swagger/standart.response.decorator';
 
-@ApiTags('Müşteriler')
+@ApiTags('Customers')
 @ApiBearerAuth() // Global token zorunluluğunu belirtir
 @ApiHeader({
   name: 'x-company-id',
@@ -63,5 +62,4 @@ export class CustomersController {
   remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.customersService.remove(id, companyId);
   }
-
 }
