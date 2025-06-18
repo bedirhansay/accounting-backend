@@ -40,14 +40,12 @@ export class UsersService {
       .exec();
 
     return {
-      data: {
-        items: users,
-        pageNumber,
-        totalCount,
-        totalPages: Math.ceil(totalCount / pageSize),
-        hasPreviousPage: pageNumber > 1,
-        hasNextPage: pageNumber * pageSize < totalCount,
-      },
+      items: users,
+      pageNumber,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize),
+      hasPreviousPage: pageNumber > 1,
+      hasNextPage: pageNumber * pageSize < totalCount,
     };
   }
 

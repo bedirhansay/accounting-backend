@@ -57,14 +57,12 @@ export class ExpenseService {
       .exec();
 
     return {
-      data: {
-        items,
-        pageNumber: pageNumber,
-        totalPages: Math.ceil(totalCount / pageSize),
-        totalCount,
-        hasPreviousPage: pageNumber > 1,
-        hasNextPage: pageNumber * pageSize < totalCount,
-      },
+      items,
+      pageNumber: pageNumber,
+      totalPages: Math.ceil(totalCount / pageSize),
+      totalCount,
+      hasPreviousPage: pageNumber > 1,
+      hasNextPage: pageNumber * pageSize < totalCount,
     };
   }
 
@@ -140,14 +138,12 @@ export class ExpenseService {
       .limit(pageSize);
 
     return {
-      data: {
-        pageNumber,
-        totalPages: Math.ceil(totalCount / pageSize),
-        totalCount,
-        hasPreviousPage: pageNumber > 1,
-        hasNextPage: pageNumber * pageSize < totalCount,
-        items: expenses,
-      },
+      pageNumber,
+      totalPages: Math.ceil(totalCount / pageSize),
+      totalCount,
+      hasPreviousPage: pageNumber > 1,
+      hasNextPage: pageNumber * pageSize < totalCount,
+      items: expenses,
     };
   }
 
@@ -185,14 +181,12 @@ export class ExpenseService {
       .limit(pageSize);
 
     return {
-      data: {
-        pageNumber,
-        totalPages: Math.ceil(totalCount / pageSize),
-        totalCount,
-        hasPreviousPage: pageNumber > 1,
-        hasNextPage: pageNumber * pageSize < totalCount,
-        items: expenses,
-      },
+      pageNumber,
+      totalPages: Math.ceil(totalCount / pageSize),
+      totalCount,
+      hasPreviousPage: pageNumber > 1,
+      hasNextPage: pageNumber * pageSize < totalCount,
+      items: expenses,
     };
   }
 }

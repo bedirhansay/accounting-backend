@@ -62,14 +62,12 @@ export class CustomersService {
       .exec();
 
     return {
-      data: {
-        items: customers,
-        pageNumber: pageNumber,
-        totalPages: Math.ceil(totalCount / pageSize),
-        totalCount,
-        hasPreviousPage: pageNumber > 1,
-        hasNextPage: pageNumber * pageSize < totalCount,
-      },
+      items: customers,
+      pageNumber: pageNumber,
+      totalPages: Math.ceil(totalCount / pageSize),
+      totalCount,
+      hasPreviousPage: pageNumber > 1,
+      hasNextPage: pageNumber * pageSize < totalCount,
     };
   }
 

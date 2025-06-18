@@ -51,14 +51,12 @@ export class PaymentsService {
       .exec();
 
     return {
-      data: {
-        pageNumber: pageNumber,
-        totalPages: Math.ceil(totalCount / pageSize),
-        totalCount,
-        hasPreviousPage: pageNumber > 1,
-        hasNextPage: pageNumber * pageSize < totalCount,
-        items: data,
-      },
+      pageNumber: pageNumber,
+      totalPages: Math.ceil(totalCount / pageSize),
+      totalCount,
+      hasPreviousPage: pageNumber > 1,
+      hasNextPage: pageNumber * pageSize < totalCount,
+      items: data,
     };
   }
 
@@ -130,14 +128,12 @@ export class PaymentsService {
       .exec();
 
     return {
-      data: {
-        pageNumber: pageNumber,
-        totalPages: Math.ceil(totalCount / pageSize),
-        totalCount,
-        hasPreviousPage: pageNumber > 1,
-        hasNextPage: pageNumber * pageSize < totalCount,
-        items: payments,
-      },
+      pageNumber: pageNumber,
+      totalPages: Math.ceil(totalCount / pageSize),
+      totalCount,
+      hasPreviousPage: pageNumber > 1,
+      hasNextPage: pageNumber * pageSize < totalCount,
+      items: payments,
     };
   }
 }

@@ -57,14 +57,12 @@ export class CategoriesService {
       .exec();
 
     return {
-      data: {
-        items: categories,
-        pageNumber: pageNumber,
-        totalPages: Math.ceil(totalCount / pageSize),
-        totalCount,
-        hasPreviousPage: pageNumber > 1,
-        hasNextPage: pageNumber * pageSize < totalCount,
-      },
+      items: categories,
+      pageNumber: pageNumber,
+      totalPages: Math.ceil(totalCount / pageSize),
+      totalCount,
+      hasPreviousPage: pageNumber > 1,
+      hasNextPage: pageNumber * pageSize < totalCount,
     };
   }
 

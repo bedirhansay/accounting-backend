@@ -57,14 +57,12 @@ export class FuelService {
       .exec();
 
     return {
-      data: {
-        pageNumber,
-        totalPages: Math.ceil(totalCount / pageSize),
-        totalCount,
-        hasPreviousPage: pageNumber > 1,
-        hasNextPage: pageNumber * pageSize < totalCount,
-        items: data,
-      },
+      pageNumber,
+      totalPages: Math.ceil(totalCount / pageSize),
+      totalCount,
+      hasPreviousPage: pageNumber > 1,
+      hasNextPage: pageNumber * pageSize < totalCount,
+      items: data,
     };
   }
 
@@ -147,14 +145,12 @@ export class FuelService {
       .limit(pageSize);
 
     return {
-      data: {
-        pageNumber,
-        totalPages: Math.ceil(totalCount / pageSize),
-        totalCount,
-        hasPreviousPage: pageNumber > 1,
-        hasNextPage: pageNumber * pageSize < totalCount,
-        items: fuels,
-      },
+      pageNumber,
+      totalPages: Math.ceil(totalCount / pageSize),
+      totalCount,
+      hasPreviousPage: pageNumber > 1,
+      hasNextPage: pageNumber * pageSize < totalCount,
+      items: fuels,
     };
   }
 }

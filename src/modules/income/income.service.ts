@@ -54,14 +54,12 @@ export class IncomeService {
       .exec();
 
     return {
-      data: {
-        pageNumber,
-        totalPages: Math.ceil(totalCount / pageSize),
-        totalCount,
-        hasPreviousPage: pageNumber > 1,
-        hasNextPage: pageNumber * pageSize < totalCount,
-        items: data,
-      },
+      pageNumber,
+      totalPages: Math.ceil(totalCount / pageSize),
+      totalCount,
+      hasPreviousPage: pageNumber > 1,
+      hasNextPage: pageNumber * pageSize < totalCount,
+      items: data,
     };
   }
 
@@ -219,14 +217,12 @@ export class IncomeService {
       .exec();
 
     return {
-      data: {
-        items: incomes,
-        pageNumber: pageNumber,
-        totalPages: Math.ceil(totalCount / pageSize),
-        totalCount,
-        hasPreviousPage: pageNumber > 1,
-        hasNextPage: pageNumber * pageSize < totalCount,
-      },
+      items: incomes,
+      pageNumber: pageNumber,
+      totalPages: Math.ceil(totalCount / pageSize),
+      totalCount,
+      hasPreviousPage: pageNumber > 1,
+      hasNextPage: pageNumber * pageSize < totalCount,
     };
   }
 }

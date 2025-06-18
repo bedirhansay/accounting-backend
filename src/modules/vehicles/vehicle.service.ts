@@ -57,14 +57,12 @@ export class VehicleService {
       .exec();
 
     return {
-      data: {
-        items: data,
-        pageNumber: pageNumber,
-        totalCount: totalCount,
-        totalPages: Math.ceil(totalCount / pageSize),
-        hasPreviousPage: pageNumber > 1,
-        hasNextPage: pageNumber * pageSize < totalCount,
-      },
+      items: data,
+      pageNumber: pageNumber,
+      totalCount: totalCount,
+      totalPages: Math.ceil(totalCount / pageSize),
+      hasPreviousPage: pageNumber > 1,
+      hasNextPage: pageNumber * pageSize < totalCount,
     };
   }
 

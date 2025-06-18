@@ -13,12 +13,10 @@ export class PaginatedResponseDto<T> {
       hasNextPage: { type: 'boolean', example: true },
     },
   })
-  data: {
-    items: T[];
-    pageNumber: number;
-    totalPages: number;
-    totalCount: number;
-    hasPreviousPage: boolean;
-    hasNextPage: boolean;
-  };
+  items: T[];
+  pageNumber: number;
+  totalPages: number;
+  totalCount: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
 }
