@@ -25,7 +25,7 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Yeni kategori oluştur' })
+  @ApiOperation({ summary: 'Yeni kategori oluştur', operationId: 'getPaginatedCategories' })
   @ApiStandardResponse(OperationResultDto, 'Kategori başarıyla oluşturuldu')
   create(@Body() createCategoryDto: CreateCategoryDto, @CurrentCompany() companyId: string) {
     return this.categoriesService.create(createCategoryDto, companyId);
