@@ -1,37 +1,38 @@
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { join } from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // CORS yapılandırması
   app.enableCors({
-    origin: true,
+    origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
 
-  // Statik dosya sunumu
-  app.useStaticAssets('public');
+  // Statik dosya sunumu için absolute path kullan
+  app.useStaticAssets(join(__dirname, '..', 'public'));
 
-  // Global prefix (örnek: /api)
+  // Global prefix ayarı
   app.setGlobalPrefix('api', {
     exclude: ['/api-json', '/swagger.html', '/redoc.html'],
   });
 
-  // Swagger config
+  // Swagger yapılandırması
   const config = new DocumentBuilder()
     .setTitle('API Dokümantasyonu')
     .setDescription('Muhasebe API dokümantasyonu')
     .setVersion('1.0')
     .addBearerAuth()
+    .addServer(process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
 
-  // /api-json endpoint'i
+  // API JSON endpoint'i
   app
     .getHttpAdapter()
     .getInstance()
@@ -41,8 +42,5 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  console.log(`Application is running on: http://localhost:${port}`);
-  console.log(`Swagger UI: http://localhost:${port}/swagger.html`);
-  console.log(`ReDoc: http://localhost:${port}/redoc.html`);
 }
 bootstrap();
