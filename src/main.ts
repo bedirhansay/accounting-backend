@@ -14,9 +14,6 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Global prefix olarak api/v1 versiyonlama
-  app.setGlobalPrefix('api/v1');
-
   // Swagger dokümantasyon konfigürasyonu
   const config = new DocumentBuilder()
     .setTitle('API Dokümantasyonu')
@@ -30,20 +27,13 @@ async function bootstrap() {
         name: 'Authorization',
         in: 'header',
       },
-      'BearerAuth' // Swagger UI’da gösterilecek security scheme adı
+      'Bearer' // Swagger UI’da gösterilecek security scheme adı
     )
     .build();
 
-  const document = SwaggerModule.createDocument(app, config);
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, documentFactory);
 
-  // Swagger UI '/api/v1/docs' endpointinde aktif olur
-  SwaggerModule.setup('api/v1/docs', app, document, {
-    swaggerOptions: {
-      persistAuthorization: true, // Token’ı sayfa yenilense bile saklar
-    },
-  });
-
-  // Global exception filtresi
   const exceptionFilter = app.get(GlobalExceptionFilter);
   app.useGlobalFilters(exceptionFilter);
 
