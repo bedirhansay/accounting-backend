@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Header, Param, Patch, Post, Query, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 
 import { CurrentCompany } from '../../common/decorator/company-decarator';
@@ -8,6 +8,7 @@ import { CompanyGuard } from '../../common/guards/company-quard';
 import { CreateIncomeDto } from './dto/create-income.dto';
 
 import { PaginatedDateSearchDTO } from '../../common/DTO/request';
+import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
 import { ApiOperationResultResponse, ApiPaginatedQuery } from '../../common/swagger';
 import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
 import { ApiStandardResponse } from '../../common/swagger/standart.response.decorator';
@@ -17,6 +18,15 @@ import { IncomeService } from './income.service';
 
 @ApiTags('Incomes')
 @ApiBearerAuth()
+@ApiExtraModels(
+  IncomeDto,
+  CreateIncomeDto,
+  UpdateIncomeDto,
+  PaginatedDateSearchDTO,
+  PaginatedResponseDto,
+  StandardResponseDto,
+  OperationResultDto
+)
 @UseGuards(CompanyGuard)
 @Controller('incomes')
 export class IncomeController {

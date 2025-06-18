@@ -5,7 +5,7 @@ import { CurrentCompany } from '../../common/decorator/company-decarator';
 import { CompanyGuard } from '../../common/guards/company-quard';
 
 import { PaginatedDateSearchDTO } from '../../common/DTO/request';
-import { PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
+import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
 import { ApiOperationResultResponse, ApiPaginatedQuery, ApiStandardResponse } from '../../common/swagger';
 import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
 import { CreateExpenseDto } from './dto/create-expense.dto';
@@ -16,7 +16,14 @@ import { ExpenseService } from './expense.service';
 
 @ApiTags('Expenses')
 @ApiBearerAuth()
-@ApiExtraModels(StandardResponseDto, PaginatedResponseDto, ExpenseDto)
+@ApiExtraModels(
+  StandardResponseDto,
+  PaginatedResponseDto,
+  ExpenseDto,
+  CreateExpenseDto,
+  UpdateExpenseDto,
+  OperationResultDto
+)
 @UseGuards(CompanyGuard)
 @Controller('expense')
 export class ExpenseController {

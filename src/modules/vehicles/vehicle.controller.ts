@@ -4,6 +4,7 @@ import { ApiExtraModels, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger
 import { CurrentCompany } from '../../common/decorator/company-decarator';
 
 import { PaginatedDateSearchDTO } from '../../common/DTO/request';
+import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
 import { CompanyGuard } from '../../common/guards/company-quard';
 import { ApiOperationResultResponse, ApiPaginatedQuery } from '../../common/swagger';
 import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
@@ -14,7 +15,15 @@ import { VehicleDto } from './dto/vehicle.dto';
 import { VehicleService } from './vehicle.service';
 
 @ApiTags('Vehicles')
-@ApiExtraModels(VehicleDto)
+@ApiExtraModels(
+  VehicleDto,
+  CreateVehicleDto,
+  UpdateVehicleDto,
+  PaginatedDateSearchDTO,
+  PaginatedResponseDto,
+  OperationResultDto,
+  StandardResponseDto
+)
 @UseGuards(CompanyGuard)
 @Controller('vehicles')
 export class VehicleController {

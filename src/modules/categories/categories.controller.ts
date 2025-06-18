@@ -1,10 +1,11 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company-decarator';
 import { CompanyGuard } from '../../common/guards/company-quard';
 
 import { PaginatedSearchDTO } from '../../common/DTO/request';
+import { OperationResultDto } from '../../common/DTO/response';
 import { ApiPaginatedResponse, ApiStandardResponse } from '../../common/swagger';
 import { ApiOperationResultResponse } from '../../common/swagger/operation.result.response';
 import { CategoriesService } from './categories.service';
@@ -14,6 +15,7 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @ApiTags('Categories')
 @ApiBearerAuth()
+@ApiExtraModels(OperationResultDto, CategoryDto, CreateCategoryDto, UpdateCategoryDto, PaginatedSearchDTO)
 @ApiSecurity('x-company-id')
 @UseGuards(CompanyGuard)
 @Controller('categories')

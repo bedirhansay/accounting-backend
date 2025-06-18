@@ -1,17 +1,26 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 
 import { PaginationDTO } from '../../common/DTO/request/pagination.dto'; // Buradan alındığını varsaydım
+import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
+import { ApiOperationResultResponse } from '../../common/swagger';
 import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
 import { ApiStandardResponse } from '../../common/swagger/standart.response.decorator';
 import { CompaniesService } from './companies.service';
 import { CompanyDto } from './dto/company-dto';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
-import { ApiOperationResultResponse } from '../../common/swagger';
 
 @ApiTags('Companies')
 @ApiBearerAuth()
+@ApiExtraModels(
+  StandardResponseDto,
+  PaginatedResponseDto,
+  OperationResultDto,
+  CompanyDto,
+  CreateCompanyDto,
+  UpdateCompanyDto
+)
 @Controller('companies')
 export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}

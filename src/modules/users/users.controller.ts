@@ -1,7 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExtraModels, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { PaginatedSearchDTO } from '../../common/DTO/request';
+import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
 import { ApiOperationResultResponse } from '../../common/swagger';
 import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
 import { ApiStandardResponse } from '../../common/swagger/standart.response.decorator';
@@ -11,6 +12,7 @@ import { UserDto } from './dto/user.dto';
 import { UsersService } from './users.service';
 
 @ApiTags('Users')
+@ApiExtraModels(StandardResponseDto, PaginatedResponseDto, OperationResultDto, UserDto, CreateUserDto, UpdateUserDto)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

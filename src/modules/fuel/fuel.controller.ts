@@ -1,11 +1,13 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company-decarator';
 
 import { CompanyGuard } from '../../common/guards/company-quard';
 
 import { PaginatedDateSearchDTO } from '../../common/DTO/request';
+import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
+import { ApiPaginatedQuery } from '../../common/swagger';
 import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
 import { ApiStandardResponse } from '../../common/swagger/standart.response.decorator';
 import { CreateFuelDto } from './dto/create-fuel.dto';
@@ -15,6 +17,15 @@ import { FuelService } from './fuel.service';
 
 @ApiTags('Fuels')
 @ApiBearerAuth()
+@ApiExtraModels(
+  FuelDTO,
+  CreateFuelDto,
+  UpdateFuelDto,
+  PaginatedDateSearchDTO,
+  PaginatedResponseDto,
+  StandardResponseDto,
+  OperationResultDto
+)
 @UseGuards(CompanyGuard)
 @Controller('fuels')
 export class FuelController {
@@ -29,11 +40,7 @@ export class FuelController {
 
   @Get()
   @ApiOperation({ summary: 'Yakıt kayıtlarını sayfalı şekilde listele', operationId: 'getAllFuels' })
-  @ApiQuery({ name: 'pageNumber', required: true, description: 'Sayfa numarası', type: Number })
-  @ApiQuery({ name: 'pageSize', required: true, description: 'Sayfa başına kayıt sayısı', type: Number })
-  @ApiQuery({ name: 'search', required: false, description: 'İsim ile arama yapılır', type: String })
-  @ApiQuery({ name: 'beginDate', required: false, description: 'Sayfa başına kayıt sayısı', type: Number })
-  @ApiQuery({ name: 'endDate', required: false, description: 'İsim ile arama yapılır', type: String })
+  @ApiPaginatedQuery()
   @ApiPaginatedResponse(FuelDTO)
   findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
     return this.fuelService.findAll({ ...query, companyId });

@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiTags } from '
 
 import { CurrentCompany } from '../../common/decorator/company-decarator';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request';
+import { OperationResultDto } from '../../common/DTO/response';
 import { CompanyGuard } from '../../common/guards/company-quard';
 import { ApiOperationResultResponse, ApiPaginatedQuery } from '../../common/swagger';
 import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
@@ -14,7 +15,7 @@ import { PaymentsService } from './payments.service';
 
 @ApiTags('Payments')
 @ApiBearerAuth()
-@ApiExtraModels(PaymentDto)
+@ApiExtraModels(PaymentDto, OperationResultDto, PaymentDto, CreatePaymentDto, UpdatePaymentDto)
 @UseGuards(CompanyGuard)
 @Controller('payments')
 export class PaymentsController {

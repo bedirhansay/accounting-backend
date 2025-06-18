@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company-decarator';
 import { CompanyGuard } from '../../common/guards/company-quard';
@@ -10,6 +10,7 @@ import { CustomerDto } from './dto/customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 import { PaginatedSearchDTO } from '../../common/DTO/request';
+import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
 import { ApiPaginatedQuery, ApiStandardResponse } from '../../common/swagger';
 import { ApiOperationResultResponse } from '../../common/swagger/operation.result.response';
 import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
@@ -17,11 +18,14 @@ import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.de
 @ApiTags('Customers')
 @ApiBearerAuth()
 @ApiSecurity('x-company-id')
-@ApiHeader({
-  name: 'x-company-id',
-  description: 'Firma kimliği',
-  required: true,
-})
+@ApiExtraModels(
+  StandardResponseDto,
+  PaginatedResponseDto,
+  OperationResultDto,
+  CustomerDto,
+  CreateCustomerDto,
+  UpdateCustomerDto
+)
 @UseGuards(CompanyGuard)
 @Controller('customers')
 export class CustomersController {

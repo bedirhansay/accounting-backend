@@ -6,7 +6,7 @@ import { CurrentCompany } from '../../common/decorator/company-decarator';
 import { CompanyGuard } from '../../common/guards/company-quard';
 
 import { PaginatedDateSearchDTO } from '../../common/DTO/request';
-import { PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
+import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
 import { ApiOperationResultResponse, ApiPaginatedQuery } from '../../common/swagger';
 import { ApiStandardResponse } from '../../common/swagger/standart.response.decorator';
 import { CreateEmployeeDto } from './dto/create-emplooye.dto';
@@ -16,7 +16,14 @@ import { EmployeeService } from './employee.service';
 
 @ApiTags('Employees')
 @ApiBearerAuth()
-@ApiExtraModels(StandardResponseDto, PaginatedResponseDto, EmployeeDto)
+@ApiExtraModels(
+  StandardResponseDto,
+  PaginatedResponseDto,
+  OperationResultDto,
+  EmployeeDto,
+  CreateEmployeeDto,
+  UpdateEmplooyeDto
+)
 @UseGuards(CompanyGuard)
 @Controller('employees')
 export class EmployeeController {
