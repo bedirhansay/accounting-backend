@@ -56,11 +56,11 @@ async function bootstrap() {
 
     filesToDownload.forEach((filename) => {
       const fileUrl = `${serverUrl}/api/${filename}`;
-      const localPath = join(__dirname, '..', 'swagger-static', filename);
+      const localPath = join(__dirname, '..', '..', 'public', 'swagger-ui', filename); // 🔄 güncelledik
 
       get(fileUrl, (res) => {
         res.pipe(createWriteStream(localPath));
-        console.log(`✅ ${filename} dosyası indirildi ve kaydedildi -> /swagger-static/${filename}`);
+        console.log(`✅ ${filename} dosyası indirildi ve kaydedildi -> /public/swagger-ui/${filename}`);
       });
     });
   }
