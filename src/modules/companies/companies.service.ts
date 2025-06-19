@@ -41,6 +41,7 @@ export class CompaniesService {
       .sort({ createdAt: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
+      .select('-__v')
       .lean()
       .exec();
 
@@ -61,7 +62,7 @@ export class CompaniesService {
       throw new NotFoundException('Geçersiz firma ID');
     }
 
-    const company = await this.companyModel.findById(id).lean().exec();
+    const company = await this.companyModel.findById(id).lean().select('-__v').exec();
     if (!company) {
       throw new NotFoundException('Firma bulunamadı');
     }

@@ -15,7 +15,7 @@ export class Company {
   description: string;
 
   @Prop()
-  createdAt: Date;
+  createdAt?: Date;
 
   @Prop()
   updatedAt?: Date;

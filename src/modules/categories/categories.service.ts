@@ -56,6 +56,7 @@ export class CategoriesService {
       .sort({ createdAt: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
+      .select('-__v')
       .lean()
       .exec();
 
@@ -76,7 +77,7 @@ export class CategoriesService {
       throw new BadRequestException('Geçersiz kategori ID');
     }
 
-    const category = await this.categoryModel.findOne({ _id: id, companyId }).lean().exec();
+    const category = await this.categoryModel.findOne({ _id: id, companyId }).lean().select('-__v').exec();
     if (!category) throw new NotFoundException('Kategori bulunamadı');
 
     const items = plainToInstance(CategoryDto, category);

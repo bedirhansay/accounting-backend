@@ -1,7 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Expose, Transform } from 'class-transformer';
 
 export class CompanyDto {
   @ApiProperty({ example: '64fc94c97ab0c123456789ab' })
+  @Expose()
+  @Transform(({ obj }) => obj._id?.toString())
   id: string;
 
   @ApiProperty({ example: 'Mersel Yazılım A.Ş.' })
