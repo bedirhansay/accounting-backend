@@ -3,7 +3,7 @@ import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiStandardResponse } from '../../common/swagger';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
+import { LoginDto, LoginResponseDto } from './dto/login.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -26,7 +26,7 @@ export class AuthController {
     summary: 'Kullanıcı girişi yapar',
     operationId: 'login',
   })
-  @ApiStandardResponse(LoginDto)
+  @ApiStandardResponse(LoginResponseDto)
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);

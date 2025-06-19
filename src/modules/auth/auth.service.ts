@@ -6,7 +6,7 @@ import { Model } from 'mongoose';
 
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { User, UserDocument } from '../users/user.schema';
-import { LoginDto } from './dto/login.dto';
+import { LoginDto, LoginResponseDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -16,40 +16,34 @@ export class AuthService {
     private readonly userModel: Model<UserDocument>
   ) {}
 
-  async login(dto: LoginDto) {
-    try {
-      const user = await this.findUserByEmailOrUsername(dto.username);
+  async login(dto: LoginDto): Promise<LoginResponseDto> {
+    const user = await this.findUserByEmailOrUsername(dto.username);
 
-      if (!user) {
-        throw new UnauthorizedException('Kullanıcı bulunamadı');
-      }
-
-      const isPasswordValid = await bcrypt.compare(dto.password, user.password);
-      if (!isPasswordValid) {
-        throw new UnauthorizedException('Geçersiz şifre');
-      }
-
-      const payload = {
-        id: user._id,
-        email: user.email,
-        username: user.username,
-      };
-
-      const token = await this.jwtService.signAsync(payload);
-
-      return {
-        status: 200,
-        token,
-        user: {
-          id: user._id,
-          email: user.email,
-          username: user.username,
-        },
-      };
-    } catch (error) {
-      console.error('❌ Giriş hatası:', error);
-      throw new UnauthorizedException('Giriş başarısız');
+    if (!user || !user.password) {
+      throw new UnauthorizedException('Kullanıcı bulunamadı veya şifresi geçersiz');
     }
+
+    const isPasswordValid = await bcrypt.compare(dto.password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Geçersiz şifre');
+    }
+
+    const payload = {
+      id: user._id,
+      email: user.email,
+      username: user.username,
+    };
+
+    const token = await this.jwtService.signAsync(payload);
+
+    return {
+      token,
+      user: {
+        id: user._id as string,
+        username: user.username,
+        email: user.email,
+      },
+    };
   }
 
   async register(dto: CreateUserDto) {
