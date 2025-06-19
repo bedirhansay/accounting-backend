@@ -18,8 +18,16 @@ export class AuthController {
     description: 'Kullanıcı kaydı başarıyla oluşturuldu',
   })
   @Post('register')
-  register(@Body() dto: CreateUserDto) {
-    return this.authService.register(dto);
+  async register(@Body() dto: CreateUserDto) {
+    try {
+      return await this.authService.register(dto);
+    } catch (error) {
+      return {
+        statusCode: error.status || 500,
+        message: error.message || 'Bilinmeyen bir hata oluştu',
+        error: error.name || 'InternalServerError',
+      };
+    }
   }
 
   @ApiOperation({
@@ -28,7 +36,15 @@ export class AuthController {
   })
   @ApiStandardResponse(LoginResponseDto)
   @Post('login')
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(@Body() dto: LoginDto) {
+    try {
+      return await this.authService.login(dto);
+    } catch (error) {
+      return {
+        statusCode: error.status || 500,
+        message: error.message || 'Bilinmeyen bir hata oluştu',
+        error: error.name || 'InternalServerError',
+      };
+    }
   }
 }
