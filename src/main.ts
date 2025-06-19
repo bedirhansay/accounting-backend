@@ -7,21 +7,14 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  app.enableCors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-company-id'],
-    credentials: false,
-  });
+  app.enableCors({});
 
-  // Statik dosya sunumu için absolute path kullan
   app.useStaticAssets(join(__dirname, '..', 'public'));
 
-  // Global prefix ayarı
   app.setGlobalPrefix('api', {
     exclude: ['/api-json', '/swagger', '/redoc'],
   });
-  // Swagger yapılandırması
+
   const config = new DocumentBuilder()
     .setTitle('API Dokümantasyonu')
     .setDescription('Muhasebe API dokümantasyonu')
