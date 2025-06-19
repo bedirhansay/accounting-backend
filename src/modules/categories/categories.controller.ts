@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company-decarator';
 import { CompanyGuard } from '../../common/guards/company-quard';
@@ -50,6 +50,7 @@ export class CategoriesController {
   @Patch(':id')
   @ApiOperation({ summary: 'Kategori güncelle', operationId: 'updateCategory' })
   @ApiParam({ name: 'id', description: 'Kategori ID', type: String })
+  @ApiBody({ type: UpdateCategoryDto }) // Bunu ekle
   @ApiOperationResultResponse()
   update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto, @CurrentCompany() companyId: string) {
     return this.categoriesService.update(id, updateCategoryDto, companyId);
