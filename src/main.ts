@@ -48,6 +48,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('', app, document);
 
   // API JSON endpoint'i
   app
