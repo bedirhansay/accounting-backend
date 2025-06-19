@@ -8,7 +8,7 @@ export class CompanyDto {
   name: string;
 
   @ApiProperty({ example: '+90 212 123 45 67' })
-  phone: string;
+  phone?: string;
 
   @ApiProperty({ example: 'info@mersel.com' })
   description?: string;
