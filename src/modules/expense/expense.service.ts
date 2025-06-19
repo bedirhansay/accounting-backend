@@ -1,10 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { plainToInstance } from 'class-transformer';
 import { Model } from 'mongoose';
 import { IListDTO, PaginatedDateSearchDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto } from '../../common/DTO/response';
+import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
 import { ensureValidObjectId } from '../../common/utils/object-id';
+import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../constant/pagination.param';
 import { CreateExpenseDto } from './dto/create-expense.dto';
+import { ExpenseDto } from './dto/expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { Expense, ExpenseDocument } from './expense.schema';
 
@@ -30,16 +33,20 @@ export class ExpenseService {
     };
   }
 
-  async findAll(query: IListDTO): Promise<PaginatedResponseDto<Expense>> {
-    const { pageNumber, pageSize, beginDate, endDate, search, companyId } = query;
+  async findAll(params: IListDTO): Promise<PaginatedResponseDto<ExpenseDto>> {
+    const {
+      pageNumber = PAGINATION_DEFAULT_PAGE,
+      pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
+      search,
+      beginDate,
+      endDate,
+      companyId,
+    } = params;
 
     const filter: any = { companyId };
 
     if (search) {
-      filter.$or = [
-        { description: { $regex: search, $options: 'i' } },
-        // başka alanlar varsa ekleyebilirsin
-      ];
+      filter.$or = [{ category: { $regex: search, $options: 'i' } }];
     }
 
     if (beginDate || endDate) {
@@ -49,12 +56,18 @@ export class ExpenseService {
     }
 
     const totalCount = await this.expenseModel.countDocuments(filter);
-    const items = await this.expenseModel
+    const expenses = await this.expenseModel
       .find(filter)
       .sort({ operationDate: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
+      .lean()
+      .collation({ locale: 'tr', strength: 1 })
+      .populate('relatedToId', 'plateNumber fullName')
+      .select('-__v')
       .exec();
+
+    const items = plainToInstance(ExpenseDto, expenses);
 
     return {
       items,
@@ -66,15 +79,16 @@ export class ExpenseService {
     };
   }
 
-  async findOne({ id, companyId }: WithIdAndCompanyId) {
+  async findOne({ id, companyId }: WithIdAndCompanyId): Promise<StandardResponseDto<ExpenseDto>> {
     ensureValidObjectId(id, 'Geçersiz gider ID');
 
-    const expense = await this.expenseModel.findOne({ _id: id, companyId }).exec();
+    const expense = await this.expenseModel.findOne({ _id: id, companyId }).lean().exec();
     if (!expense) throw new NotFoundException('Gider kaydı bulunamadı');
 
+    const data = plainToInstance(ExpenseDto, expense);
+
     return {
-      message: 'Gider bulundu',
-      data: expense,
+      data,
     };
   }
 

@@ -18,6 +18,9 @@ export class CategoryDto {
   @ApiProperty({ enum: CategoryType, example: CategoryType.INCOME })
   type: CategoryType;
 
+  @ApiProperty({ example: 'Bağlı olduğu Firma' })
+  companyId: string;
+
   @ApiProperty({ example: '2024-01-01T12:00:00.000Z' })
   createdAt: string;
 

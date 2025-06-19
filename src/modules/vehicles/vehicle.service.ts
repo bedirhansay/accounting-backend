@@ -2,11 +2,13 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
+import { plainToInstance } from 'class-transformer';
 import { IListDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto } from '../../common/DTO/response';
+import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
 import { ensureValidObjectId } from '../../common/utils/object-id';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
+import { VehicleDto } from './dto/vehicle.dto';
 import { Vehicle, VehicleDocument } from './vehicle.schema';
 
 @Injectable()
@@ -28,7 +30,7 @@ export class VehicleService {
     };
   }
 
-  async findAll(params: IListDTO): Promise<PaginatedResponseDto<Vehicle>> {
+  async findAll(params: IListDTO): Promise<PaginatedResponseDto<VehicleDto>> {
     const { pageNumber, pageSize, search, beginDate, endDate, companyId } = params;
 
     const filter: any = { companyId };
@@ -52,12 +54,16 @@ export class VehicleService {
     const data = await this.vehicleModel
       .find(filter)
       .sort({ createdAt: -1 })
+      .populate('driverId', 'fullName phone')
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
+      .lean()
       .exec();
 
+    const items = plainToInstance(VehicleDto, data);
+
     return {
-      items: data,
+      items,
       pageNumber: pageNumber,
       totalCount: totalCount,
       totalPages: Math.ceil(totalCount / pageSize),
@@ -66,14 +72,20 @@ export class VehicleService {
     };
   }
 
-  async findOne(id: string, companyId: string) {
+  async findOne(id: string, companyId: string): Promise<StandardResponseDto<VehicleDto>> {
     ensureValidObjectId(id, 'Geçersiz araç ID');
-    const vehicle = await this.vehicleModel.findOne({ _id: id, companyId });
+    const vehicle = await this.vehicleModel
+      .findOne({ _id: id, companyId })
+      .populate('driverId', 'fullName phone')
+      .lean()
+      .exec();
 
     if (!vehicle) throw new NotFoundException('Araç bulunamadı');
 
+    const data = plainToInstance(VehicleDto, vehicle);
+
     return {
-      data: vehicle,
+      data,
     };
   }
 

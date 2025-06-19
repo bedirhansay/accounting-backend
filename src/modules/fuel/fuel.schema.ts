@@ -7,9 +7,6 @@ export class Fuel {
   totalPrice: number;
 
   @Prop({ type: String, required: true })
-  fuelType: string;
-
-  @Prop({ type: String, required: true })
   invoiceNo: string;
 
   @Prop({ type: String })

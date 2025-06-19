@@ -1,5 +1,5 @@
-import { IsBoolean, IsDateString, IsNumber, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsDateString, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateExpenseDto {
   @ApiProperty({ example: '2024-01-01', description: 'Giderin gerçekleştiği tarih' })
@@ -17,14 +17,6 @@ export class CreateExpenseDto {
   @ApiProperty({ example: 'İstanbul içi yakıt harcaması', description: 'Açıklama' })
   @IsString()
   description: string;
-
-  @ApiProperty({ example: 'Kredi Kartı', description: 'Ödeme yöntemi' })
-  @IsString()
-  paymentType: string;
-
-  @ApiProperty({ example: true, description: 'Ödeme durumu' })
-  @IsBoolean()
-  isPaid: boolean;
 
   @ApiPropertyOptional({ example: '664d5e27b3349e001edac7f8', description: 'İlgili kayıt ID (Opsiyonel)' })
   @IsOptional()

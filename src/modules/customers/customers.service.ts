@@ -1,11 +1,14 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { plainToInstance } from 'class-transformer';
 import { Model } from 'mongoose';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request';
 import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
 import { ensureValidObjectId } from '../../common/utils/object-id';
+import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../constant/pagination.param';
 import { Customer, CustomerDocument } from './customer.schema';
 import { CreateCustomerDto } from './dto/create-customer.dto';
+import { CustomerDto } from './dto/customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 @Injectable()
@@ -33,17 +36,19 @@ export class CustomersService {
     };
   }
 
-  async findAll(companyId: string, query: PaginatedDateSearchDTO): Promise<PaginatedResponseDto<Customer>> {
-    const { pageNumber, pageSize, search, beginDate, endDate } = query;
+  async findAll(companyId: string, query: PaginatedDateSearchDTO): Promise<PaginatedResponseDto<CustomerDto>> {
+    const {
+      pageNumber = PAGINATION_DEFAULT_PAGE,
+      pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
+      search,
+      beginDate,
+      endDate,
+    } = query;
 
     const filter: any = { companyId };
 
     if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { phone: { $regex: search, $options: 'i' } },
-        { taxNumber: { $regex: search, $options: 'i' } },
-      ];
+      filter.$or = [{ name: { $regex: search, $options: 'i' } }];
     }
 
     if (beginDate || endDate) {
@@ -59,10 +64,13 @@ export class CustomersService {
       .sort({ createdAt: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
+      .lean()
       .exec();
 
+    const items = plainToInstance(CustomerDto, customers);
+
     return {
-      items: customers,
+      items,
       pageNumber: pageNumber,
       totalPages: Math.ceil(totalCount / pageSize),
       totalCount,
@@ -71,15 +79,18 @@ export class CustomersService {
     };
   }
 
-  async findOne(id: string, companyId: string): Promise<StandardResponseDto<Customer>> {
+  async findOne(id: string, companyId: string): Promise<StandardResponseDto<CustomerDto>> {
     ensureValidObjectId(id, 'Geçersiz müşteri ID');
 
-    const customer = await this.customerModel.findOne({ _id: id, companyId });
+    const customer = await this.customerModel.findOne({ _id: id, companyId }).lean().exec();
+
     if (!customer) throw new NotFoundException('Müşteri bulunamadı');
 
+    const data = plainToInstance(CustomerDto, customer);
+
     return {
-      data: customer,
-      message: 'Müşteri detayları başarıyla getirildi',
+      data,
+      statusCode: 200,
     };
   }
 

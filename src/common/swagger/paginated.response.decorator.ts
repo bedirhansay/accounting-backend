@@ -1,4 +1,3 @@
-// common/swagger/api-paginated-response.decorator.ts
 import { applyDecorators, Type } from '@nestjs/common';
 import { ApiExtraModels, ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
 

@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { CategoryDto } from '../../categories/dto/category.dto';
 
 export class ExpenseDto {
   @ApiProperty({ example: '666abc123def4567890fedcba', description: 'Gider ID' })
@@ -8,19 +9,13 @@ export class ExpenseDto {
   operationDate: string;
 
   @ApiProperty({ example: 'Kategori adı', description: 'Giderin kategorisi' })
-  category: string;
+  category: Partial<CategoryDto>;
 
   @ApiProperty({ example: 1500.75, description: 'Gider miktarı' })
   amount: number;
 
   @ApiProperty({ example: 'Fatura ödemesi', description: 'Açıklama' })
   description: string;
-
-  @ApiProperty({ example: 'credit_card', description: 'Ödeme tipi' })
-  paymentType: string;
-
-  @ApiProperty({ example: true, description: 'Ödeme yapıldı mı?' })
-  isPaid: boolean;
 
   @ApiPropertyOptional({ example: '664eab32123e1a0001bb1234', description: 'İlgili belge ya da nesne ID’si' })
   relatedToId?: string;

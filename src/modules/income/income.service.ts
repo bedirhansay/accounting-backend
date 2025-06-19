@@ -5,10 +5,13 @@ import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
 import { Model } from 'mongoose';
 
+import { plainToInstance } from 'class-transformer';
 import { DateRangeDTO, IListDTO, PaginatedDateSearchDTO } from '../../common/DTO/request';
 import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
 import { ensureValidObjectId } from '../../common/utils/object-id';
+import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../constant/pagination.param';
 import { CreateIncomeDto } from './dto/create-income.dto';
+import { IncomeDto } from './dto/income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
 import { Income, IncomeDocument } from './income.schema';
 
@@ -29,13 +32,20 @@ export class IncomeService {
     };
   }
 
-  async findAll(query: IListDTO): Promise<PaginatedResponseDto<Income>> {
-    const { pageNumber, pageSize, search, beginDate, endDate, companyId } = query;
+  async findAll(params: IListDTO): Promise<PaginatedResponseDto<IncomeDto>> {
+    const {
+      pageNumber = PAGINATION_DEFAULT_PAGE,
+      pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
+      search,
+      beginDate,
+      endDate,
+      companyId,
+    } = params;
 
     const filter: any = { companyId };
 
     if (search) {
-      filter.$or = [{ description: { $regex: search, $options: 'i' } }];
+      filter.$or = [{ customerId: { $regex: search, $options: 'i' } }];
     }
 
     if (beginDate || endDate) {
@@ -48,30 +58,39 @@ export class IncomeService {
     const data = await this.incomeModel
       .find(filter)
       .populate('customerId', 'name')
+      .populate('customerId', 'name')
       .sort({ operationDate: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
+      .lean()
       .exec();
-
+    const items = plainToInstance(IncomeDto, data);
     return {
+      items,
       pageNumber,
       totalPages: Math.ceil(totalCount / pageSize),
       totalCount,
       hasPreviousPage: pageNumber > 1,
       hasNextPage: pageNumber * pageSize < totalCount,
-      items: data,
     };
   }
 
-  async findOne(id: string, companyId: string): Promise<StandardResponseDto<Income>> {
+  async findOne(id: string, companyId: string): Promise<StandardResponseDto<IncomeDto>> {
     ensureValidObjectId(id, 'Geçersiz gelir ID');
 
-    const income = await this.incomeModel.findOne({ _id: id, companyId }).exec();
+    const income = await this.incomeModel
+      .findOne({ _id: id, companyId })
+      .populate('customerId', 'name')
+      .populate('customerId', 'name')
+      .lean()
+      .exec();
     if (!income) throw new NotFoundException('Gelir kaydı bulunamadı');
+
+    const data = plainToInstance(IncomeDto, income);
 
     return {
       statusCode: 200,
-      data: income,
+      data,
     };
   }
 

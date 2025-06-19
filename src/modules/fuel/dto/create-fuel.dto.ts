@@ -9,10 +9,6 @@ export class CreateFuelDto {
 
   @IsString()
   @IsNotEmpty()
-  fuelType: string;
-
-  @IsString()
-  @IsNotEmpty()
   invoiceNo: string;
 
   @IsOptional()

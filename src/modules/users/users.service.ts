@@ -1,10 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { plainToInstance } from 'class-transformer';
 import { Model, Types } from 'mongoose';
 import { PaginatedSearchDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto } from '../../common/DTO/response';
+import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserDto } from './dto/user.dto';
 import { User, UserDocument } from './user.schema';
 
 @Injectable()
@@ -21,7 +23,7 @@ export class UsersService {
     };
   }
 
-  async findAll(query: PaginatedSearchDTO): Promise<PaginatedResponseDto<User>> {
+  async findAll(query: PaginatedSearchDTO): Promise<PaginatedResponseDto<UserDto>> {
     const { pageNumber = 1, pageSize = 10, search } = query;
 
     const filter: any = {};
@@ -37,10 +39,17 @@ export class UsersService {
       .sort({ createdAt: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
+      .lean()
+      .collation({ locale: 'tr', strength: 1 })
+      .populate('companyId', 'name')
+      .select('-password')
+      .select('-__v') //
       .exec();
 
+    const items = plainToInstance(UserDto, users);
+
     return {
-      items: users,
+      items,
       pageNumber,
       totalCount,
       totalPages: Math.ceil(totalCount / pageSize),
@@ -49,17 +58,18 @@ export class UsersService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<StandardResponseDto<UserDto>> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Geçersiz kullanıcı ID');
     }
 
-    const user = await this.userModel.findById(id).exec();
+    const user = await this.userModel.findById(id).lean().exec();
     if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
 
+    const data = plainToInstance(UserDto, user);
+
     return {
-      message: 'Kullanıcı bulundu',
-      data: user,
+      data,
     };
   }
 

@@ -14,10 +14,6 @@ export class CreateCustomerDto {
     description: 'Müşterinin telefon numarası',
     example: '+90 532 123 45 67',
   })
-  @IsOptional()
-  @IsString()
-  phone?: string;
-
   @ApiPropertyOptional({
     description: 'Müşteri hakkında açıklama',
     example: 'Düzenli alışveriş yapan müşteri',

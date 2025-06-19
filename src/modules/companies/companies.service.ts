@@ -37,6 +37,7 @@ export class CompaniesService {
 
     const companies = await this.companyModel
       .find()
+      .collation({ locale: 'tr', strength: 1 })
       .sort({ createdAt: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
@@ -55,19 +56,20 @@ export class CompaniesService {
     };
   }
 
-  async findOne(id: string): Promise<StandardResponseDto<Company>> {
+  async findOne(id: string): Promise<StandardResponseDto<CompanyDto>> {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException('Geçersiz firma ID');
     }
 
-    const company = await this.companyModel.findById(id).exec();
+    const company = await this.companyModel.findById(id).lean().exec();
     if (!company) {
       throw new NotFoundException('Firma bulunamadı');
     }
+    const items = plainToInstance(CompanyDto, company);
 
     return {
       statusCode: 200,
-      data: company,
+      data: items,
     };
   }
 

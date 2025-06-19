@@ -1,10 +1,11 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { plainToInstance } from 'class-transformer';
 import { Model, Types } from 'mongoose';
 import { PaginatedSearchDTO } from '../../common/DTO/request';
 import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
 import { Category, CategoryDocument } from './categories.schema';
-import { CategoryType } from './dto/category.dto';
+import { CategoryDto, CategoryType } from './dto/category.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
@@ -38,7 +39,7 @@ export class CategoriesService {
     };
   }
 
-  async findAll(companyId: string, query: PaginatedSearchDTO): Promise<PaginatedResponseDto<Category>> {
+  async findAll(companyId: string, query: PaginatedSearchDTO): Promise<PaginatedResponseDto<CategoryDto>> {
     const { pageNumber, pageSize, search } = query;
 
     const filter: any = { companyId };
@@ -51,13 +52,17 @@ export class CategoriesService {
 
     const categories = await this.categoryModel
       .find(filter)
+      .collation({ locale: 'tr', strength: 1 })
       .sort({ createdAt: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
+      .lean()
       .exec();
 
+    const items = plainToInstance(CategoryDto, categories);
+
     return {
-      items: categories,
+      items,
       pageNumber: pageNumber,
       totalPages: Math.ceil(totalCount / pageSize),
       totalCount,
@@ -66,16 +71,18 @@ export class CategoriesService {
     };
   }
 
-  async findOne(id: string, companyId: string): Promise<StandardResponseDto<Category>> {
+  async findOne(id: string, companyId: string): Promise<StandardResponseDto<CategoryDto>> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Geçersiz kategori ID');
     }
 
-    const category = await this.categoryModel.findOne({ _id: id, companyId }).exec();
+    const category = await this.categoryModel.findOne({ _id: id, companyId }).lean().exec();
     if (!category) throw new NotFoundException('Kategori bulunamadı');
 
+    const items = plainToInstance(CategoryDto, category);
+
     return {
-      data: category,
+      data: items,
     };
   }
 

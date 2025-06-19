@@ -1,10 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { plainToInstance } from 'class-transformer';
 import { Model } from 'mongoose';
 import { IListDTO } from '../../common/DTO/request';
-import { OperationResultDto, StandardResponseDto } from '../../common/DTO/response';
+import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
 import { ensureValidObjectId } from '../../common/utils/object-id';
+import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../constant/pagination.param';
 import { CreateEmployeeDto } from './dto/create-emplooye.dto';
+import { EmployeeDto } from './dto/employee.dto';
 import { UpdateEmplooyeDto } from './dto/update-emplooye.dto';
 import { Emplooye, EmplooyeDocument } from './employee.schema';
 
@@ -29,8 +32,15 @@ export class EmployeeService {
     };
   }
 
-  async findAll(params: IListDTO) {
-    const { pageNumber, pageSize, search, beginDate, endDate, companyId } = params;
+  async findAll(params: IListDTO): Promise<PaginatedResponseDto<EmployeeDto>> {
+    const {
+      pageNumber = PAGINATION_DEFAULT_PAGE,
+      pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
+      search,
+      beginDate,
+      endDate,
+      companyId,
+    } = params;
 
     const filter: any = { companyId };
 
@@ -56,7 +66,10 @@ export class EmployeeService {
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
       .sort({ hireDate: -1 })
+      .lean()
       .exec();
+
+    const items = plainToInstance(EmployeeDto, data);
 
     return {
       pageNumber: pageNumber,
@@ -64,19 +77,21 @@ export class EmployeeService {
       totalCount,
       hasPreviousPage: pageNumber > 1,
       hasNextPage: pageNumber * pageSize < totalCount,
-      items: data,
+      items,
     };
   }
 
-  async findOne(id: string, companyId: string): Promise<StandardResponseDto<Emplooye>> {
+  async findOne(id: string, companyId: string): Promise<StandardResponseDto<EmployeeDto>> {
     ensureValidObjectId(id, 'Geçersiz personel ID');
 
-    const employee = await this.emplooyeModel.findOne({ _id: id, companyId }).exec();
-    if (!employee) throw new NotFoundException('Personel bulunamadı');
+    const data = await this.emplooyeModel.findOne({ _id: id, companyId }).lean().exec();
+    if (!data) throw new NotFoundException('Personel bulunamadı');
+
+    const item = plainToInstance(EmployeeDto, data);
 
     return {
       statusCode: 200,
-      data: employee,
+      data: item,
     };
   }
 

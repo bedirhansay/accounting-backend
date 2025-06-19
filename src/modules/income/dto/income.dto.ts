@@ -1,14 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { CategoryDto } from '../../categories/dto/category.dto';
+import { CustomerDto } from '../../customers/dto/customer.dto';
 
 export class IncomeDto {
   @ApiProperty({ example: '665f1c48fbb89c0012345678', description: 'Gelirin ID bilgisi' })
   id: string;
 
   @ApiProperty({ example: '665f1c48fbb89c0011223344', description: 'Müşteri ID bilgisi' })
-  customerId: string;
+  customerId: Partial<CustomerDto>;
 
   @ApiProperty({ example: '665f1c48fbb89c0099887766', description: 'Kategori ID bilgisi' })
-  categoryId: string;
+  categoryId: Partial<CategoryDto>;
 
   @ApiProperty({ example: 5, description: 'Birim sayısı' })
   unitCount: number;

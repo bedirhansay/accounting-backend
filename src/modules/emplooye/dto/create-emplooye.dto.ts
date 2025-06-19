@@ -16,7 +16,8 @@ export class CreateEmployeeDto {
 
   @IsDate()
   @Type(() => Date)
-  hireDate: Date;
+  @IsOptional()
+  hireDate?: Date;
 
   @IsOptional()
   @IsDate()
@@ -24,14 +25,14 @@ export class CreateEmployeeDto {
   terminationDate?: Date | null;
 
   @IsNumber()
-  salary: number;
+  salary?: number;
 
   @IsBoolean()
   isActive: boolean;
 
   @IsOptional()
   @IsString()
-  notes?: string;
+  description?: string;
 
   @IsString()
   @IsNotEmpty()

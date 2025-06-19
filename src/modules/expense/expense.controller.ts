@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiQuery, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company-decarator';
 import { CompanyGuard } from '../../common/guards/company-quard';
@@ -39,11 +39,7 @@ export class ExpenseController {
 
   @Get()
   @ApiOperation({ summary: 'Tüm giderleri listele', operationId: 'getAllExpenses' })
-  @ApiQuery({ name: 'page', required: true, description: 'Sayfa numarası', type: Number })
-  @ApiQuery({ name: 'pageSize', required: true, description: 'Sayfa başına kayıt sayısı', type: Number })
-  @ApiQuery({ name: 'search', required: false, description: 'İsim ile arama yapılır', type: String })
-  @ApiQuery({ name: 'beginDate', required: false, description: 'Sayfa başına kayıt sayısı', type: Number })
-  @ApiQuery({ name: 'endDate', required: false, description: 'İsim ile arama yapılır', type: String })
+  @ApiPaginatedQuery()
   @ApiPaginatedResponse(ExpenseDto)
   findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
     return this.expenseService.findAll({ ...query, companyId });
@@ -88,12 +84,7 @@ export class ExpenseController {
 
   @Get(':employeeId/expenses')
   @ApiOperation({ summary: 'Personele ait giderler', operationId: 'getExpensesByEmployee' })
-  @ApiParam({ name: 'employeeId', description: 'Personel ID' })
-  @ApiQuery({ name: 'page', required: true, description: 'Sayfa numarası', type: Number })
-  @ApiQuery({ name: 'pageSize', required: true, description: 'Sayfa başına kayıt sayısı', type: Number })
-  @ApiQuery({ name: 'search', required: false, description: 'İsim ile arama yapılır', type: String })
-  @ApiQuery({ name: 'beginDate', required: false, description: 'Sayfa başına kayıt sayısı', type: Number })
-  @ApiQuery({ name: 'endDate', required: false, description: 'İsim ile arama yapılır', type: String })
+  @ApiPaginatedQuery()
   @ApiPaginatedResponse(Expense)
   getExpensesByEmployee(
     @Param('employeeId') vehicleId: string,

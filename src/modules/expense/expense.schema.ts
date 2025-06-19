@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { CategoryDto } from '../categories/dto/category.dto';
 
 export type ExpenseDocument = Expense & Document;
 
@@ -9,19 +10,13 @@ export class Expense {
   operationDate: Date;
 
   @Prop({ type: String, required: true })
-  category: string;
+  category: Partial<CategoryDto>;
 
   @Prop({ type: Number, required: true })
   amount: number;
 
   @Prop({ type: String, required: true })
   description: string;
-
-  @Prop({ type: String, required: true })
-  paymentType: string;
-
-  @Prop({ type: Boolean, required: true })
-  isPaid: boolean;
 
   @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
   companyId: Types.ObjectId;

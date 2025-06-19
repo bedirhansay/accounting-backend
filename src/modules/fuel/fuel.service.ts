@@ -1,10 +1,13 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { plainToInstance } from 'class-transformer';
 import { Model, Types } from 'mongoose';
 import { IListDTO, PaginatedDateSearchDTO } from '../../common/DTO/request';
 import { OperationResultDto, PaginatedResponseDto } from '../../common/DTO/response';
 import { ensureValidObjectId } from '../../common/utils/object-id';
+import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../constant/pagination.param';
 import { CreateFuelDto } from './dto/create-fuel.dto';
+import { FuelDTO } from './dto/fuel.dto';
 import { UpdateFuelDto } from './dto/update-fuel.dto';
 import { Fuel, FuelDocument } from './fuel.schema';
 
@@ -29,17 +32,20 @@ export class FuelService {
     }
   }
 
-  async findAll(params: IListDTO): Promise<PaginatedResponseDto<Fuel>> {
-    const { pageNumber, pageSize, search, beginDate, endDate, companyId } = params;
+  async findAll(params: IListDTO): Promise<PaginatedResponseDto<FuelDTO>> {
+    const {
+      pageNumber = PAGINATION_DEFAULT_PAGE,
+      pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
+      search,
+      beginDate,
+      endDate,
+      companyId,
+    } = params;
 
     const filter: any = { companyId };
 
     if (search) {
-      filter.$or = [
-        { fuelType: new RegExp(search, 'i') },
-        { invoiceNo: new RegExp(search, 'i') },
-        { description: new RegExp(search, 'i') },
-      ];
+      filter.$or = [{ fuelType: new RegExp(search, 'i') }, { invoiceNo: new RegExp(search, 'i') }];
     }
 
     if (beginDate || endDate) {
@@ -51,18 +57,24 @@ export class FuelService {
     const totalCount = await this.fuelModel.countDocuments(filter);
     const data = await this.fuelModel
       .find(filter)
+      .collation({ locale: 'tr', strength: 1 })
+      .populate('driverId', 'fullName')
+      .populate('vehicleId', 'plateNumber')
       .sort({ operationDate: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
+      .lean()
       .exec();
 
+    const items = plainToInstance(FuelDTO, data);
+
     return {
+      items,
       pageNumber,
       totalPages: Math.ceil(totalCount / pageSize),
       totalCount,
       hasPreviousPage: pageNumber > 1,
       hasNextPage: pageNumber * pageSize < totalCount,
-      items: data,
     };
   }
 
