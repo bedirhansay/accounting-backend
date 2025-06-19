@@ -3,6 +3,8 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { AppModule } from './app.module';
+import { GlobalExceptionFilter } from './common/exception/global.exception';
+import { ErrorLoggerService } from './modules/logger/logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -46,6 +48,9 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('swagger', app, document);
+
+  const errorLogger = app.get(ErrorLoggerService);
+  app.useGlobalFilters(new GlobalExceptionFilter(errorLogger));
 
   app
     .getHttpAdapter()
