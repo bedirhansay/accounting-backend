@@ -1,5 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { plainToInstance } from 'class-transformer';
 import { Model, Types } from 'mongoose';
 import { PaginationDTO } from '../../common/DTO/request';
 import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
@@ -33,15 +34,19 @@ export class CompaniesService {
     const { pageNumber, pageSize } = query;
 
     const totalCount = await this.companyModel.countDocuments();
-    const items = await this.companyModel
+
+    const companies = await this.companyModel
       .find()
       .sort({ createdAt: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
+      .lean()
       .exec();
 
+    const items = plainToInstance(CompanyDto, companies);
+
     return {
-      items: items as CompanyDto[],
+      items,
       pageNumber,
       totalPages: Math.ceil(totalCount / pageSize),
       totalCount,
