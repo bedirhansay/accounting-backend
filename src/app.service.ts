@@ -4,6 +4,6 @@ import { Get, Injectable } from '@nestjs/common';
 export class AppService {
   @Get()
   getHello(name: string = 'Dünya'): string {
-    return `Merhaba ${name}!`;
+    throw new Error('Test exception');
   }
 }

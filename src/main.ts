@@ -9,13 +9,9 @@ import { ErrorLoggerService } from './modules/logger/logger.service';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // app.enableCors({
-  //   origin: true, // veya origin: ['http://localhost:5173', 'https://senin-frontend-domainin']
-  //   credentials: true,
-  //   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-  //   allowedHeaders: ['Content-Type', 'Authorization', 'X-Company-Id'],
-  //   exposedHeaders: ['Authorization', 'X-Company-Id'],
-  // });
+  app.enableCors({
+    origin: ['http://localhost:5173'],
+  });
 
   app.useStaticAssets(join(__dirname, '..', 'public'));
 
