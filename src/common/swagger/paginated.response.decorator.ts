@@ -5,13 +5,13 @@ import { PaginatedResponseDto } from '../DTO/response';
 
 export const ApiPaginatedResponse = <TModel extends Type<unknown>>(model: TModel, description = 'Liste getirildi') =>
   applyDecorators(
-    ApiExtraModels(model),
+    ApiExtraModels(PaginatedResponseDto, model),
     ApiOkResponse({
       description,
       schema: {
         allOf: [
-          { $ref: getSchemaPath(PaginatedResponseDto) },
           {
+            type: 'object',
             properties: {
               data: {
                 type: 'object',
