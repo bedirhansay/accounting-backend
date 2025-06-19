@@ -9,27 +9,18 @@ export const ApiPaginatedResponse = <TModel extends Type<unknown>>(model: TModel
     ApiOkResponse({
       description,
       schema: {
-        allOf: [
-          {
-            type: 'object',
-            properties: {
-              data: {
-                type: 'object',
-                properties: {
-                  items: {
-                    type: 'array',
-                    items: { $ref: getSchemaPath(model) },
-                  },
-                  pageNumber: { type: 'number', example: 1 },
-                  totalPages: { type: 'number', example: 5 },
-                  totalCount: { type: 'number', example: 50 },
-                  hasPreviousPage: { type: 'boolean', example: false },
-                  hasNextPage: { type: 'boolean', example: true },
-                },
-              },
-            },
+        type: 'object',
+        properties: {
+          items: {
+            type: 'array',
+            items: { $ref: getSchemaPath(model) },
           },
-        ],
+          pageNumber: { type: 'number', example: 1 },
+          totalPages: { type: 'number', example: 5 },
+          totalCount: { type: 'number', example: 50 },
+          hasPreviousPage: { type: 'boolean', example: false },
+          hasNextPage: { type: 'boolean', example: true },
+        },
       },
     })
   );
