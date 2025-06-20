@@ -3,11 +3,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
 import { Model } from 'mongoose';
 
-import { CompanyListQueryDto } from '../../common/dto/request/company.list.request.dto';
-import { PaginatedDateSearchDTO } from '../../common/dto/request/pagination.request.dto';
-import { BaseResponseDto } from '../../common/dto/response/base.response.dto';
-import { CommandResponseDto } from '../../common/dto/response/command-response.dto';
-import { PaginatedResponseDto } from '../../common/dto/response/paginated.response.dto';
+import { CompanyListQueryDto } from '../../common/DTO/request/company.list.request.dto';
+import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
+import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
+import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
+import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { ensureValidObjectId } from '../../common/helper/object.id';
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../constant/pagination.param';
 import { CreateExpenseDto } from './dto/create-expense.dto';

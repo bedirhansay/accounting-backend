@@ -11,10 +11,10 @@ import {
   ApiPaginatedQuery,
   ApiPaginatedResponse,
 } from '../../common/decorator/swagger';
-import { PaginatedDateSearchDTO } from '../../common/dto/request/pagination.request.dto';
-import { BaseResponseDto } from '../../common/dto/response/base.response.dto';
-import { CommandResponseDto } from '../../common/dto/response/command-response.dto';
-import { PaginatedResponseDto } from '../../common/dto/response/paginated.response.dto';
+import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
+import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
+import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
+import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { VehicleDto } from './dto/vehicle.dto';

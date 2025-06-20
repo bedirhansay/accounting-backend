@@ -4,10 +4,10 @@ import { Model } from 'mongoose';
 
 import { plainToInstance } from 'class-transformer';
 
-import { CompanyListQueryDto } from '../../common/dto/request/company.list.request.dto';
-import { BaseResponseDto } from '../../common/dto/response/base.response.dto';
-import { CommandResponseDto } from '../../common/dto/response/command-response.dto';
-import { PaginatedResponseDto } from '../../common/dto/response/paginated.response.dto';
+import { CompanyListQueryDto } from '../../common/DTO/request/company.list.request.dto';
+import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
+import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
+import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { ensureValidObjectId } from '../../common/helper/object.id';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';

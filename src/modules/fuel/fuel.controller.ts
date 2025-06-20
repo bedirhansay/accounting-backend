@@ -5,12 +5,12 @@ import { CurrentCompany } from '../../common/decorator/company.id';
 
 import { CompanyGuard } from '../../common/guards/company.id';
 
-import { CommandResponseDto } from '../../common/dto/response/command-response.dto';
+import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 
 import { ApiBaseResponse, ApiPaginatedQuery, ApiPaginatedResponse } from '../../common/decorator/swagger';
-import { PaginatedDateSearchDTO } from '../../common/dto/request/pagination.request.dto';
-import { BaseResponseDto } from '../../common/dto/response/base.response.dto';
-import { PaginatedResponseDto } from '../../common/dto/response/paginated.response.dto';
+import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
+import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
+import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { CreateFuelDto } from './dto/create-fuel.dto';
 import { FuelDTO } from './dto/fuel.dto';
 import { UpdateFuelDto } from './dto/update-fuel.dto';

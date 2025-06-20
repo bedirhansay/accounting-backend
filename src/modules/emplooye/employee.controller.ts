@@ -7,10 +7,10 @@ import { CompanyGuard } from '../../common/guards/company.id';
 
 import { ApiBaseResponse, ApiCommandResponse, ApiPaginatedQuery } from '../../common/decorator/swagger';
 
-import { PaginatedDateSearchDTO } from '../../common/dto/request/pagination.request.dto';
-import { BaseResponseDto } from '../../common/dto/response/base.response.dto';
-import { CommandResponseDto } from '../../common/dto/response/command-response.dto';
-import { PaginatedResponseDto } from '../../common/dto/response/paginated.response.dto';
+import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
+import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
+import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
+import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { EmployeeDto } from './dto/employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';

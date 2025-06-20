@@ -15,10 +15,10 @@ import {
   ApiPaginatedQuery,
   ApiPaginatedResponse,
 } from '../../common/decorator/swagger';
-import { PaginatedSearchDTO } from '../../common/dto/request/search.request.dto';
-import { BaseResponseDto } from '../../common/dto/response/base.response.dto';
-import { CommandResponseDto } from '../../common/dto/response/command-response.dto';
-import { PaginatedResponseDto } from '../../common/dto/response/paginated.response.dto';
+import { PaginatedSearchDTO } from '../../common/DTO/request/search.request.dto';
+import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
+import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
+import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 @ApiTags('Customers')
 @ApiBearerAuth('Bearer')
 @ApiSecurity('x-company-id')

@@ -11,8 +11,8 @@ import {
   ApiPaginatedQuery,
   ApiPaginatedResponse,
 } from '../../common/decorator/swagger';
-import { PaginatedDateSearchDTO } from '../../common/dto/request/pagination.request.dto';
-import { CommandResponseDto } from '../../common/dto/response/command-response.dto';
+import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
+import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentDto } from './dto/payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
