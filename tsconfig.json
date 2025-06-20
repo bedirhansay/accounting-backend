@@ -12,6 +12,7 @@
     "outDir": "./dist",
     "incremental": true,
     "skipLibCheck": true,
+    "baseUrl": "./src",
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
