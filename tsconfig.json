@@ -17,6 +17,14 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
-    "baseUrl": "./"
+    "baseUrl": "./src",
+    "paths": {
+      "@decorator/*": ["common/decorator/*"],
+      "@dto/*": ["common/DTO/*"],
+      "@guards/*": ["common/guards/*"],
+      "@helper/*": ["common/helper/*"],
+      "@interceptor/*": ["common/interceptor/*"],
+      "@constant/*": ["common/constant/*"]
+    }
   }
 }
