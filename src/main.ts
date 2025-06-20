@@ -66,7 +66,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('swagger', app, document);
+  SwaggerModule.setup('', app, document);
 
   const errorLogger = app.get(ErrorLoggerService);
   app.useGlobalFilters(new GlobalExceptionFilter(errorLogger));
