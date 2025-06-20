@@ -10,7 +10,8 @@ import {
   ApiPaginatedQuery,
   ApiPaginatedResponse,
 } from '../../common/decorator/swagger';
-import { PaginatedSearchDTO } from '../../common/dto/request/search.request.dto';
+
+import { PaginatedSearchDTO } from '../../common/dto/request';
 import { CommandResponseDto } from '../../common/dto/response/command-response.dto';
 import { CategoriesService } from './categories.service';
 import { CategoryDto } from './dto/category.dto';
