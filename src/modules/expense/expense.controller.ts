@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company.id';
 import { CompanyGuard } from '../../common/guards/company.id';
@@ -20,7 +20,7 @@ import { Expense } from './expense.schema';
 import { ExpenseService } from './expense.service';
 
 @ApiTags('Expenses')
-@ApiBearerAuth()
+@ApiBearerAuth('Bearer')
 @ApiSecurity('x-company-id')
 @ApiExtraModels(
   BaseResponseDto,
@@ -38,6 +38,7 @@ export class ExpenseController {
   @Post()
   @ApiOperation({ summary: 'Yeni gider oluştur', operationId: 'createExpense' })
   @ApiCommandResponse()
+  @ApiBody({ type: CreateExpenseDto })
   create(@Body() createExpenseDto: CreateExpenseDto, @CurrentCompany() companyId: string) {
     return this.expenseService.create({ ...createExpenseDto, companyId });
   }
@@ -62,6 +63,7 @@ export class ExpenseController {
   @ApiOperation({ summary: 'Gider güncelle', operationId: 'updateExpense' })
   @ApiParam({ name: 'id', description: 'Gider ID' })
   @ApiCommandResponse()
+  @ApiBody({ type: UpdateExpenseDto })
   update(@Param('id') id: string, @Body() updateExpenseDto: UpdateExpenseDto, @CurrentCompany() companyId: string) {
     return this.expenseService.update({ id, companyId }, updateExpenseDto);
   }

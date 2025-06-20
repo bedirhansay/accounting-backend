@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company.id';
 import { PaginatedDateSearchDTO } from '../../common/dto/request';
@@ -18,7 +18,7 @@ import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { PaymentsService } from './payments.service';
 
 @ApiTags('Payments')
-@ApiBearerAuth()
+@ApiBearerAuth('Bearer')
 @ApiSecurity('x-company-id')
 @ApiExtraModels(PaymentDto, CommandResponseDto, PaymentDto, CreatePaymentDto, UpdatePaymentDto)
 @UseGuards(CompanyGuard)
@@ -29,6 +29,7 @@ export class PaymentsController {
   @Post()
   @ApiOperation({ summary: 'Yeni ödeme oluştur', operationId: 'createPayment' })
   @ApiCommandResponse()
+  @ApiBody({ type: CreatePaymentDto })
   create(@Body() createPaymentDto: CreatePaymentDto, @CurrentCompany() companyId: string) {
     return this.paymentsService.create({ ...createPaymentDto, companyId });
   }
@@ -53,6 +54,7 @@ export class PaymentsController {
   @ApiOperation({ summary: 'Ödeme güncelle', operationId: 'updatePayment' })
   @ApiParam({ name: 'id', description: 'Ödeme ID' })
   @ApiBaseResponse(PaymentDto)
+  @ApiBody({ type: UpdatePaymentDto })
   update(@Param('id') id: string, @Body() updatePaymentDto: UpdatePaymentDto, @CurrentCompany() companyId: string) {
     return this.paymentsService.update(id, updatePaymentDto, companyId);
   }

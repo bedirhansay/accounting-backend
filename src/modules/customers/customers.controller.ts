@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company.id';
 import { CompanyGuard } from '../../common/guards/company.id';
@@ -19,7 +19,7 @@ import { PaginatedSearchDTO } from '../../common/dto/request';
 import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
 
 @ApiTags('Customers')
-@ApiBearerAuth()
+@ApiBearerAuth('Bearer')
 @ApiSecurity('x-company-id')
 @ApiExtraModels(
   BaseResponseDto,
@@ -37,6 +37,7 @@ export class CustomersController {
   @Post()
   @ApiOperation({ summary: 'Yeni müşteri oluştur', operationId: 'createCustomer' })
   @ApiCommandResponse()
+  @ApiBody({ type: CreateCustomerDto })
   create(@Body() createCustomerDto: CreateCustomerDto, @CurrentCompany() companyId: string) {
     return this.customersService.create({ ...createCustomerDto, companyId });
   }
@@ -61,6 +62,7 @@ export class CustomersController {
   @ApiOperation({ summary: 'Müşteri bilgilerini güncelle', operationId: 'updateCustomer' })
   @ApiParam({ name: 'id', description: 'Müşteri ID' })
   @ApiCommandResponse()
+  @ApiBody({ type: UpdateCustomerDto })
   update(@Param('id') id: string, @Body() updateCustomerDto: UpdateCustomerDto, @CurrentCompany() companyId: string) {
     return this.customersService.update(id, updateCustomerDto, companyId);
   }

@@ -1,21 +1,23 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
+export type VehicleDocument = Vehicle & Document;
+
 @Schema({ timestamps: true })
 export class Vehicle {
-  @Prop({ required: true })
+  @Prop({ required: true, trim: true, unique: true })
   plateNumber: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, trim: true })
   brand: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, trim: true })
   model: string;
 
-  @Prop({ required: true })
+  @Prop({ type: Date, required: true })
   inspectionDate: Date;
 
-  @Prop({ required: true })
+  @Prop({ type: Date, required: true })
   insuranceDate: Date;
 
   @Prop({ type: Types.ObjectId, ref: 'Emplooye', required: true })
@@ -24,12 +26,11 @@ export class Vehicle {
   @Prop({ required: true, default: true })
   isActive: boolean;
 
-  @Prop()
+  @Prop({ type: String, trim: true, default: '' })
   description?: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
   companyId: Types.ObjectId;
 }
 
-export type VehicleDocument = Vehicle & Document;
 export const VehicleSchema = SchemaFactory.createForClass(Vehicle);

@@ -7,8 +7,8 @@ export class CreateEmployeeDto {
   fullName: string;
 
   @IsString()
-  @IsNotEmpty()
-  phone: string;
+  @IsOptional()
+  phone?: string;
 
   @IsString()
   @IsNotEmpty()

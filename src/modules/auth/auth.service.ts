@@ -72,7 +72,6 @@ export class AuthService {
         },
       };
     } catch (error) {
-      console.error('❌ Kayıt hatası:', error);
       throw new ConflictException('Kayıt başarısız');
     }
   }

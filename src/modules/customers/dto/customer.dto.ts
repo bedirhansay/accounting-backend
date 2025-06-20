@@ -10,6 +10,9 @@ export class CustomerDto {
   @ApiProperty({ example: 'Düzenli müşteri' })
   description?: string;
 
+  @ApiProperty({ example: 'Telefon Numarası' })
+  phone?: string;
+
   @ApiProperty({ example: 'Bağlı olduğu Firma' })
   companyId: string;
 

@@ -7,15 +7,20 @@ import { CompanyGuard } from '../../common/guards/company.id';
 import { PaginatedSearchDTO } from '../../common/dto/request';
 import { CommandResponseDto } from '../../common/dto/response';
 
-import { ApiBaseResponse, ApiCommandResponse, ApiPaginatedResponse } from '../../common/decorator/swagger';
+import {
+  ApiBaseResponse,
+  ApiCommandResponse,
+  ApiPaginatedQuery,
+  ApiPaginatedResponse,
+} from '../../common/decorator/swagger';
 import { CategoriesService } from './categories.service';
 import { CategoryDto } from './dto/category.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @ApiTags('Categories')
-@ApiBearerAuth()
 @ApiExtraModels(CommandResponseDto, CategoryDto, CreateCategoryDto, UpdateCategoryDto, PaginatedSearchDTO)
+@ApiBearerAuth('Bearer')
 @ApiSecurity('x-company-id')
 @UseGuards(CompanyGuard)
 @Controller('categories')
@@ -27,12 +32,14 @@ export class CategoriesController {
     summary: 'Yeni bir kategori oluşturur',
     operationId: 'createCategory',
   })
+  @ApiBody({ type: CreateCategoryDto })
   @ApiCommandResponse()
   create(@Body() createCategoryDto: CreateCategoryDto, @CurrentCompany() companyId: string) {
     return this.categoriesService.create(createCategoryDto, companyId);
   }
 
   @Get()
+  @ApiPaginatedQuery()
   @ApiOperation({ summary: 'Tüm kategorileri listele', operationId: 'getAllCategories' })
   @ApiPaginatedResponse(CategoryDto)
   findAll(@Query() query: PaginatedSearchDTO, @CurrentCompany() companyId: string) {
@@ -50,7 +57,7 @@ export class CategoriesController {
   @Patch(':id')
   @ApiOperation({ summary: 'Kategori güncelle', operationId: 'updateCategory' })
   @ApiParam({ name: 'id', description: 'Kategori ID', type: String })
-  @ApiBody({ type: UpdateCategoryDto }) // Bunu ekle
+  @ApiBody({ type: UpdateCategoryDto })
   @ApiCommandResponse()
   update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto, @CurrentCompany() companyId: string) {
     return this.categoriesService.update(id, updateCategoryDto, companyId);

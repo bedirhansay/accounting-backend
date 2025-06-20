@@ -1,4 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { EmployeeDto } from '../../emplooye/dto/employee.dto';
 
 export class VehicleDto {
   @ApiProperty({ example: '665b776f58e4d5be07e7e8c4', description: 'Araç ID' })
@@ -10,6 +11,9 @@ export class VehicleDto {
   @ApiProperty({ example: 'Ford', description: 'Araç markası' })
   brand: string;
 
+  @ApiProperty({ example: 'Focus', description: 'Araç modeli' })
+  model: string;
+
   @ApiProperty({ example: '2025-06-01T00:00:00.000Z', description: 'Muayene tarihi' })
   inspectionDate: string;
 
@@ -19,7 +23,7 @@ export class VehicleDto {
   @ApiProperty({ example: true, description: 'Araç aktif mi?' })
   isActive: boolean;
 
-  @ApiProperty({ example: 'Servis aracı', required: false, description: 'Açıklama' })
+  @ApiPropertyOptional({ example: 'Servis aracı', description: 'Açıklama' })
   description?: string;
 
   @ApiProperty({ example: '2025-06-18T12:00:00.000Z', description: 'Oluşturulma tarihi' })
@@ -28,8 +32,8 @@ export class VehicleDto {
   @ApiProperty({ example: '2025-06-18T12:00:00.000Z', description: 'Güncellenme tarihi' })
   updatedAt: Date;
 
-  @ApiProperty({ example: '662ff3f108dc5e1b3472cd9e', description: 'Sürücü ID' })
-  driverId: string;
+  @ApiProperty({ description: 'Sürücü bilgisi (populate edilmiş)' })
+  driverId: Partial<EmployeeDto>;
 
   @ApiProperty({ example: '665a1234bcf8f47e4b76cdef', description: 'Firma ID' })
   companyId: string;

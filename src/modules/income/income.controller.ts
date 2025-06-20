@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Header, Param, Patch, Post, Query, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 
 import { CurrentCompany } from '../../common/decorator/company.id';
@@ -21,7 +21,7 @@ import { UpdateIncomeDto } from './dto/update-income.dto';
 import { IncomeService } from './income.service';
 
 @ApiTags('Incomes')
-@ApiBearerAuth()
+@ApiBearerAuth('Bearer')
 @ApiSecurity('x-company-id')
 @ApiExtraModels(
   IncomeDto,
@@ -40,6 +40,7 @@ export class IncomeController {
   @Post()
   @ApiOperation({ summary: 'Yeni gelir oluştur', operationId: 'createIncome' })
   @ApiCommandResponse()
+  @ApiBody({ type: CreateIncomeDto })
   create(@Body() createIncomeDto: CreateIncomeDto, @CurrentCompany() companyId: string) {
     return this.incomeService.create({ ...createIncomeDto, companyId });
   }
@@ -64,6 +65,7 @@ export class IncomeController {
   @ApiOperation({ summary: 'Gelir kaydını güncelle', operationId: 'updateIncome' })
   @ApiParam({ name: 'id', description: 'Gelir ID' })
   @ApiCommandResponse()
+  @ApiBody({ type: UpdateIncomeDto })
   update(@Param('id') id: string, @Body() updateIncomeDto: UpdateIncomeDto, @CurrentCompany() companyId: string) {
     return this.incomeService.update(id, updateIncomeDto, companyId);
   }

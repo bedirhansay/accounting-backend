@@ -45,6 +45,7 @@ export class PaymentsService {
 
     const data = await this.paymentModel
       .find(filter)
+      .populate('customerId', 'name')
       .sort({ operationDate: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)

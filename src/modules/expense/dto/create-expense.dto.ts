@@ -15,8 +15,8 @@ export class CreateExpenseDto {
   amount: number;
 
   @ApiProperty({ example: 'İstanbul içi yakıt harcaması', description: 'Açıklama' })
-  @IsString()
-  description: string;
+  @IsOptional()
+  description?: string;
 
   @ApiPropertyOptional({ example: '664d5e27b3349e001edac7f8', description: 'İlgili kayıt ID (Opsiyonel)' })
   @IsOptional()

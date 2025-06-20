@@ -1,10 +1,15 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 
 import { PaginationDTO } from '../../common/dto/request/pagination.request.dto'; // Buradan alındığını varsaydım
 import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
 
-import { ApiBaseResponse, ApiCommandResponse, ApiPaginatedResponse } from '../../common/decorator/swagger';
+import {
+  ApiBaseResponse,
+  ApiCommandResponse,
+  ApiPaginatedQuery,
+  ApiPaginatedResponse,
+} from '../../common/decorator/swagger';
 import { CompaniesService } from './companies.service';
 import { CompanyDto } from './dto/company-dto';
 import { CreateCompanyDto } from './dto/create-company.dto';
@@ -12,6 +17,7 @@ import { UpdateCompanyDto } from './dto/update-company.dto';
 
 @ApiTags('Companies')
 @ApiBearerAuth()
+@ApiBearerAuth('Bearer')
 @ApiExtraModels(
   BaseResponseDto,
   PaginatedResponseDto,
@@ -25,6 +31,7 @@ export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}
 
   @Post()
+  @ApiBody({ type: CreateCompanyDto })
   @ApiOperation({ summary: 'Yeni bir şirket oluştur', operationId: 'createCompany' })
   @ApiCommandResponse()
   create(@Body() createCompanyDto: CreateCompanyDto) {
@@ -32,6 +39,7 @@ export class CompaniesController {
   }
 
   @Get()
+  @ApiPaginatedQuery()
   @ApiOperation({ summary: 'Tüm şirketleri getir', operationId: 'getAllCompanies' })
   @ApiPaginatedResponse(CompanyDto)
   findAll(@Query() query: PaginationDTO) {
@@ -49,6 +57,7 @@ export class CompaniesController {
   @Patch(':id')
   @ApiOperation({ summary: 'Şirket bilgilerini güncelle', operationId: 'updateCompany' })
   @ApiParam({ name: 'id', description: 'Şirket ID' })
+  @ApiBody({ type: UpdateCompanyDto })
   @ApiCommandResponse()
   update(@Param('id') id: string, @Body() updateCompanyDto: UpdateCompanyDto) {
     return this.companiesService.update(id, updateCompanyDto);

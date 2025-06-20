@@ -1,16 +1,25 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { CategoryDto } from '../categories/dto/category.dto';
 
 export type ExpenseDocument = Expense & Document;
-
+@Schema({
+  timestamps: true,
+  toJSON: {
+    virtuals: true,
+    versionKey: false,
+    transform: (_, ret) => {
+      ret.id = ret._id;
+      delete ret._id;
+    },
+  },
+})
 @Schema({ timestamps: true })
 export class Expense {
   @Prop({ type: Date, required: true })
   operationDate: Date;
 
-  @Prop({ type: String, required: true })
-  category: Partial<CategoryDto>;
+  @Prop({ type: Types.ObjectId, ref: 'Category', required: true })
+  categoryId: Types.ObjectId;
 
   @Prop({ type: Number, required: true })
   amount: number;
@@ -25,7 +34,7 @@ export class Expense {
   relatedToId?: Types.ObjectId;
 
   @Prop({ type: String, enum: ['Vehicle', 'Emplooye'], required: false })
-  relatedModel?: string;
+  relatedModel?: 'Vehicle' | 'Emplooye';
 }
 
 export const ExpenseSchema = SchemaFactory.createForClass(Expense);

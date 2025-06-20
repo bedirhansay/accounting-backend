@@ -6,9 +6,9 @@ import { CompanyListQueryDto } from '../../common/dto/request';
 import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
 import { ensureValidObjectId } from '../../common/helper/object.id';
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../constant/pagination.param';
-import { CreateEmployeeDto } from './dto/create-emplooye.dto';
+import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { EmployeeDto } from './dto/employee.dto';
-import { UpdateEmplooyeDto } from './dto/update-emplooye.dto';
+import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { Emplooye, EmplooyeDocument } from './employee.schema';
 
 @Injectable()
@@ -95,7 +95,7 @@ export class EmployeeService {
     };
   }
 
-  async update(id: string, dto: UpdateEmplooyeDto, companyId: string): Promise<CommandResponseDto> {
+  async update(id: string, dto: UpdateEmployeeDto, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz personel ID');
 
     const updated = await this.emplooyeModel.findOneAndUpdate({ _id: id, companyId }, dto, {

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
 
 export class CreateIncomeDto {
   @ApiProperty({
@@ -23,6 +23,7 @@ export class CreateIncomeDto {
     description: 'Ürün/hizmet adedi',
   })
   @IsNumber()
+  @IsPositive()
   unitCount: number;
 
   @ApiProperty({
@@ -30,6 +31,7 @@ export class CreateIncomeDto {
     description: 'Birim fiyatı (₺)',
   })
   @IsNumber()
+  @IsPositive()
   unitPrice: number;
 
   @ApiProperty({
@@ -37,6 +39,7 @@ export class CreateIncomeDto {
     description: 'Toplam gelir tutarı (₺)',
   })
   @IsNumber()
+  @IsPositive()
   totalAmount: number;
 
   @ApiPropertyOptional({
@@ -52,5 +55,6 @@ export class CreateIncomeDto {
     description: 'Gelir işlem tarihi',
   })
   @IsDateString()
+  @IsNotEmpty()
   operationDate: string;
 }

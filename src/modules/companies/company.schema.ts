@@ -3,22 +3,23 @@ import { Document } from 'mongoose';
 
 export type CompanyDocument = Company & Document;
 
-@Schema({ timestamps: true })
+@Schema({
+  timestamps: true,
+  toJSON: {
+    virtuals: true,
+    versionKey: false,
+    transform: (_, ret) => {
+      ret.id = ret._id;
+      delete ret._id;
+    },
+  },
+})
 export class Company {
   @Prop({ required: true, unique: true })
   name: string;
 
-  @Prop()
-  phone: string;
-
-  @Prop()
+  @Prop({ required: false, unique: false })
   description: string;
-
-  @Prop()
-  createdAt?: Date;
-
-  @Prop()
-  updatedAt?: Date;
 }
 
 export const CompanySchema = SchemaFactory.createForClass(Company);

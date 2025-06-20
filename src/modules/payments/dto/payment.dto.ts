@@ -1,11 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { CustomerDto } from '../../customers/dto/customer.dto';
 
 export class PaymentDto {
   @ApiProperty({ example: '64f5f1a134abc3f1c2d8b234', description: 'Ödemenin ID değeri' })
   id: string;
 
-  @ApiProperty({ example: '64f5f1a134abc3f1c2d8b200', description: 'Müşteri ID değeri' })
-  customerId: string;
+  @ApiProperty({
+    description: 'Ödeme yapılan müşteri bilgisi',
+    type: () => CustomerDto,
+  })
+  customer: Partial<CustomerDto>; // sadece name gibi alanlar dönecekse
 
   @ApiProperty({ example: 1000, description: 'Ödeme miktarı (₺)' })
   amount: number;

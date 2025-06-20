@@ -1,29 +1,30 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
+
+export type FuelDocument = Fuel & Document;
 
 @Schema({ timestamps: true })
 export class Fuel {
-  @Prop({ type: Number, required: true })
+  @Prop({ type: Number, required: true, description: 'Toplam yakıt ücreti' })
   totalPrice: number;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String, required: true, description: 'Fatura numarası' })
   invoiceNo: string;
 
-  @Prop({ type: String })
+  @Prop({ type: String, required: false, description: 'Açıklama' })
   description?: string;
 
-  @Prop({ type: Date, required: true })
+  @Prop({ type: Date, required: true, description: 'Yakıtın alındığı tarih' })
   operationDate: Date;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Driver', required: true })
-  driverId: mongoose.Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Driver', required: true })
+  driverId: Types.ObjectId;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Vehicle', required: true })
-  vehicleId: mongoose.Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Vehicle', required: true })
+  vehicleId: Types.ObjectId;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true })
-  companyId: mongoose.Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
+  companyId: Types.ObjectId;
 }
 
-export type FuelDocument = Fuel & Document;
 export const FuelSchema = SchemaFactory.createForClass(Fuel);

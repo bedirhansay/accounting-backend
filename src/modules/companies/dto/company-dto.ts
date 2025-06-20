@@ -10,9 +10,6 @@ export class CompanyDto {
   @ApiProperty({ example: 'Mersel Yazılım A.Ş.' })
   name: string;
 
-  @ApiProperty({ example: '+90 212 123 45 67' })
-  phone?: string;
-
   @ApiProperty({ example: 'info@mersel.com' })
   description?: string;
 

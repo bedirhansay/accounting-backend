@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { VehicleDto } from '../../vehicles/dto/vehicle.dto';
 
 export class FuelDTO {
   @ApiProperty({ example: '666abc123def4567890fedcba', description: 'Yakıt kaydının ID’si' })
@@ -17,11 +16,17 @@ export class FuelDTO {
   @ApiProperty({ example: '2025-06-18T10:00:00.000Z', description: 'İşlem tarihi' })
   operationDate: string;
 
-  @ApiProperty({ example: '665fab123abc1234567890ef', description: 'Sürücü ID’si' })
-  driverId: string;
+  @ApiProperty({
+    example: { fullName: 'Ali Yılmaz' },
+    description: 'Sürücü bilgisi (yalnızca adı)',
+  })
+  driverId: Partial<{ fullName: string }>;
 
-  @ApiProperty({ example: '665fab999carabc1234567890', description: 'Araç ID’si' })
-  vehicleId: Partial<VehicleDto>;
+  @ApiProperty({
+    example: { plateNumber: '34ABC123' },
+    description: 'Araç bilgisi (yalnızca plaka)',
+  })
+  vehicleId: Partial<{ plateNumber: string }>;
 
   @ApiProperty({ example: '665fab321companyid987654321', description: 'Firma ID’si' })
   companyId: string;

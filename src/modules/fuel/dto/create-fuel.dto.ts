@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateFuelDto {
   @ApiProperty({
@@ -20,10 +20,9 @@ export class CreateFuelDto {
   @IsNotEmpty()
   invoiceNo: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'Uzun yol dolumu',
     description: 'İsteğe bağlı açıklama',
-    required: false,
   })
   @IsOptional()
   @IsString()
@@ -34,14 +33,14 @@ export class CreateFuelDto {
     description: 'Yakıt işleminin tarihi (ISO 8601 formatında)',
   })
   @IsNotEmpty()
-  @Type(() => Date)
-  @IsDate()
-  operationDate: Date;
+  @IsDateString()
+  operationDate: string;
 
   @ApiProperty({
     example: '665f1c48fbb89c0012345678',
     description: 'Sürücü ID bilgisi',
   })
+  @IsString()
   @IsNotEmpty()
   driverId: string;
 

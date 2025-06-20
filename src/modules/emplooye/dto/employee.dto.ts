@@ -8,7 +8,7 @@ export class EmployeeDto {
   fullName: string;
 
   @ApiProperty({ example: '+90 532 123 45 67', description: 'Telefon numarası' })
-  phone: string;
+  phone?: string;
 
   @ApiProperty({ example: 'Muhasebe', description: 'Departman adı' })
   departmentName: string;

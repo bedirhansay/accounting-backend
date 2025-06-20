@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company.id';
 
@@ -9,13 +9,13 @@ import { ApiBaseResponse, ApiCommandResponse, ApiPaginatedQuery } from '../../co
 import { PaginatedDateSearchDTO } from '../../common/dto/request';
 import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
 
-import { CreateEmployeeDto } from './dto/create-emplooye.dto';
+import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { EmployeeDto } from './dto/employee.dto';
-import { UpdateEmplooyeDto } from './dto/update-emplooye.dto';
+import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { EmployeeService } from './employee.service';
 
 @ApiTags('Employees')
-@ApiBearerAuth()
+@ApiBearerAuth('Bearer')
 @ApiSecurity('x-company-id')
 @ApiExtraModels(
   BaseResponseDto,
@@ -23,7 +23,7 @@ import { EmployeeService } from './employee.service';
   CommandResponseDto,
   EmployeeDto,
   CreateEmployeeDto,
-  UpdateEmplooyeDto
+  UpdateEmployeeDto
 )
 @UseGuards(CompanyGuard)
 @Controller('employees')
@@ -33,6 +33,7 @@ export class EmployeeController {
   @Post()
   @ApiOperation({ summary: 'Yeni çalışan oluştur', operationId: 'createEmployee' })
   @ApiCommandResponse()
+  @ApiBody({ type: CreateEmployeeDto })
   create(@Body() createEmplooyeDto: CreateEmployeeDto, @CurrentCompany() companyId: string) {
     return this.employeeService.create(createEmplooyeDto, companyId);
   }
@@ -56,7 +57,8 @@ export class EmployeeController {
   @ApiOperation({ summary: 'Çalışan bilgilerini güncelle', operationId: 'updateEmployee' })
   @ApiParam({ name: 'id', description: 'Çalışan ID' })
   @ApiCommandResponse()
-  update(@Param('id') id: string, @Body() updateEmplooyeDto: UpdateEmplooyeDto, @CurrentCompany() companyId: string) {
+  @ApiBody({ type: UpdateEmployeeDto })
+  update(@Param('id') id: string, @Body() updateEmplooyeDto: UpdateEmployeeDto, @CurrentCompany() companyId: string) {
     return this.employeeService.update(id, updateEmplooyeDto, companyId);
   }
 

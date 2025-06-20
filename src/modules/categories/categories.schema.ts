@@ -3,7 +3,17 @@ import mongoose, { Document } from 'mongoose';
 
 export type CategoryDocument = Category & Document;
 
-@Schema({ timestamps: true })
+@Schema({
+  timestamps: true,
+  toJSON: {
+    virtuals: true,
+    versionKey: false,
+    transform: (_, ret) => {
+      ret.id = ret._id;
+      delete ret._id;
+    },
+  },
+})
 export class Category {
   @Prop({ required: true, unique: true })
   name: string;

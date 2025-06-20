@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import archiver from 'archiver';
 import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
 import { Model } from 'mongoose';
@@ -146,65 +145,48 @@ export class IncomeService {
     const grouped = incomes.reduce(
       (acc, income) => {
         const name = income.customerId?.name || 'Unknown';
-        if (!acc[name]) acc[name] = [];
-        acc[name].push(income);
+        if (!acc[name]) {
+          acc[name] = {
+            totalDocuments: 0,
+            totalUnitCount: 0,
+            totalAmount: 0,
+          };
+        }
+
+        acc[name].totalDocuments += 1;
+        acc[name].totalUnitCount += income.unitCount;
+        acc[name].totalAmount += income.totalAmount;
+
         return acc;
       },
-      {} as Record<string, PopulatedIncome[]>
+      {} as Record<string, { totalDocuments: number; totalUnitCount: number; totalAmount: number }>
     );
 
-    const archive = archiver('zip');
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Income Summary');
 
-    // ✅ Header ayarları
-    res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', 'attachment; filename=incomes.zip');
+    sheet.columns = [
+      { header: 'Firma Adı', key: 'customerName', width: 30 },
+      { header: 'Belge Sayısı', key: 'totalDocuments', width: 15 },
+      { header: 'Toplam Birim Adet', key: 'totalUnitCount', width: 20 },
+      { header: 'Toplam Tutar', key: 'totalAmount', width: 20 },
+    ];
 
-    archive.pipe(res);
-
-    for (const [customerName, records] of Object.entries(grouped)) {
-      const workbook = new ExcelJS.Workbook();
-      const sheet = workbook.addWorksheet('Incomes');
-
-      sheet.columns = [
-        { header: 'Tarih', key: 'operationDate', width: 15 },
-        { header: 'Açıklama', key: 'description', width: 30 },
-        { header: 'Kategori ID', key: 'categoryId', width: 20 },
-        { header: 'Birim Adet', key: 'unitCount', width: 15 },
-        { header: 'Birim Fiyat', key: 'unitPrice', width: 15 },
-        { header: 'Toplam Tutar', key: 'totalAmount', width: 15 },
-      ];
-
-      let total = 0;
-
-      records.forEach((r) => {
-        total += r.totalAmount;
-        sheet.addRow({
-          operationDate: r.operationDate.toISOString().split('T')[0],
-          description: r.description,
-          categoryId: r.categoryId,
-          unitCount: r.unitCount,
-          unitPrice: r.unitPrice,
-          totalAmount: r.totalAmount,
-        });
-      });
-
-      // Toplam satırı
-      sheet.addRow([]);
+    for (const [customerName, data] of Object.entries(grouped)) {
       sheet.addRow({
-        description: 'Toplam Tutar:',
-        totalAmount: total,
-      });
-
-      const buffer = await workbook.xlsx.writeBuffer();
-
-      archive.append(Buffer.from(buffer), {
-        name: `${customerName}.xlsx`,
+        customerName,
+        totalDocuments: data.totalDocuments,
+        totalUnitCount: data.totalUnitCount,
+        totalAmount: data.totalAmount,
       });
     }
 
-    await archive.finalize();
-  }
+    const buffer = await workbook.xlsx.writeBuffer();
 
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=incomes-summary.xlsx');
+    res.end(buffer);
+  }
   async getIncomesByCustomer(
     customerId: string,
     query: PaginatedDateSearchDTO,
