@@ -4,8 +4,8 @@ import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiSecu
 import { CurrentCompany } from '../../common/decorator/company.id';
 import { CompanyGuard } from '../../common/guards/company.id';
 
-import { PaginatedSearchDTO } from '@request-dto/search.request.dto';
-import { CommandResponseDto } from '@response-dto/command-response.dto';
+import { PaginatedSearchDTO } from '@request-dto';
+import { CommandResponseDto } from '@response-dto';
 import {
   ApiBaseResponse,
   ApiCommandResponse,

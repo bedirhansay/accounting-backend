@@ -19,7 +19,9 @@
     "noFallthroughCasesInSwitch": false,
     "baseUrl": "./src",
     "paths": {
+      "@request-dto": ["common/dto/request/index"],
       "@request-dto/*": ["common/dto/request/*"],
+      "@response-dto": ["common/dto/response/index"],
       "@response-dto/*": ["common/dto/response/*"]
     }
   }
