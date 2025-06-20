@@ -2,6 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
+import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { JwtAuthGuard } from './common/guards/jwt';
 import { GlobalExceptionFilter } from './common/interceptor/global.exception';
@@ -46,7 +47,7 @@ import { VehiclesModule } from './modules/vehicles/vehicle.module';
     IncomeModule,
     PaymentsModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [
     AppService,
     GlobalExceptionFilter,

@@ -37,7 +37,7 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'public'));
 
   app.setGlobalPrefix('api', {
-    exclude: ['/api-json', '/swagger', '/redoc'],
+    exclude: ['/', '/api-json', '/swagger', '/redoc'],
   });
 
   const config = new DocumentBuilder()
@@ -66,7 +66,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('', app, document);
+  SwaggerModule.setup('swagger', app, document);
 
   const errorLogger = app.get(ErrorLoggerService);
   app.useGlobalFilters(new GlobalExceptionFilter(errorLogger));

@@ -12,7 +12,7 @@
   ],
   "routes": [
     {
-      "src": "/",
+      "src": "/swagger",
       "dest": "/public/swagger.html"
     },
     {
@@ -25,7 +25,8 @@
     },
     {
       "src": "/(.*)",
-      "dest": "src/main.ts"
+      "dest": "src/main.ts",
+      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
     }
   ]
 }
