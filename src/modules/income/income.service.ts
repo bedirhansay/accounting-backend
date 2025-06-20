@@ -5,8 +5,13 @@ import { Response } from 'express';
 import { Model } from 'mongoose';
 
 import { plainToInstance } from 'class-transformer';
-import { CompanyListQueryDto, DateRangeDTO, PaginatedDateSearchDTO } from '../../common/dto/request';
-import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
+
+import { CompanyListQueryDto } from '../../common/dto/request/company.list.request.dto';
+import { DateRangeDTO } from '../../common/dto/request/date.range.request.dto';
+import { PaginatedDateSearchDTO } from '../../common/dto/request/pagination.request.dto';
+import { BaseResponseDto } from '../../common/dto/response/base.response.dto';
+import { CommandResponseDto } from '../../common/dto/response/command-response.dto';
+import { PaginatedResponseDto } from '../../common/dto/response/paginated.response.dto';
 import { ensureValidObjectId } from '../../common/helper/object.id';
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../constant/pagination.param';
 import { CreateIncomeDto } from './dto/create-income.dto';

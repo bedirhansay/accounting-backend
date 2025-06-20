@@ -2,8 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } f
 import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company.id';
-import { PaginatedDateSearchDTO } from '../../common/dto/request';
-import { CommandResponseDto } from '../../common/dto/response';
+
 import { CompanyGuard } from '../../common/guards/company.id';
 
 import {
@@ -12,6 +11,8 @@ import {
   ApiPaginatedQuery,
   ApiPaginatedResponse,
 } from '../../common/decorator/swagger';
+import { PaginatedDateSearchDTO } from '../../common/dto/request/pagination.request.dto';
+import { CommandResponseDto } from '../../common/dto/response/command-response.dto';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentDto } from './dto/payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';

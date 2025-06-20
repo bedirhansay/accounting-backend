@@ -1,17 +1,26 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
-import { PaginatedSearchDTO } from '../../common/dto/request';
-import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
-
 import { ApiBaseResponse, ApiCommandResponse, ApiPaginatedResponse } from '../../common/decorator/swagger';
+import { PaginatedSearchDTO } from '../../common/dto/request/search.request.dto';
+import { BaseResponseDto } from '../../common/dto/response/base.response.dto';
+import { CommandResponseDto } from '../../common/dto/response/command-response.dto';
+import { PaginatedResponseDto } from '../../common/dto/response/paginated.response.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
 import { UsersService } from './users.service';
 
 @ApiTags('Users')
-@ApiExtraModels(BaseResponseDto, PaginatedResponseDto, CommandResponseDto, UserDto, CreateUserDto, UpdateUserDto)
+@ApiExtraModels(
+  BaseResponseDto,
+  PaginatedResponseDto,
+  PaginatedSearchDTO,
+  CommandResponseDto,
+  UserDto,
+  CreateUserDto,
+  UpdateUserDto
+)
 @Controller('users')
 @ApiBearerAuth('Bearer')
 @ApiSecurity('x-company-id')

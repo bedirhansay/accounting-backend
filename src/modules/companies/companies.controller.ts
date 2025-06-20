@@ -1,15 +1,16 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 
-import { PaginationDTO } from '../../common/dto/request/pagination.request.dto'; // Buradan alındığını varsaydım
-import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
-
 import {
   ApiBaseResponse,
   ApiCommandResponse,
   ApiPaginatedQuery,
   ApiPaginatedResponse,
 } from '../../common/decorator/swagger';
+import { PaginationDTO } from '../../common/dto/request/pagination.request.dto';
+import { BaseResponseDto } from '../../common/dto/response/base.response.dto';
+import { CommandResponseDto } from '../../common/dto/response/command-response.dto';
+import { PaginatedResponseDto } from '../../common/dto/response/paginated.response.dto';
 import { CompaniesService } from './companies.service';
 import { CompanyDto } from './dto/company-dto';
 import { CreateCompanyDto } from './dto/create-company.dto';

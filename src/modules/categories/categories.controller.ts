@@ -4,15 +4,14 @@ import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiSecu
 import { CurrentCompany } from '../../common/decorator/company.id';
 import { CompanyGuard } from '../../common/guards/company.id';
 
-import { PaginatedSearchDTO } from '../../common/dto/request';
-import { CommandResponseDto } from '../../common/dto/response';
-
 import {
   ApiBaseResponse,
   ApiCommandResponse,
   ApiPaginatedQuery,
   ApiPaginatedResponse,
 } from '../../common/decorator/swagger';
+import { PaginatedSearchDTO } from '../../common/dto/request/search.request.dto';
+import { CommandResponseDto } from '../../common/dto/response/command-response.dto';
 import { CategoriesService } from './categories.service';
 import { CategoryDto } from './dto/category.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';

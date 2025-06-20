@@ -1,6 +1,6 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
-import { CommandResponseDto } from '../../dto/response';
+import { CommandResponseDto } from '../../dto/response/command-response.dto';
 
 export const ApiCommandResponse = (desc: string = 'Başarılı') =>
   applyDecorators(
