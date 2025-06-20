@@ -6,9 +6,9 @@ import { Response } from 'express';
 import { Model } from 'mongoose';
 
 import { plainToInstance } from 'class-transformer';
-import { DateRangeDTO, IListDTO, PaginatedDateSearchDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
-import { ensureValidObjectId } from '../../common/utils/object-id';
+import { CompanyListQueryDto, DateRangeDTO, PaginatedDateSearchDTO } from '../../common/dto/request';
+import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
+import { ensureValidObjectId } from '../../common/helper/object.id';
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../constant/pagination.param';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { IncomeDto } from './dto/income.dto';
@@ -22,7 +22,7 @@ export class IncomeService {
     private readonly incomeModel: Model<IncomeDocument>
   ) {}
 
-  async create(dto: CreateIncomeDto & { companyId: string }): Promise<OperationResultDto> {
+  async create(dto: CreateIncomeDto & { companyId: string }): Promise<CommandResponseDto> {
     const created = new this.incomeModel(dto);
     await created.save();
 
@@ -32,7 +32,7 @@ export class IncomeService {
     };
   }
 
-  async findAll(params: IListDTO): Promise<PaginatedResponseDto<IncomeDto>> {
+  async findAll(params: CompanyListQueryDto): Promise<PaginatedResponseDto<IncomeDto>> {
     const {
       pageNumber = PAGINATION_DEFAULT_PAGE,
       pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
@@ -75,7 +75,7 @@ export class IncomeService {
     };
   }
 
-  async findOne(id: string, companyId: string): Promise<StandardResponseDto<IncomeDto>> {
+  async findOne(id: string, companyId: string): Promise<BaseResponseDto<IncomeDto>> {
     ensureValidObjectId(id, 'Geçersiz gelir ID');
 
     const income = await this.incomeModel
@@ -94,7 +94,7 @@ export class IncomeService {
     };
   }
 
-  async update(id: string, dto: UpdateIncomeDto, companyId: string): Promise<OperationResultDto> {
+  async update(id: string, dto: UpdateIncomeDto, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz gelir ID');
 
     const updated = await this.incomeModel.findOneAndUpdate({ _id: id, companyId }, dto, { new: true }).exec();
@@ -107,7 +107,7 @@ export class IncomeService {
     };
   }
 
-  async remove(id: string, companyId: string): Promise<OperationResultDto> {
+  async remove(id: string, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz gelir ID');
 
     const deleted = await this.incomeModel.findOneAndDelete({ _id: id, companyId }).exec();

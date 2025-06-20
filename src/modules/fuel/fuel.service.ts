@@ -2,9 +2,9 @@ import { BadRequestException, Injectable, InternalServerErrorException, NotFound
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
 import { Model, Types } from 'mongoose';
-import { IListDTO, PaginatedDateSearchDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto } from '../../common/DTO/response';
-import { ensureValidObjectId } from '../../common/utils/object-id';
+import { CompanyListQueryDto, PaginatedDateSearchDTO } from '../../common/dto/request';
+import { CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
+import { ensureValidObjectId } from '../../common/helper/object.id';
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../constant/pagination.param';
 import { CreateFuelDto } from './dto/create-fuel.dto';
 import { FuelDTO } from './dto/fuel.dto';
@@ -18,7 +18,7 @@ export class FuelService {
     private readonly fuelModel: Model<FuelDocument>
   ) {}
 
-  async create(dto: CreateFuelDto & { companyId: string }): Promise<OperationResultDto> {
+  async create(dto: CreateFuelDto & { companyId: string }): Promise<CommandResponseDto> {
     try {
       const created = new this.fuelModel(dto);
       await created.save();
@@ -32,7 +32,7 @@ export class FuelService {
     }
   }
 
-  async findAll(params: IListDTO): Promise<PaginatedResponseDto<FuelDTO>> {
+  async findAll(params: CompanyListQueryDto): Promise<PaginatedResponseDto<FuelDTO>> {
     const {
       pageNumber = PAGINATION_DEFAULT_PAGE,
       pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
@@ -78,7 +78,7 @@ export class FuelService {
     };
   }
 
-  async findOne(id: string, companyId: string): Promise<OperationResultDto> {
+  async findOne(id: string, companyId: string): Promise<CommandResponseDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Geçersiz yakıt ID');
     }
@@ -92,7 +92,7 @@ export class FuelService {
     };
   }
 
-  async update(id: string, dto: UpdateFuelDto, companyId: string): Promise<OperationResultDto> {
+  async update(id: string, dto: UpdateFuelDto, companyId: string): Promise<CommandResponseDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Geçersiz yakıt ID');
     }
@@ -107,7 +107,7 @@ export class FuelService {
     };
   }
 
-  async remove(id: string, companyId: string): Promise<OperationResultDto> {
+  async remove(id: string, companyId: string): Promise<CommandResponseDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Geçersiz yakıt ID');
     }

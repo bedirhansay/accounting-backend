@@ -1,7 +1,7 @@
 // auth.module.ts
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { CustomJwtModule } from '../jwt-module/jwt.module'; // <== EKLE
+import { CustomJwtModule } from './jwt-strategy'; // <== EKLE
 
 import { User, UserSchema } from '../users/user.schema';
 import { AuthController } from './auth.controller';

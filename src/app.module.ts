@@ -1,12 +1,13 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { GlobalExceptionFilter } from './common/exception/global.exception';
-import { JwtAuthGuard } from './common/guards/jwt-quard';
+import { JwtAuthGuard } from './common/guards/jwt';
+import { GlobalExceptionFilter } from './common/interceptor/global.exception';
+import { CorsMiddleware } from './middleware/cors';
 import { AuthModule } from './modules/auth/auth.module';
+import { CustomJwtModule } from './modules/auth/jwt-strategy';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { CustomersModule } from './modules/customers/customers.module';
@@ -14,7 +15,6 @@ import { EmplooyeModule } from './modules/emplooye/employee.module';
 import { ExpenseModule } from './modules/expense/expense.module';
 import { FuelModule } from './modules/fuel/fuel.module';
 import { IncomeModule } from './modules/income/income.module';
-import { CustomJwtModule } from './modules/jwt-module/jwt.module';
 import { LoggerModule } from './modules/logger/logger.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { UsersModule } from './modules/users/users.module';
@@ -46,7 +46,7 @@ import { VehiclesModule } from './modules/vehicles/vehicle.module';
     IncomeModule,
     PaymentsModule,
   ],
-  controllers: [AppController],
+  controllers: [],
   providers: [
     AppService,
     GlobalExceptionFilter,
@@ -56,4 +56,8 @@ import { VehiclesModule } from './modules/vehicles/vehicle.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CorsMiddleware).forRoutes('*');
+  }
+}

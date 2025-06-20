@@ -2,16 +2,20 @@ import { Body, Controller, Delete, Get, Header, Param, Patch, Post, Query, Res, 
 import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 
-import { CurrentCompany } from '../../common/decorator/company-decarator';
+import { CurrentCompany } from '../../common/decorator/company.id';
 
-import { CompanyGuard } from '../../common/guards/company-quard';
+import { CompanyGuard } from '../../common/guards/company.id';
 import { CreateIncomeDto } from './dto/create-income.dto';
 
-import { PaginatedDateSearchDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
-import { ApiOperationResultResponse, ApiPaginatedQuery } from '../../common/swagger';
-import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
-import { ApiStandardResponse } from '../../common/swagger/standart.response.decorator';
+import { PaginatedDateSearchDTO } from '../../common/dto/request';
+import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
+
+import {
+  ApiBaseResponse,
+  ApiCommandResponse,
+  ApiPaginatedQuery,
+  ApiPaginatedResponse,
+} from '../../common/decorator/swagger';
 import { IncomeDto } from './dto/income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
 import { IncomeService } from './income.service';
@@ -25,8 +29,8 @@ import { IncomeService } from './income.service';
   UpdateIncomeDto,
   PaginatedDateSearchDTO,
   PaginatedResponseDto,
-  StandardResponseDto,
-  OperationResultDto
+  BaseResponseDto,
+  CommandResponseDto
 )
 @UseGuards(CompanyGuard)
 @Controller('incomes')
@@ -35,7 +39,7 @@ export class IncomeController {
 
   @Post()
   @ApiOperation({ summary: 'Yeni gelir oluştur', operationId: 'createIncome' })
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   create(@Body() createIncomeDto: CreateIncomeDto, @CurrentCompany() companyId: string) {
     return this.incomeService.create({ ...createIncomeDto, companyId });
   }
@@ -51,7 +55,7 @@ export class IncomeController {
   @Get(':id')
   @ApiOperation({ summary: 'ID ile gelir detayı getir', operationId: 'getIncomeById' })
   @ApiParam({ name: 'id', description: 'Gelir ID' })
-  @ApiStandardResponse(IncomeDto)
+  @ApiBaseResponse(IncomeDto)
   findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.incomeService.findOne(id, companyId);
   }
@@ -59,7 +63,7 @@ export class IncomeController {
   @Patch(':id')
   @ApiOperation({ summary: 'Gelir kaydını güncelle', operationId: 'updateIncome' })
   @ApiParam({ name: 'id', description: 'Gelir ID' })
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   update(@Param('id') id: string, @Body() updateIncomeDto: UpdateIncomeDto, @CurrentCompany() companyId: string) {
     return this.incomeService.update(id, updateIncomeDto, companyId);
   }
@@ -67,7 +71,7 @@ export class IncomeController {
   @Delete(':id')
   @ApiOperation({ summary: 'Gelir kaydını sil', operationId: 'deleteIncome' })
   @ApiParam({ name: 'id', description: 'Gelir ID' })
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.incomeService.remove(id, companyId);
   }

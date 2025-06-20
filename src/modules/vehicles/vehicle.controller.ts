@@ -1,14 +1,13 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
-import { CurrentCompany } from '../../common/decorator/company-decarator';
+import { CurrentCompany } from '../../common/decorator/company.id';
 
-import { PaginatedDateSearchDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
-import { CompanyGuard } from '../../common/guards/company-quard';
-import { ApiOperationResultResponse, ApiPaginatedQuery } from '../../common/swagger';
-import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
-import { ApiStandardResponse } from '../../common/swagger/standart.response.decorator';
+import { PaginatedDateSearchDTO } from '../../common/dto/request';
+import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
+import { CompanyGuard } from '../../common/guards/company.id';
+
+import { ApiBaseResponse, ApiCommandResponse, ApiPaginatedQuery, ApiPaginatedResponse } from '../../common/decorator/swagger';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { VehicleDto } from './dto/vehicle.dto';
@@ -23,8 +22,8 @@ import { VehicleService } from './vehicle.service';
   UpdateVehicleDto,
   PaginatedDateSearchDTO,
   PaginatedResponseDto,
-  OperationResultDto,
-  StandardResponseDto
+  CommandResponseDto,
+  BaseResponseDto
 )
 @UseGuards(CompanyGuard)
 @Controller('vehicles')
@@ -33,7 +32,7 @@ export class VehicleController {
 
   @Post()
   @ApiOperation({ summary: 'Araç  Oluştur', operationId: 'createVehicle' })
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   create(@Body() dto: CreateVehicleDto, @CurrentCompany() companyId: string) {
     return this.vehicleService.create({ ...dto, companyId });
   }
@@ -48,7 +47,7 @@ export class VehicleController {
   @Get(':id')
   @ApiOperation({ summary: 'ID ile araç getir', operationId: 'getVehicleById' })
   @ApiParam({ name: 'id', description: 'Araç ID' })
-  @ApiStandardResponse(VehicleDto)
+  @ApiBaseResponse(VehicleDto)
   findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.vehicleService.findOne(id, companyId);
   }
@@ -56,14 +55,14 @@ export class VehicleController {
   @Patch(':id')
   @ApiOperation({ summary: 'ID ile araç güncelle', operationId: 'updateVehicle' })
   @ApiParam({ name: 'id', description: 'Araç ID' })
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   update(@Param('id') id: string, @Body() dto: UpdateVehicleDto, @CurrentCompany() companyId: string) {
     return this.vehicleService.update(id, dto, companyId);
   }
 
   @Delete(':id')
   @ApiParam({ name: 'id', description: 'Araç ID' })
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.vehicleService.remove(id, companyId);
   }

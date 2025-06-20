@@ -2,9 +2,9 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
 import { Model } from 'mongoose';
-import { PaginatedDateSearchDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
-import { ensureValidObjectId } from '../../common/utils/object-id';
+import { PaginatedDateSearchDTO } from '../../common/dto/request';
+import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
+import { ensureValidObjectId } from '../../common/helper/object.id';
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../constant/pagination.param';
 import { Customer, CustomerDocument } from './customer.schema';
 import { CreateCustomerDto } from './dto/create-customer.dto';
@@ -18,7 +18,7 @@ export class CustomersService {
     private readonly customerModel: Model<CustomerDocument>
   ) {}
 
-  async create(dto: CreateCustomerDto & { companyId: string }): Promise<OperationResultDto> {
+  async create(dto: CreateCustomerDto & { companyId: string }): Promise<CommandResponseDto> {
     const existing = await this.customerModel.findOne({
       companyId: dto.companyId,
       name: dto.name,
@@ -79,7 +79,7 @@ export class CustomersService {
     };
   }
 
-  async findOne(id: string, companyId: string): Promise<StandardResponseDto<CustomerDto>> {
+  async findOne(id: string, companyId: string): Promise<BaseResponseDto<CustomerDto>> {
     ensureValidObjectId(id, 'Geçersiz müşteri ID');
 
     const customer = await this.customerModel.findOne({ _id: id, companyId }).lean().exec();
@@ -94,7 +94,7 @@ export class CustomersService {
     };
   }
 
-  async update(id: string, dto: UpdateCustomerDto, companyId: string): Promise<OperationResultDto> {
+  async update(id: string, dto: UpdateCustomerDto, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz müşteri ID');
 
     const updated = await this.customerModel.findOneAndUpdate({ _id: id, companyId }, dto, {
@@ -109,7 +109,7 @@ export class CustomersService {
     };
   }
 
-  async remove(id: string, companyId: string): Promise<OperationResultDto> {
+  async remove(id: string, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz müşteri ID');
 
     const deleted = await this.customerModel.findOneAndDelete({ _id: id, companyId });

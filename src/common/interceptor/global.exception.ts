@@ -14,12 +14,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const res = ctx.getResponse<Response>();
 
     const status = exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
-
-    const message = exception instanceof HttpException ? exception.message : 'Internal server error';
-
+    const message = this.getErrorMessage(exception);
     const stack = exception?.stack ?? '';
-
-    const companyId = req['companyId'];
 
     await this.errorLogger.logError({
       message,
@@ -27,14 +23,39 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       context: exception?.name ?? 'UnknownException',
       path: req.url,
       method: req.method,
-      companyId,
+      companyId: req['companyId'],
     });
 
     res.status(status).json({
       success: false,
       statusCode: status,
       message,
-      errors: exception instanceof HttpException ? ((exception.getResponse() as any)?.errors ?? null) : null,
+      errors: this.getErrorDetails(exception),
     });
+  }
+
+  private getErrorMessage(exception: any): string {
+    if (exception instanceof HttpException) {
+      const response = exception.getResponse();
+      if (typeof response === 'string') return response;
+      if (typeof response === 'object') {
+        if (Array.isArray((response as any).message)) {
+          return 'Validation failed';
+        }
+        return (response as any).message;
+      }
+    }
+    return 'Internal server error';
+  }
+
+  private getErrorDetails(exception: any): string[] | null {
+    if (exception instanceof HttpException) {
+      const res = exception.getResponse();
+      const message = (res as any)?.message;
+      if (Array.isArray(message)) return message;
+      const errors = (res as any)?.errors;
+      if (Array.isArray(errors)) return errors;
+    }
+    return null;
   }
 }

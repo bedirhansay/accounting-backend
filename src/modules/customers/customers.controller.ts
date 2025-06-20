@@ -1,27 +1,30 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
-import { CurrentCompany } from '../../common/decorator/company-decarator';
-import { CompanyGuard } from '../../common/guards/company-quard';
+import { CurrentCompany } from '../../common/decorator/company.id';
+import { CompanyGuard } from '../../common/guards/company.id';
 
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { CustomerDto } from './dto/customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
-import { PaginatedSearchDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
-import { ApiPaginatedQuery, ApiStandardResponse } from '../../common/swagger';
-import { ApiOperationResultResponse } from '../../common/swagger/operation.result.response';
-import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
+import {
+  ApiBaseResponse,
+  ApiCommandResponse,
+  ApiPaginatedQuery,
+  ApiPaginatedResponse,
+} from '../../common/decorator/swagger';
+import { PaginatedSearchDTO } from '../../common/dto/request';
+import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
 
 @ApiTags('Customers')
 @ApiBearerAuth()
 @ApiSecurity('x-company-id')
 @ApiExtraModels(
-  StandardResponseDto,
+  BaseResponseDto,
   PaginatedResponseDto,
-  OperationResultDto,
+  CommandResponseDto,
   CustomerDto,
   CreateCustomerDto,
   UpdateCustomerDto
@@ -33,7 +36,7 @@ export class CustomersController {
 
   @Post()
   @ApiOperation({ summary: 'Yeni müşteri oluştur', operationId: 'createCustomer' })
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   create(@Body() createCustomerDto: CreateCustomerDto, @CurrentCompany() companyId: string) {
     return this.customersService.create({ ...createCustomerDto, companyId });
   }
@@ -49,7 +52,7 @@ export class CustomersController {
   @Get(':id')
   @ApiOperation({ summary: 'Müşteri detayı getir', operationId: 'getCustomerById' })
   @ApiParam({ name: 'id', description: 'Müşteri ID' })
-  @ApiStandardResponse(CustomerDto)
+  @ApiBaseResponse(CustomerDto)
   findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.customersService.findOne(id, companyId);
   }
@@ -57,7 +60,7 @@ export class CustomersController {
   @Patch(':id')
   @ApiOperation({ summary: 'Müşteri bilgilerini güncelle', operationId: 'updateCustomer' })
   @ApiParam({ name: 'id', description: 'Müşteri ID' })
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   update(@Param('id') id: string, @Body() updateCustomerDto: UpdateCustomerDto, @CurrentCompany() companyId: string) {
     return this.customersService.update(id, updateCustomerDto, companyId);
   }
@@ -65,7 +68,7 @@ export class CustomersController {
   @Delete(':id')
   @ApiOperation({ summary: 'Müşteriyi sil', operationId: 'deleteCustomer' })
   @ApiParam({ name: 'id', description: 'Müşteri ID' })
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.customersService.remove(id, companyId);
   }

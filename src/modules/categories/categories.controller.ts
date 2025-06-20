@@ -1,13 +1,13 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
-import { CurrentCompany } from '../../common/decorator/company-decarator';
-import { CompanyGuard } from '../../common/guards/company-quard';
+import { CurrentCompany } from '../../common/decorator/company.id';
+import { CompanyGuard } from '../../common/guards/company.id';
 
-import { PaginatedSearchDTO } from '../../common/DTO/request';
-import { OperationResultDto } from '../../common/DTO/response';
-import { ApiPaginatedResponse, ApiStandardResponse } from '../../common/swagger';
-import { ApiOperationResultResponse } from '../../common/swagger/operation.result.response';
+import { PaginatedSearchDTO } from '../../common/dto/request';
+import { CommandResponseDto } from '../../common/dto/response';
+
+import { ApiBaseResponse, ApiCommandResponse, ApiPaginatedResponse } from '../../common/decorator/swagger';
 import { CategoriesService } from './categories.service';
 import { CategoryDto } from './dto/category.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -15,7 +15,7 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @ApiTags('Categories')
 @ApiBearerAuth()
-@ApiExtraModels(OperationResultDto, CategoryDto, CreateCategoryDto, UpdateCategoryDto, PaginatedSearchDTO)
+@ApiExtraModels(CommandResponseDto, CategoryDto, CreateCategoryDto, UpdateCategoryDto, PaginatedSearchDTO)
 @ApiSecurity('x-company-id')
 @UseGuards(CompanyGuard)
 @Controller('categories')
@@ -27,7 +27,7 @@ export class CategoriesController {
     summary: 'Yeni bir kategori oluşturur',
     operationId: 'createCategory',
   })
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   create(@Body() createCategoryDto: CreateCategoryDto, @CurrentCompany() companyId: string) {
     return this.categoriesService.create(createCategoryDto, companyId);
   }
@@ -42,7 +42,7 @@ export class CategoriesController {
   @Get(':id')
   @ApiOperation({ summary: 'ID ile kategori getir', operationId: 'getCategoryById' })
   @ApiParam({ name: 'id', description: 'Kategori ID', type: String })
-  @ApiStandardResponse(CategoryDto)
+  @ApiBaseResponse(CategoryDto)
   findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.categoriesService.findOne(id, companyId);
   }
@@ -51,7 +51,7 @@ export class CategoriesController {
   @ApiOperation({ summary: 'Kategori güncelle', operationId: 'updateCategory' })
   @ApiParam({ name: 'id', description: 'Kategori ID', type: String })
   @ApiBody({ type: UpdateCategoryDto }) // Bunu ekle
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto, @CurrentCompany() companyId: string) {
     return this.categoriesService.update(id, updateCategoryDto, companyId);
   }
@@ -59,7 +59,7 @@ export class CategoriesController {
   @Delete(':id')
   @ApiOperation({ summary: 'Kategori sil', operationId: 'deleteCategory' })
   @ApiParam({ name: 'id', description: 'Kategori ID', type: String })
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.categoriesService.remove(id, companyId);
   }

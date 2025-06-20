@@ -2,9 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-import { PaginatedDateSearchDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
-import { ensureValidObjectId } from '../../common/utils/object-id';
+import { PaginatedDateSearchDTO } from '../../common/dto/request';
+import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
+import { ensureValidObjectId } from '../../common/helper/object.id';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { Payment, PaymentDocument } from './payment.schema';
@@ -16,7 +16,7 @@ export class PaymentsService {
     private readonly paymentModel: Model<PaymentDocument>
   ) {}
 
-  async create(dto: CreatePaymentDto & { companyId: string }): Promise<OperationResultDto> {
+  async create(dto: CreatePaymentDto & { companyId: string }): Promise<CommandResponseDto> {
     const created = new this.paymentModel(dto);
     await created.save();
 
@@ -60,7 +60,7 @@ export class PaymentsService {
     };
   }
 
-  async findOne(id: string, companyId: string): Promise<StandardResponseDto<Payment>> {
+  async findOne(id: string, companyId: string): Promise<BaseResponseDto<Payment>> {
     ensureValidObjectId(id, 'Geçersiz ödeme ID');
 
     const payment = await this.paymentModel.findOne({ _id: id, companyId }).exec();
@@ -72,7 +72,7 @@ export class PaymentsService {
     };
   }
 
-  async update(id: string, dto: UpdatePaymentDto, companyId: string): Promise<OperationResultDto> {
+  async update(id: string, dto: UpdatePaymentDto, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz ödeme ID');
 
     const updated = await this.paymentModel.findOneAndUpdate({ _id: id, companyId }, dto, { new: true });
@@ -85,7 +85,7 @@ export class PaymentsService {
     };
   }
 
-  async remove(id: string, companyId: string): Promise<OperationResultDto> {
+  async remove(id: string, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz ödeme ID');
 
     const deleted = await this.paymentModel.findOneAndDelete({ _id: id, companyId });

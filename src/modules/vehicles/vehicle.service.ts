@@ -3,9 +3,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
 import { plainToInstance } from 'class-transformer';
-import { IListDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
-import { ensureValidObjectId } from '../../common/utils/object-id';
+import { CompanyListQueryDto } from '../../common/dto/request';
+import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
+import { ensureValidObjectId } from '../../common/helper/object.id';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { VehicleDto } from './dto/vehicle.dto';
@@ -15,7 +15,7 @@ import { Vehicle, VehicleDocument } from './vehicle.schema';
 export class VehicleService {
   constructor(@InjectModel(Vehicle.name) private readonly vehicleModel: Model<VehicleDocument>) {}
 
-  async create(dto: CreateVehicleDto & { companyId: string }): Promise<OperationResultDto> {
+  async create(dto: CreateVehicleDto & { companyId: string }): Promise<CommandResponseDto> {
     const existing = await this.vehicleModel.findOne({ plateNumber: dto.plateNumber, companyId: dto.companyId });
     if (existing) {
       throw new BadRequestException('Bu plaka ile kayıtlı bir araç zaten var.');
@@ -30,7 +30,7 @@ export class VehicleService {
     };
   }
 
-  async findAll(params: IListDTO): Promise<PaginatedResponseDto<VehicleDto>> {
+  async findAll(params: CompanyListQueryDto): Promise<PaginatedResponseDto<VehicleDto>> {
     const { pageNumber, pageSize, search, beginDate, endDate, companyId } = params;
 
     const filter: any = { companyId };
@@ -72,7 +72,7 @@ export class VehicleService {
     };
   }
 
-  async findOne(id: string, companyId: string): Promise<StandardResponseDto<VehicleDto>> {
+  async findOne(id: string, companyId: string): Promise<BaseResponseDto<VehicleDto>> {
     ensureValidObjectId(id, 'Geçersiz araç ID');
     const vehicle = await this.vehicleModel
       .findOne({ _id: id, companyId })
@@ -89,7 +89,7 @@ export class VehicleService {
     };
   }
 
-  async update(id: string, dto: UpdateVehicleDto, companyId: string): Promise<OperationResultDto> {
+  async update(id: string, dto: UpdateVehicleDto, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz araç ID');
 
     const updated = await this.vehicleModel.findOneAndUpdate({ _id: id, companyId }, dto, { new: true });
@@ -102,7 +102,7 @@ export class VehicleService {
     };
   }
 
-  async remove(id: string, companyId: string): Promise<OperationResultDto> {
+  async remove(id: string, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz araç ID');
 
     const deleted = await this.vehicleModel.findOneAndDelete({ _id: id, companyId });

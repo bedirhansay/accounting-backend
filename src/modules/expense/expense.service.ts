@@ -2,9 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
 import { Model } from 'mongoose';
-import { IListDTO, PaginatedDateSearchDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
-import { ensureValidObjectId } from '../../common/utils/object-id';
+import { CompanyListQueryDto, PaginatedDateSearchDTO } from '../../common/dto/request';
+import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
+import { ensureValidObjectId } from '../../common/helper/object.id';
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../constant/pagination.param';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { ExpenseDto } from './dto/expense.dto';
@@ -23,7 +23,7 @@ export class ExpenseService {
     private readonly expenseModel: Model<ExpenseDocument>
   ) {}
 
-  async create(dto: CreateExpenseDto & { companyId: string }): Promise<OperationResultDto> {
+  async create(dto: CreateExpenseDto & { companyId: string }): Promise<CommandResponseDto> {
     const created = new this.expenseModel(dto);
     await created.save();
 
@@ -33,7 +33,7 @@ export class ExpenseService {
     };
   }
 
-  async findAll(params: IListDTO): Promise<PaginatedResponseDto<ExpenseDto>> {
+  async findAll(params: CompanyListQueryDto): Promise<PaginatedResponseDto<ExpenseDto>> {
     const {
       pageNumber = PAGINATION_DEFAULT_PAGE,
       pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
@@ -79,7 +79,7 @@ export class ExpenseService {
     };
   }
 
-  async findOne({ id, companyId }: WithIdAndCompanyId): Promise<StandardResponseDto<ExpenseDto>> {
+  async findOne({ id, companyId }: WithIdAndCompanyId): Promise<BaseResponseDto<ExpenseDto>> {
     ensureValidObjectId(id, 'Geçersiz gider ID');
 
     const expense = await this.expenseModel.findOne({ _id: id, companyId }).lean().exec();
@@ -92,7 +92,7 @@ export class ExpenseService {
     };
   }
 
-  async update({ id, companyId }: WithIdAndCompanyId, dto: UpdateExpenseDto): Promise<OperationResultDto> {
+  async update({ id, companyId }: WithIdAndCompanyId, dto: UpdateExpenseDto): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz gider ID');
 
     const updated = await this.expenseModel.findOneAndUpdate({ _id: id, companyId }, dto, { new: true }).exec();
@@ -105,7 +105,7 @@ export class ExpenseService {
     };
   }
 
-  async remove({ id, companyId }: WithIdAndCompanyId): Promise<OperationResultDto> {
+  async remove({ id, companyId }: WithIdAndCompanyId): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz gider ID');
 
     const deleted = await this.expenseModel.findOneAndDelete({ _id: id, companyId }).exec();

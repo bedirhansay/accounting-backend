@@ -1,14 +1,14 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
-import { CurrentCompany } from '../../common/decorator/company-decarator';
+import { CurrentCompany } from '../../common/decorator/company.id';
 
-import { CompanyGuard } from '../../common/guards/company-quard';
+import { CompanyGuard } from '../../common/guards/company.id';
 
-import { PaginatedDateSearchDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
-import { ApiOperationResultResponse, ApiPaginatedQuery } from '../../common/swagger';
-import { ApiStandardResponse } from '../../common/swagger/standart.response.decorator';
+import { ApiBaseResponse, ApiCommandResponse, ApiPaginatedQuery } from '../../common/decorator/swagger';
+import { PaginatedDateSearchDTO } from '../../common/dto/request';
+import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
+
 import { CreateEmployeeDto } from './dto/create-emplooye.dto';
 import { EmployeeDto } from './dto/employee.dto';
 import { UpdateEmplooyeDto } from './dto/update-emplooye.dto';
@@ -18,9 +18,9 @@ import { EmployeeService } from './employee.service';
 @ApiBearerAuth()
 @ApiSecurity('x-company-id')
 @ApiExtraModels(
-  StandardResponseDto,
+  BaseResponseDto,
   PaginatedResponseDto,
-  OperationResultDto,
+  CommandResponseDto,
   EmployeeDto,
   CreateEmployeeDto,
   UpdateEmplooyeDto
@@ -32,7 +32,7 @@ export class EmployeeController {
 
   @Post()
   @ApiOperation({ summary: 'Yeni çalışan oluştur', operationId: 'createEmployee' })
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   create(@Body() createEmplooyeDto: CreateEmployeeDto, @CurrentCompany() companyId: string) {
     return this.employeeService.create(createEmplooyeDto, companyId);
   }
@@ -47,7 +47,7 @@ export class EmployeeController {
   @Get(':id')
   @ApiOperation({ summary: 'ID ile çalışan detayı getir', operationId: 'getEmployeeById' })
   @ApiParam({ name: 'id', description: 'Çalışan ID' })
-  @ApiStandardResponse(EmployeeDto)
+  @ApiBaseResponse(EmployeeDto)
   findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.employeeService.findOne(id, companyId);
   }
@@ -55,7 +55,7 @@ export class EmployeeController {
   @Patch(':id')
   @ApiOperation({ summary: 'Çalışan bilgilerini güncelle', operationId: 'updateEmployee' })
   @ApiParam({ name: 'id', description: 'Çalışan ID' })
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   update(@Param('id') id: string, @Body() updateEmplooyeDto: UpdateEmplooyeDto, @CurrentCompany() companyId: string) {
     return this.employeeService.update(id, updateEmplooyeDto, companyId);
   }
@@ -63,7 +63,7 @@ export class EmployeeController {
   @Delete(':id')
   @ApiOperation({ summary: 'Çalışanı sil', operationId: 'deleteEmployee' })
   @ApiParam({ name: 'id', description: 'Çalışan ID' })
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.employeeService.remove(id, companyId);
   }

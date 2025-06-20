@@ -1,13 +1,18 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
-import { CurrentCompany } from '../../common/decorator/company-decarator';
-import { CompanyGuard } from '../../common/guards/company-quard';
+import { CurrentCompany } from '../../common/decorator/company.id';
+import { CompanyGuard } from '../../common/guards/company.id';
 
-import { PaginatedDateSearchDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
-import { ApiOperationResultResponse, ApiPaginatedQuery, ApiStandardResponse } from '../../common/swagger';
-import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
+import { PaginatedDateSearchDTO } from '../../common/dto/request';
+import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
+
+import {
+  ApiBaseResponse,
+  ApiCommandResponse,
+  ApiPaginatedQuery,
+  ApiPaginatedResponse,
+} from '../../common/decorator/swagger';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { ExpenseDto } from './dto/expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
@@ -18,12 +23,12 @@ import { ExpenseService } from './expense.service';
 @ApiBearerAuth()
 @ApiSecurity('x-company-id')
 @ApiExtraModels(
-  StandardResponseDto,
+  BaseResponseDto,
   PaginatedResponseDto,
   ExpenseDto,
   CreateExpenseDto,
   UpdateExpenseDto,
-  OperationResultDto
+  CommandResponseDto
 )
 @UseGuards(CompanyGuard)
 @Controller('expense')
@@ -32,7 +37,7 @@ export class ExpenseController {
 
   @Post()
   @ApiOperation({ summary: 'Yeni gider oluştur', operationId: 'createExpense' })
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   create(@Body() createExpenseDto: CreateExpenseDto, @CurrentCompany() companyId: string) {
     return this.expenseService.create({ ...createExpenseDto, companyId });
   }
@@ -48,7 +53,7 @@ export class ExpenseController {
   @Get(':id')
   @ApiOperation({ summary: 'ID ile gider detayı getir', operationId: 'getExpenseById' })
   @ApiParam({ name: 'id', description: 'Gider ID' })
-  @ApiStandardResponse(Expense)
+  @ApiBaseResponse(Expense)
   findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.expenseService.findOne({ id, companyId });
   }
@@ -56,7 +61,7 @@ export class ExpenseController {
   @Patch(':id')
   @ApiOperation({ summary: 'Gider güncelle', operationId: 'updateExpense' })
   @ApiParam({ name: 'id', description: 'Gider ID' })
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   update(@Param('id') id: string, @Body() updateExpenseDto: UpdateExpenseDto, @CurrentCompany() companyId: string) {
     return this.expenseService.update({ id, companyId }, updateExpenseDto);
   }
@@ -64,7 +69,7 @@ export class ExpenseController {
   @Delete(':id')
   @ApiOperation({ summary: 'Gider sil', operationId: 'deleteExpense' })
   @ApiParam({ name: 'id', description: 'Gider ID' })
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.expenseService.remove({ id, companyId });
   }

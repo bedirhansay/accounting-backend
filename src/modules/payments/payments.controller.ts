@@ -1,13 +1,17 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
-import { CurrentCompany } from '../../common/decorator/company-decarator';
-import { PaginatedDateSearchDTO } from '../../common/DTO/request';
-import { OperationResultDto } from '../../common/DTO/response';
-import { CompanyGuard } from '../../common/guards/company-quard';
-import { ApiOperationResultResponse, ApiPaginatedQuery } from '../../common/swagger';
-import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
-import { ApiStandardResponse } from '../../common/swagger/standart.response.decorator';
+import { CurrentCompany } from '../../common/decorator/company.id';
+import { PaginatedDateSearchDTO } from '../../common/dto/request';
+import { CommandResponseDto } from '../../common/dto/response';
+import { CompanyGuard } from '../../common/guards/company.id';
+
+import {
+  ApiBaseResponse,
+  ApiCommandResponse,
+  ApiPaginatedQuery,
+  ApiPaginatedResponse,
+} from '../../common/decorator/swagger';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentDto } from './dto/payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
@@ -16,7 +20,7 @@ import { PaymentsService } from './payments.service';
 @ApiTags('Payments')
 @ApiBearerAuth()
 @ApiSecurity('x-company-id')
-@ApiExtraModels(PaymentDto, OperationResultDto, PaymentDto, CreatePaymentDto, UpdatePaymentDto)
+@ApiExtraModels(PaymentDto, CommandResponseDto, PaymentDto, CreatePaymentDto, UpdatePaymentDto)
 @UseGuards(CompanyGuard)
 @Controller('payments')
 export class PaymentsController {
@@ -24,7 +28,7 @@ export class PaymentsController {
 
   @Post()
   @ApiOperation({ summary: 'Yeni ödeme oluştur', operationId: 'createPayment' })
-  @ApiOperationResultResponse()
+  @ApiCommandResponse()
   create(@Body() createPaymentDto: CreatePaymentDto, @CurrentCompany() companyId: string) {
     return this.paymentsService.create({ ...createPaymentDto, companyId });
   }
@@ -40,7 +44,7 @@ export class PaymentsController {
   @Get(':id')
   @ApiOperation({ summary: 'ID ile ödeme getir', operationId: 'getPaymentById' })
   @ApiParam({ name: 'id', description: 'Ödeme ID' })
-  @ApiStandardResponse(PaymentDto)
+  @ApiBaseResponse(PaymentDto)
   findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.paymentsService.findOne(id, companyId);
   }
@@ -48,7 +52,7 @@ export class PaymentsController {
   @Patch(':id')
   @ApiOperation({ summary: 'Ödeme güncelle', operationId: 'updatePayment' })
   @ApiParam({ name: 'id', description: 'Ödeme ID' })
-  @ApiStandardResponse(PaymentDto)
+  @ApiBaseResponse(PaymentDto)
   update(@Param('id') id: string, @Body() updatePaymentDto: UpdatePaymentDto, @CurrentCompany() companyId: string) {
     return this.paymentsService.update(id, updatePaymentDto, companyId);
   }
@@ -56,7 +60,7 @@ export class PaymentsController {
   @Delete(':id')
   @ApiOperation({ summary: 'Ödemeyi sil', operationId: 'deletePayment' })
   @ApiParam({ name: 'id', description: 'Ödeme ID' })
-  @ApiStandardResponse(PaymentDto)
+  @ApiBaseResponse(PaymentDto)
   remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.paymentsService.remove(id, companyId);
   }

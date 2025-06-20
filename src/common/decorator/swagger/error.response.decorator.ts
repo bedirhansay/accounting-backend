@@ -1,6 +1,6 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
-import { ErrorResponseDto } from '../DTO/response';
+import { ErrorResponseDto } from '../../dto/response';
 
 export const ApiErrorResponse = () =>
   applyDecorators(

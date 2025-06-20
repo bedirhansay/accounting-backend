@@ -2,8 +2,8 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
 import { Model, Types } from 'mongoose';
-import { PaginatedSearchDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
+import { PaginatedSearchDTO } from '../../common/dto/request';
+import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
 import { Category, CategoryDocument } from './categories.schema';
 import { CategoryDto, CategoryType } from './dto/category.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -16,7 +16,7 @@ export class CategoriesService {
     private readonly categoryModel: Model<CategoryDocument>
   ) {}
 
-  async create(dto: CreateCategoryDto, companyId: string): Promise<Promise<OperationResultDto>> {
+  async create(dto: CreateCategoryDto, companyId: string): Promise<Promise<CommandResponseDto>> {
     const allowedTypes = Object.values(CategoryType);
     if (!allowedTypes.includes(dto.type)) {
       throw new BadRequestException(`Kategori tipi geçersiz. Sadece: ${allowedTypes.join(', ')}`);
@@ -72,7 +72,7 @@ export class CategoriesService {
     };
   }
 
-  async findOne(id: string, companyId: string): Promise<StandardResponseDto<CategoryDto>> {
+  async findOne(id: string, companyId: string): Promise<BaseResponseDto<CategoryDto>> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Geçersiz kategori ID');
     }
@@ -87,7 +87,7 @@ export class CategoriesService {
     };
   }
 
-  async update(id: string, dto: UpdateCategoryDto, companyId: string): Promise<OperationResultDto> {
+  async update(id: string, dto: UpdateCategoryDto, companyId: string): Promise<CommandResponseDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Geçersiz kategori ID');
     }
@@ -102,7 +102,7 @@ export class CategoriesService {
     };
   }
 
-  async remove(id: string, companyId: string): Promise<OperationResultDto> {
+  async remove(id: string, companyId: string): Promise<CommandResponseDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Geçersiz kategori ID');
     }

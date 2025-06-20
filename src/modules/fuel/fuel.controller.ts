@@ -1,15 +1,14 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
-import { CurrentCompany } from '../../common/decorator/company-decarator';
+import { CurrentCompany } from '../../common/decorator/company.id';
 
-import { CompanyGuard } from '../../common/guards/company-quard';
+import { CompanyGuard } from '../../common/guards/company.id';
 
-import { PaginatedDateSearchDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
-import { ApiPaginatedQuery } from '../../common/swagger';
-import { ApiPaginatedResponse } from '../../common/swagger/paginated.response.decorator';
-import { ApiStandardResponse } from '../../common/swagger/standart.response.decorator';
+import { PaginatedDateSearchDTO } from '../../common/dto/request';
+import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
+
+import { ApiBaseResponse, ApiPaginatedQuery, ApiPaginatedResponse } from '../../common/decorator/swagger';
 import { CreateFuelDto } from './dto/create-fuel.dto';
 import { FuelDTO } from './dto/fuel.dto';
 import { UpdateFuelDto } from './dto/update-fuel.dto';
@@ -24,8 +23,8 @@ import { FuelService } from './fuel.service';
   UpdateFuelDto,
   PaginatedDateSearchDTO,
   PaginatedResponseDto,
-  StandardResponseDto,
-  OperationResultDto
+  BaseResponseDto,
+  CommandResponseDto
 )
 @UseGuards(CompanyGuard)
 @Controller('fuels')
@@ -34,7 +33,7 @@ export class FuelController {
 
   @Post()
   @ApiOperation({ summary: 'Yeni yakıt kaydı oluştur', operationId: 'createFuel' })
-  @ApiStandardResponse(FuelDTO)
+  @ApiBaseResponse(FuelDTO)
   create(@Body() createFuelDto: CreateFuelDto, @CurrentCompany() companyId: string) {
     return this.fuelService.create({ ...createFuelDto, companyId });
   }
@@ -50,7 +49,7 @@ export class FuelController {
   @Get(':id')
   @ApiOperation({ summary: 'ID ile yakıt kaydı getir', operationId: 'getFuelById' })
   @ApiParam({ name: 'id', description: 'Yakıt ID' })
-  @ApiStandardResponse(FuelDTO)
+  @ApiBaseResponse(FuelDTO)
   findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.fuelService.findOne(id, companyId);
   }
@@ -58,7 +57,7 @@ export class FuelController {
   @Patch(':id')
   @ApiOperation({ summary: 'Yakıt kaydını güncelle', operationId: 'updateFuel' })
   @ApiParam({ name: 'id', description: 'Yakıt ID' })
-  @ApiStandardResponse(FuelDTO)
+  @ApiBaseResponse(FuelDTO)
   update(@Param('id') id: string, @Body() updateFuelDto: UpdateFuelDto, @CurrentCompany() companyId: string) {
     return this.fuelService.update(id, updateFuelDto, companyId);
   }
@@ -66,7 +65,7 @@ export class FuelController {
   @Delete(':id')
   @ApiOperation({ summary: 'Yakıt kaydını sil', operationId: 'deleteFuel' })
   @ApiParam({ name: 'id', description: 'Yakıt ID' })
-  @ApiStandardResponse(FuelDTO)
+  @ApiBaseResponse(FuelDTO)
   remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.fuelService.remove(id, companyId);
   }

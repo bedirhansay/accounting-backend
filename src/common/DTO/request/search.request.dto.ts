@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
-import { PaginationDTO } from './pagination.dto';
+import { PaginationDTO } from './pagination.request.dto';
 
 export class SearchDTO {
   @ApiPropertyOptional({ description: 'Arama metni', example: 'john' })

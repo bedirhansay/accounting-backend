@@ -2,9 +2,9 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
 import { Model } from 'mongoose';
-import { IListDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
-import { ensureValidObjectId } from '../../common/utils/object-id';
+import { CompanyListQueryDto } from '../../common/dto/request';
+import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
+import { ensureValidObjectId } from '../../common/helper/object.id';
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../constant/pagination.param';
 import { CreateEmployeeDto } from './dto/create-emplooye.dto';
 import { EmployeeDto } from './dto/employee.dto';
@@ -18,7 +18,7 @@ export class EmployeeService {
     private readonly emplooyeModel: Model<EmplooyeDocument>
   ) {}
 
-  async create(dto: CreateEmployeeDto, companyId: string): Promise<OperationResultDto> {
+  async create(dto: CreateEmployeeDto, companyId: string): Promise<CommandResponseDto> {
     const existing = await this.emplooyeModel.findOne({ fullName: dto.fullName, companyId });
 
     if (existing) {
@@ -32,7 +32,7 @@ export class EmployeeService {
     };
   }
 
-  async findAll(params: IListDTO): Promise<PaginatedResponseDto<EmployeeDto>> {
+  async findAll(params: CompanyListQueryDto): Promise<PaginatedResponseDto<EmployeeDto>> {
     const {
       pageNumber = PAGINATION_DEFAULT_PAGE,
       pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
@@ -81,7 +81,7 @@ export class EmployeeService {
     };
   }
 
-  async findOne(id: string, companyId: string): Promise<StandardResponseDto<EmployeeDto>> {
+  async findOne(id: string, companyId: string): Promise<BaseResponseDto<EmployeeDto>> {
     ensureValidObjectId(id, 'Geçersiz personel ID');
 
     const data = await this.emplooyeModel.findOne({ _id: id, companyId }).lean().exec();
@@ -95,7 +95,7 @@ export class EmployeeService {
     };
   }
 
-  async update(id: string, dto: UpdateEmplooyeDto, companyId: string): Promise<OperationResultDto> {
+  async update(id: string, dto: UpdateEmplooyeDto, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz personel ID');
 
     const updated = await this.emplooyeModel.findOneAndUpdate({ _id: id, companyId }, dto, {
@@ -110,7 +110,7 @@ export class EmployeeService {
     };
   }
 
-  async remove(id: string, companyId: string): Promise<OperationResultDto> {
+  async remove(id: string, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz personel ID');
 
     const deleted = await this.emplooyeModel.findOneAndDelete({ _id: id, companyId });

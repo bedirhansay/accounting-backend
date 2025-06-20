@@ -4,7 +4,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { AppModule } from './app.module';
-import { GlobalExceptionFilter } from './common/exception/global.exception';
+import { GlobalExceptionFilter } from './common/interceptor/global.exception';
 import { ErrorLoggerService } from './modules/logger/logger.service';
 
 async function bootstrap() {

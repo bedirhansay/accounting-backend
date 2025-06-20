@@ -1,6 +1,6 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ApiStandardResponse } from '../../common/swagger';
+import { ApiBaseResponse } from '../../common/decorator/swagger';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { AuthService } from './auth.service';
 import { LoginDto, LoginResponseDto } from './dto/login.dto';
@@ -34,7 +34,7 @@ export class AuthController {
     summary: 'Kullanıcı girişi yapar',
     operationId: 'login',
   })
-  @ApiStandardResponse(LoginResponseDto)
+  @ApiBaseResponse(LoginResponseDto)
   @Post('login')
   async login(@Body() dto: LoginDto) {
     try {

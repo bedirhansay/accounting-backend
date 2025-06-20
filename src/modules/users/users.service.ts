@@ -2,8 +2,8 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
 import { Model, Types } from 'mongoose';
-import { PaginatedSearchDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
+import { PaginatedSearchDTO } from '../../common/dto/request';
+import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
@@ -13,7 +13,7 @@ import { User, UserDocument } from './user.schema';
 export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
-  async create(createUserDto: CreateUserDto): Promise<OperationResultDto> {
+  async create(createUserDto: CreateUserDto): Promise<CommandResponseDto> {
     const createdUser = new this.userModel(createUserDto);
     const savedUser = await createdUser.save();
 
@@ -58,7 +58,7 @@ export class UsersService {
     };
   }
 
-  async findOne(id: string): Promise<StandardResponseDto<UserDto>> {
+  async findOne(id: string): Promise<BaseResponseDto<UserDto>> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Geçersiz kullanıcı ID');
     }
@@ -73,7 +73,7 @@ export class UsersService {
     };
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<OperationResultDto> {
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<CommandResponseDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Geçersiz kullanıcı ID');
     }
@@ -87,7 +87,7 @@ export class UsersService {
     };
   }
 
-  async remove(id: string): Promise<OperationResultDto> {
+  async remove(id: string): Promise<CommandResponseDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Geçersiz kullanıcı ID');
     }

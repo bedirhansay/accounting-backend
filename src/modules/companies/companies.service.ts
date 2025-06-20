@@ -2,8 +2,8 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
 import { Model, Types } from 'mongoose';
-import { PaginationDTO } from '../../common/DTO/request';
-import { OperationResultDto, PaginatedResponseDto, StandardResponseDto } from '../../common/DTO/response';
+import { PaginationDTO } from '../../common/dto/request';
+import { BaseResponseDto, CommandResponseDto, PaginatedResponseDto } from '../../common/dto/response';
 import { Company, CompanyDocument } from './company.schema';
 import { CompanyDto } from './dto/company-dto';
 import { CreateCompanyDto } from './dto/create-company.dto';
@@ -16,7 +16,7 @@ export class CompaniesService {
     private readonly companyModel: Model<CompanyDocument>
   ) {}
 
-  async create(createCompanyDto: CreateCompanyDto): Promise<OperationResultDto> {
+  async create(createCompanyDto: CreateCompanyDto): Promise<CommandResponseDto> {
     const existing = await this.companyModel.findOne({ name: createCompanyDto.name });
     if (existing) {
       throw new ConflictException('Bu isimde bir firma zaten var.');
@@ -57,7 +57,7 @@ export class CompaniesService {
     };
   }
 
-  async findOne(id: string): Promise<StandardResponseDto<CompanyDto>> {
+  async findOne(id: string): Promise<BaseResponseDto<CompanyDto>> {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException('Geçersiz firma ID');
     }
@@ -74,7 +74,7 @@ export class CompaniesService {
     };
   }
 
-  async update(id: string, updateCompanyDto: UpdateCompanyDto): Promise<OperationResultDto> {
+  async update(id: string, updateCompanyDto: UpdateCompanyDto): Promise<CommandResponseDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException('Geçersiz firma ID');
     }
@@ -91,7 +91,7 @@ export class CompaniesService {
     };
   }
 
-  async remove(id: string): Promise<OperationResultDto> {
+  async remove(id: string): Promise<CommandResponseDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException('Geçersiz firma ID');
     }
