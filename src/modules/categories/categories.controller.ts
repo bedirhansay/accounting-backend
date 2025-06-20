@@ -11,8 +11,8 @@ import {
   ApiPaginatedResponse,
 } from '../../common/decorator/swagger';
 
-import { PaginatedSearchDTO } from '@dto/request';
-import { CommandResponseDto } from '@dto/response';
+import { PaginatedSearchDTO } from 'common/DTO/request';
+import { CommandResponseDto } from 'common/DTO/response';
 import { CategoriesService } from './categories.service';
 import { CategoryDto } from './dto/category.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
