@@ -8,8 +8,8 @@ import { CompanyGuard } from '../../common/guards/company.id';
 import {
   ApiBaseResponse,
   ApiCommandResponse,
-  ApiPaginatedQuery,
   ApiPaginatedResponse,
+  ApiSearchDatePaginatedQuery,
 } from '../../common/decorator/swagger';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
@@ -45,7 +45,7 @@ export class VehicleController {
   }
   @Get()
   @ApiOperation({ summary: 'Araçları listele', operationId: 'getAllVehicles' })
-  @ApiPaginatedQuery()
+  @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(VehicleDto)
   findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
     return this.vehicleService.findAll({ ...query, companyId });
@@ -69,6 +69,7 @@ export class VehicleController {
 
   @Delete(':id')
   @ApiParam({ name: 'id', description: 'Araç ID' })
+  @ApiOperation({ summary: 'Aracı Sil', operationId: 'deleteVehicle' })
   @ApiCommandResponse()
   remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.vehicleService.remove(id, companyId);

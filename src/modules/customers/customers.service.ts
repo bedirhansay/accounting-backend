@@ -5,7 +5,6 @@ import { Model } from 'mongoose';
 
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../common/constant/pagination.param';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
-import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { ensureValidObjectId } from '../../common/helper/object.id';
@@ -82,7 +81,7 @@ export class CustomersService {
     };
   }
 
-  async findOne(id: string, companyId: string): Promise<BaseResponseDto<CustomerDto>> {
+  async findOne(id: string, companyId: string): Promise<CustomerDto> {
     ensureValidObjectId(id, 'Geçersiz müşteri ID');
 
     const customer = await this.customerModel.findOne({ _id: id, companyId }).lean().exec();
@@ -91,10 +90,7 @@ export class CustomersService {
 
     const data = plainToInstance(CustomerDto, customer);
 
-    return {
-      data,
-      statusCode: 200,
-    };
+    return data;
   }
 
   async update(id: string, dto: UpdateCustomerDto, companyId: string): Promise<CommandResponseDto> {

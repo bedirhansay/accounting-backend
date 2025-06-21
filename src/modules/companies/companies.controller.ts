@@ -4,8 +4,8 @@ import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiTags
 import {
   ApiBaseResponse,
   ApiCommandResponse,
-  ApiPaginatedQuery,
   ApiPaginatedResponse,
+  ApiSearchDatePaginatedQuery,
 } from '../../common/decorator/swagger';
 import { PaginationDTO } from '../../common/DTO/request/pagination.request.dto';
 import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
@@ -40,7 +40,7 @@ export class CompaniesController {
   }
 
   @Get()
-  @ApiPaginatedQuery()
+  @ApiSearchDatePaginatedQuery()
   @ApiOperation({ summary: 'Tüm şirketleri getir', operationId: 'getAllCompanies' })
   @ApiPaginatedResponse(CompanyDto)
   findAll(@Query() query: PaginationDTO) {

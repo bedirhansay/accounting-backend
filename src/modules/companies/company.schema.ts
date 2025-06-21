@@ -11,9 +11,6 @@ export class Company {
 
   @Prop({ required: false, unique: false })
   description: string;
-
-  @Prop({ required: true })
-  isActive: boolean;
 }
 
 export const CompanySchema = SchemaFactory.createForClass(Company);

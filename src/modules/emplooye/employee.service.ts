@@ -5,7 +5,6 @@ import { Model } from 'mongoose';
 
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../common/constant/pagination.param';
 import { CompanyListQueryDto } from '../../common/DTO/request/company.list.request.dto';
-import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { ensureValidObjectId } from '../../common/helper/object.id';
@@ -84,7 +83,7 @@ export class EmployeeService {
     };
   }
 
-  async findOne(id: string, companyId: string): Promise<BaseResponseDto<EmployeeDto>> {
+  async findOne(id: string, companyId: string): Promise<EmployeeDto> {
     ensureValidObjectId(id, 'Geçersiz personel ID');
 
     const data = await this.emplooyeModel.findOne({ _id: id, companyId }).lean().exec();
@@ -92,10 +91,7 @@ export class EmployeeService {
 
     const item = plainToInstance(EmployeeDto, data);
 
-    return {
-      statusCode: 200,
-      data: item,
-    };
+    return item;
   }
 
   async update(id: string, dto: UpdateEmployeeDto, companyId: string): Promise<CommandResponseDto> {

@@ -19,8 +19,8 @@ export class Emplooye {
   @Prop({ type: Date })
   hireDate?: Date;
 
-  @Prop({ type: Date, default: null })
-  terminationDate?: Date | null;
+  @Prop({ type: Date })
+  terminationDate?: Date;
 
   @Prop()
   salary?: number;

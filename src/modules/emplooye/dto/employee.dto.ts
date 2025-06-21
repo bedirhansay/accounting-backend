@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
+import { IsOptional } from 'class-validator';
 
 export class EmployeeDto {
   @ApiProperty({ example: '64f5f1a134abc3f1c2d8b234', description: 'Çalışan ID değeri' })
@@ -20,9 +21,10 @@ export class EmployeeDto {
   hireDate?: string;
 
   @ApiPropertyOptional({ example: '2024-12-01T00:00:00.000Z', description: 'İşten ayrılış tarihi' })
-  terminationDate?: string | null;
+  terminationDate?: string;
 
   @ApiProperty({ example: 15000, description: 'Maaş (₺)' })
+  @IsOptional()
   salary?: number;
 
   @ApiProperty({ example: true, description: 'Çalışan aktif mi?' })

@@ -4,12 +4,7 @@ import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiSecu
 import { CurrentCompany } from '../../common/decorator/company.id';
 import { CompanyGuard } from '../../common/guards/company.id';
 
-import {
-  ApiBaseResponse,
-  ApiCommandResponse,
-  ApiPaginatedResponse,
-  ApiPaginatedSearhQuery,
-} from '../../common/decorator/swagger';
+import { ApiBaseResponse, ApiCommandResponse, ApiPaginatedResponse, ApiSearchDatePaginatedQuery } from '../../common/decorator/swagger';
 
 import { PaginatedSearchDTO } from '../../common/DTO/request/search.request.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
@@ -39,7 +34,7 @@ export class CategoriesController {
   }
 
   @Get()
-  @ApiPaginatedSearhQuery()
+  @ApiSearchDatePaginatedQuery()
   @ApiOperation({ summary: 'Tüm kategorileri listele', operationId: 'getAllCategories' })
   @ApiPaginatedResponse(CategoryDto)
   findAll(@Query() query: PaginatedSearchDTO, @CurrentCompany() companyId: string) {

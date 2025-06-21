@@ -7,8 +7,8 @@ import { CompanyGuard } from '../../common/guards/company.id';
 import {
   ApiBaseResponse,
   ApiCommandResponse,
-  ApiPaginatedQuery,
   ApiPaginatedResponse,
+  ApiSearchDatePaginatedQuery,
 } from '../../common/decorator/swagger';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
@@ -47,7 +47,7 @@ export class ExpenseController {
 
   @Get()
   @ApiOperation({ summary: 'Tüm giderleri listele', operationId: 'getAllExpenses' })
-  @ApiPaginatedQuery()
+  @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(ExpenseDto)
   findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
     return this.expenseService.findAll({ ...query, companyId });
@@ -81,7 +81,7 @@ export class ExpenseController {
   @Get(':vehicleId')
   @ApiOperation({ summary: 'Araca ait giderler', operationId: 'getExpensesByVehicle' })
   @ApiParam({ name: 'vehicleId', description: 'Araç ID' })
-  @ApiPaginatedQuery()
+  @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(Expense)
   getExpensesByVehicle(
     @Param('vehicleId') vehicleId: string,
@@ -93,7 +93,7 @@ export class ExpenseController {
 
   @Get(':employeeId/expenses')
   @ApiOperation({ summary: 'Personele ait giderler', operationId: 'getExpensesByEmployee' })
-  @ApiPaginatedQuery()
+  @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(Expense)
   getExpensesByEmployee(
     @Param('employeeId') vehicleId: string,

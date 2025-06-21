@@ -14,11 +14,11 @@ export class Vehicle {
   @Prop({ required: true, trim: true })
   model: string;
 
-  @Prop({ type: Date, required: true })
-  inspectionDate: Date;
+  @Prop({ type: Date })
+  inspectionDate?: Date;
 
-  @Prop({ type: Date, required: true })
-  insuranceDate: Date;
+  @Prop({ type: Date })
+  insuranceDate?: Date;
 
   @Prop({ type: Types.ObjectId, ref: 'Emplooye', required: true })
   driverId: Types.ObjectId;

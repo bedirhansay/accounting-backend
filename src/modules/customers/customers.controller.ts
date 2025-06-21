@@ -1,5 +1,14 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiExtraModels,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company.id';
 import { CompanyGuard } from '../../common/guards/company.id';
@@ -9,12 +18,7 @@ import { CreateCustomerDto } from './dto/create-customer.dto';
 import { CustomerDto } from './dto/customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
-import {
-  ApiBaseResponse,
-  ApiCommandResponse,
-  ApiPaginatedQuery,
-  ApiPaginatedResponse,
-} from '../../common/decorator/swagger';
+import { ApiCommandResponse, ApiPaginatedResponse, ApiSearchDatePaginatedQuery } from '../../common/decorator/swagger';
 import { PaginatedSearchDTO } from '../../common/DTO/request/search.request.dto';
 import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
@@ -46,7 +50,7 @@ export class CustomersController {
 
   @Get()
   @ApiOperation({ summary: 'Tüm müşterileri listele', operationId: 'getAllCustomers' })
-  @ApiPaginatedQuery()
+  @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(CustomerDto)
   findAll(@Query() query: PaginatedSearchDTO, @CurrentCompany() companyId: string) {
     return this.customersService.findAll(companyId, query);
@@ -55,7 +59,7 @@ export class CustomersController {
   @Get(':id')
   @ApiOperation({ summary: 'Müşteri detayı getir', operationId: 'getCustomerById' })
   @ApiParam({ name: 'id', description: 'Müşteri ID' })
-  @ApiBaseResponse(CustomerDto)
+  @ApiOkResponse({ type: CustomerDto })
   findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.customersService.findOne(id, companyId);
   }

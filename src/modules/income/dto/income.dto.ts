@@ -71,4 +71,14 @@ export class IncomeDto {
     description: 'Son güncellenme tarihi',
   })
   updatedAt: Date;
+
+  @Expose()
+  get categoryName(): string | undefined {
+    return this.categoryId?.name;
+  }
+
+  @Expose()
+  get customerName(): string | undefined {
+    return this.customerId?.name;
+  }
 }

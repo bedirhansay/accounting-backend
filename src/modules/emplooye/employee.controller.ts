@@ -1,11 +1,20 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiExtraModels,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company.id';
 
 import { CompanyGuard } from '../../common/guards/company.id';
 
-import { ApiBaseResponse, ApiCommandResponse, ApiPaginatedQuery } from '../../common/decorator/swagger';
+import { ApiCommandResponse, ApiPaginatedResponse, ApiSearchDatePaginatedQuery } from '../../common/decorator/swagger';
 
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
@@ -42,7 +51,8 @@ export class EmployeeController {
 
   @Get()
   @ApiOperation({ summary: 'Tüm çalışanları listele', operationId: 'getAllEmployees' })
-  @ApiPaginatedQuery()
+  @ApiSearchDatePaginatedQuery()
+  @ApiPaginatedResponse(EmployeeDto)
   findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
     return this.employeeService.findAll({ ...query, companyId });
   }
@@ -50,7 +60,7 @@ export class EmployeeController {
   @Get(':id')
   @ApiOperation({ summary: 'ID ile çalışan detayı getir', operationId: 'getEmployeeById' })
   @ApiParam({ name: 'id', description: 'Çalışan ID' })
-  @ApiBaseResponse(EmployeeDto)
+  @ApiOkResponse({ type: EmployeeDto })
   findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.employeeService.findOne(id, companyId);
   }

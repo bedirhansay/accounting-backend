@@ -8,8 +8,8 @@ import { CompanyGuard } from '../../common/guards/company.id';
 import {
   ApiBaseResponse,
   ApiCommandResponse,
-  ApiPaginatedQuery,
   ApiPaginatedResponse,
+  ApiSearchDatePaginatedQuery,
 } from '../../common/decorator/swagger';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
@@ -37,7 +37,7 @@ export class PaymentsController {
 
   @Get()
   @ApiOperation({ summary: 'Ödemeleri listele', operationId: 'getAllPayments' })
-  @ApiPaginatedQuery()
+  @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(PaymentDto)
   findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
     return this.paymentsService.findAll({ ...query, companyId });
@@ -71,7 +71,7 @@ export class PaymentsController {
   @Get(':customerId')
   @ApiOperation({ summary: 'Müşteriye ait ödemeleri listele', operationId: 'getPaymentsByCustomer' })
   @ApiParam({ name: 'customerId', description: 'Müşteri ID' })
-  @ApiPaginatedQuery()
+  @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(PaymentDto)
   getPaymentsByCustomer(
     @Param('customerId') customerId: string,

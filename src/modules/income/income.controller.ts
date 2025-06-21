@@ -10,8 +10,8 @@ import { CreateIncomeDto } from './dto/create-income.dto';
 import {
   ApiBaseResponse,
   ApiCommandResponse,
-  ApiPaginatedQuery,
   ApiPaginatedResponse,
+  ApiSearchDatePaginatedQuery,
 } from '../../common/decorator/swagger';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
@@ -48,7 +48,7 @@ export class IncomeController {
 
   @Get()
   @ApiOperation({ summary: 'Gelirleri sayfalı listele', operationId: 'getAllIncomes' })
-  @ApiPaginatedQuery()
+  @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(IncomeDto)
   findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
     return this.incomeService.findAll({ ...query, companyId });
@@ -82,7 +82,7 @@ export class IncomeController {
   @Get(':id/incomes')
   @ApiOperation({ summary: 'Müşteriye ait gelirleri listele', operationId: 'getCustomerIncomes' })
   @ApiParam({ name: 'id', description: 'Müşteri ID' })
-  @ApiPaginatedQuery()
+  @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(IncomeDto)
   getCustomerIncomes(
     @Param('id') id: string,

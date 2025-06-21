@@ -10,7 +10,7 @@ import { CommandResponseDto } from '../../common/DTO/response/command-response.d
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { ensureValidObjectId } from '../../common/helper/object.id';
 import { CreateFuelDto } from './dto/create-fuel.dto';
-import { FuelDTO } from './dto/fuel.dto';
+import { FuelDto } from './dto/fuel.dto';
 import { UpdateFuelDto } from './dto/update-fuel.dto';
 import { Fuel, FuelDocument } from './fuel.schema';
 
@@ -35,7 +35,7 @@ export class FuelService {
     }
   }
 
-  async findAll(params: CompanyListQueryDto): Promise<PaginatedResponseDto<FuelDTO>> {
+  async findAll(params: CompanyListQueryDto): Promise<PaginatedResponseDto<FuelDto>> {
     const {
       pageNumber = PAGINATION_DEFAULT_PAGE,
       pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
@@ -69,7 +69,7 @@ export class FuelService {
       .lean()
       .exec();
 
-    const items = plainToInstance(FuelDTO, data);
+    const items = plainToInstance(FuelDto, data);
 
     return {
       items,

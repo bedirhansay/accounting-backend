@@ -18,10 +18,10 @@ export class VehicleDto {
   model: string;
 
   @ApiProperty({ example: '2025-06-01T00:00:00.000Z', description: 'Muayene tarihi' })
-  inspectionDate: string;
+  inspectionDate?: string;
 
   @ApiProperty({ example: '2025-07-01T00:00:00.000Z', description: 'Sigorta bitiş tarihi' })
-  insuranceDate: string;
+  insuranceDate?: string;
 
   @ApiProperty({ example: true, description: 'Araç aktif mi?' })
   isActive: boolean;

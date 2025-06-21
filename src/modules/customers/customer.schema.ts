@@ -6,7 +6,7 @@ export type CustomerDocument = Customer & Document;
   timestamps: true,
 })
 export class Customer {
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   name: string;
 
   @Prop({ required: false })
@@ -21,4 +21,4 @@ export class Customer {
 
 export const CustomerSchema = SchemaFactory.createForClass(Customer);
 
-CustomerSchema.index({ companyId: 1, name: 1 }, { unique: true });
+CustomerSchema.index({ name: 1, companyId: 1 }, { unique: true });
