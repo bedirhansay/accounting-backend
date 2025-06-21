@@ -1,7 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Expose, Transform } from 'class-transformer';
 
 export class FuelDTO {
   @ApiProperty({ example: '666abc123def4567890fedcba', description: 'Yakıt kaydının ID’si' })
+  @Expose()
+  @Transform(({ obj }) => obj._id?.toString())
   id: string;
 
   @ApiProperty({ example: 1500.5, description: 'Toplam yakıt tutarı' })

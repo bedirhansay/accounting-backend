@@ -14,6 +14,9 @@ export class CreateCompanyDto {
     description: 'Şirketin telefon numarası',
     example: '+90 555 55 67',
   })
+  @ApiProperty({ example: true })
+  isActive?: boolean;
+
   @ApiProperty({
     description: 'Şirketin adresi',
     example: 'İstanbul, Türkiye',

@@ -2,17 +2,8 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 export type CompanyDocument = Company & Document;
-
 @Schema({
   timestamps: true,
-  toJSON: {
-    virtuals: true,
-    versionKey: false,
-    transform: (_, ret) => {
-      ret.id = ret._id;
-      delete ret._id;
-    },
-  },
 })
 export class Company {
   @Prop({ required: true, unique: true })
@@ -20,6 +11,9 @@ export class Company {
 
   @Prop({ required: false, unique: false })
   description: string;
+
+  @Prop({ required: true })
+  isActive: boolean;
 }
 
 export const CompanySchema = SchemaFactory.createForClass(Company);

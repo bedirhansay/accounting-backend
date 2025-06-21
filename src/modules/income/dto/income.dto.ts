@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Expose, Transform } from 'class-transformer';
 import { CategoryDto } from '../../categories/dto/category.dto';
 import { CustomerDto } from '../../customers/dto/customer.dto';
 
@@ -7,6 +8,8 @@ export class IncomeDto {
     example: '665f1c48fbb89c0012345678',
     description: 'Gelir kaydının benzersiz ID bilgisi',
   })
+  @Expose()
+  @Transform(({ obj }) => obj._id?.toString())
   id: string;
 
   @ApiProperty({

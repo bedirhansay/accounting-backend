@@ -13,6 +13,10 @@ export class CompanyDto {
   @ApiProperty({ example: 'info@mersel.com' })
   description?: string;
 
+  @Expose()
+  @ApiProperty({ example: true })
+  isActive?: boolean;
+
   @ApiProperty({ example: '2024-01-01T12:00:00.000Z' })
   createdAt: Date;
 

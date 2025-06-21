@@ -1,16 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-
 @Schema({
   timestamps: true,
-  toJSON: {
-    virtuals: true,
-    versionKey: false,
-    transform: (_, ret) => {
-      ret.id = ret._id;
-      delete ret._id;
-    },
-  },
 })
 export class Payment {
   @Prop({ type: Types.ObjectId, ref: 'Customer', required: true })

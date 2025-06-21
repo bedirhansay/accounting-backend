@@ -4,14 +4,6 @@ import mongoose, { Document } from 'mongoose';
 export type CustomerDocument = Customer & Document;
 @Schema({
   timestamps: true,
-  toJSON: {
-    virtuals: true,
-    versionKey: false,
-    transform: (_, ret) => {
-      ret.id = ret._id;
-      delete ret._id;
-    },
-  },
 })
 export class Customer {
   @Prop({ required: true, unique: true })
@@ -28,3 +20,5 @@ export class Customer {
 }
 
 export const CustomerSchema = SchemaFactory.createForClass(Customer);
+
+CustomerSchema.index({ companyId: 1, name: 1 }, { unique: true });

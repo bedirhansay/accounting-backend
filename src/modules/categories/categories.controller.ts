@@ -7,8 +7,8 @@ import { CompanyGuard } from '../../common/guards/company.id';
 import {
   ApiBaseResponse,
   ApiCommandResponse,
-  ApiPaginatedQuery,
   ApiPaginatedResponse,
+  ApiPaginatedSearhQuery,
 } from '../../common/decorator/swagger';
 
 import { PaginatedSearchDTO } from '../../common/DTO/request/search.request.dto';
@@ -39,7 +39,7 @@ export class CategoriesController {
   }
 
   @Get()
-  @ApiPaginatedQuery()
+  @ApiPaginatedSearhQuery()
   @ApiOperation({ summary: 'Tüm kategorileri listele', operationId: 'getAllCategories' })
   @ApiPaginatedResponse(CategoryDto)
   findAll(@Query() query: PaginatedSearchDTO, @CurrentCompany() companyId: string) {

@@ -4,14 +4,6 @@ import { Document, Types } from 'mongoose';
 export type EmplooyeDocument = Emplooye & Document;
 @Schema({
   timestamps: true,
-  toJSON: {
-    virtuals: true,
-    versionKey: false,
-    transform: (_, ret) => {
-      ret.id = ret._id;
-      delete ret._id;
-    },
-  },
 })
 @Schema({ timestamps: true })
 export class Emplooye {

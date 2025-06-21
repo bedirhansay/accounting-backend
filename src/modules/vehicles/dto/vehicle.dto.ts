@@ -1,8 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Expose, Transform } from 'class-transformer';
 import { EmployeeDto } from '../../emplooye/dto/employee.dto';
 
 export class VehicleDto {
   @ApiProperty({ example: '665b776f58e4d5be07e7e8c4', description: 'Araç ID' })
+  @Expose()
+  @Transform(({ obj }) => obj._id?.toString())
   id: string;
 
   @ApiProperty({ example: 'TR34ABC123', description: 'Plaka numarası' })

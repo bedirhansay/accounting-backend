@@ -22,6 +22,9 @@ export class CategoryDto {
   @ApiProperty({ enum: CategoryType, example: CategoryType.INCOME })
   type: CategoryType;
 
+  @ApiProperty({ example: true })
+  isActive?: boolean;
+
   @ApiProperty({ example: 'Bağlı olduğu Firma' })
   companyId: string;
 

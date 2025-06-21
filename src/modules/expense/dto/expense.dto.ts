@@ -1,8 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Expose, Transform } from 'class-transformer';
 import { CategoryDto } from '../../categories/dto/category.dto';
 
 export class ExpenseDto {
   @ApiProperty({ example: '666abc123def4567890fedcba', description: 'Gider ID' })
+  @Expose()
+  @Transform(({ obj }) => obj._id?.toString())
   id: string;
 
   @ApiProperty({ example: '2025-06-18T12:00:00.000Z', description: 'İşlem tarihi' })
