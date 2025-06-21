@@ -19,15 +19,12 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: ['*'],
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-    credentials: false,
+    origin: ['http://localhost:5173'],
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'x-company-id'],
     exposedHeaders: ['Authorization'],
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
+    credentials: false,
   });
-
   app.useStaticAssets(join(__dirname, '..', 'public'));
 
   app.setGlobalPrefix('api', {
