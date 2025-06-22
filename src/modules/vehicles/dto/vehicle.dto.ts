@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Expose, Type } from 'class-transformer';
 import { BaseDto } from '../../../common/DTO/base/base.dto';
-import { EmployeeDto } from '../../emplooye/dto/employee.dto';
+import { EmployeeDto } from '../../employee/dto/employee.dto';
 
 @Exclude()
 export class VehicleDto extends BaseDto {

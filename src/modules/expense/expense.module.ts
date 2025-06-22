@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Company, CompanySchema } from '../companies/company.schema';
-import { Employee, EmployeeSchema } from '../emplooye/employee.schema';
+import { Employee, EmployeeSchema } from '../employee/employee.schema';
 import { Vehicle, VehicleSchema } from '../vehicles/vehicle.schema';
 import { ExpenseController } from './expense.controller';
 import { Expense, ExpenseSchema } from './expense.schema';

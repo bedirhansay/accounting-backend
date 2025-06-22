@@ -15,4 +15,4 @@ import { EmployeeService } from './employee.service';
   controllers: [EmployeeController],
   providers: [EmployeeService],
 })
-export class EmplooyeModule {}
+export class EmployeeModule {}

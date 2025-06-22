@@ -12,7 +12,7 @@ import { CustomJwtModule } from './modules/auth/jwt-strategy';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { CustomersModule } from './modules/customers/customers.module';
-import { EmplooyeModule } from './modules/emplooye/employee.module';
+import { EmployeeModule } from './modules/employee/employee.module';
 import { ExpenseModule } from './modules/expense/expense.module';
 import { FuelModule } from './modules/fuel/fuel.module';
 import { IncomeModule } from './modules/income/income.module';
@@ -39,7 +39,7 @@ import { VehiclesModule } from './modules/vehicles/vehicle.module';
     CategoriesModule,
     CompaniesModule,
     LoggerModule,
-    EmplooyeModule,
+    EmployeeModule,
     CustomersModule,
     FuelModule,
     VehiclesModule,
@@ -57,7 +57,6 @@ import { VehiclesModule } from './modules/vehicles/vehicle.module';
     },
   ],
 })
-
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(CorsMiddleware).forRoutes('*');
