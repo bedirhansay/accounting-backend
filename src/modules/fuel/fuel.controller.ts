@@ -72,15 +72,15 @@ export class FuelController {
     return this.fuelService.remove(id, companyId);
   }
 
-  @Get(':vehicleId')
+  @Get('vehicle/:id')
   @ApiOperation({ summary: 'Araca ait yakıt işlemleri', operationId: 'getFuelsByVehicle' })
-  @ApiParam({ name: 'vehicleId', description: 'Araç ID' })
+  @ApiParam({ name: 'id', description: 'Araç ID' })
   @ApiPaginatedResponse(FuelDto)
   getFuelsByVehicle(
-    @Param('vehicleId') vehicleId: string,
+    @Param('id') id: string,
     @Query() query: PaginatedDateSearchDTO,
     @CurrentCompany() companyId: string
   ) {
-    return this.fuelService.getFuels(vehicleId, companyId, query);
+    return this.fuelService.getFuels(id, companyId, query);
   }
 }

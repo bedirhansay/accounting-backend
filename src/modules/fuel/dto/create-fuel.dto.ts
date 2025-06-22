@@ -42,7 +42,7 @@ export class CreateFuelDto {
   })
   @IsString()
   @IsNotEmpty()
-  driverId: string;
+  driverName: string;
 
   @ApiProperty({
     example: '665f1c48fbb89c0012345679',

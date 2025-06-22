@@ -17,8 +17,8 @@ export class Fuel {
   @Prop({ type: Date, required: true, description: 'Yakıtın alındığı tarih' })
   operationDate: Date;
 
-  @Prop({ type: Types.ObjectId, ref: 'Driver', required: true })
-  driverId: Types.ObjectId;
+  @Prop({ type: String, required: true, description: 'Fatura numarası' })
+  driverName: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Vehicle', required: true })
   vehicleId: Types.ObjectId;

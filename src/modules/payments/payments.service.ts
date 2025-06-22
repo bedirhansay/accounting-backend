@@ -2,13 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
+import { plainToInstance } from 'class-transformer';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { ensureValidObjectId } from '../../common/helper/object.id';
 import { CreatePaymentDto } from './dto/create-payment.dto';
-import { UpdatePaymentDto } from './dto/update-payment.dto';
+import { PaymentDto } from './dto/payment.dto';
 import { Payment, PaymentDocument } from './payment.schema';
 
 @Injectable()
@@ -28,7 +29,7 @@ export class PaymentsService {
     };
   }
 
-  async findAll(params: PaginatedDateSearchDTO & { companyId: string }): Promise<PaginatedResponseDto<Payment>> {
+  async findAll(params: PaginatedDateSearchDTO & { companyId: string }): Promise<PaginatedResponseDto<PaymentDto>> {
     const { pageNumber, pageSize, search, beginDate, endDate, companyId } = params;
 
     const filter: any = { companyId };
@@ -51,15 +52,18 @@ export class PaymentsService {
       .sort({ operationDate: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
+      .lean()
       .exec();
 
+    const items = plainToInstance(PaymentDto, data, { excludeExtraneousValues: true });
+
     return {
-      pageNumber: pageNumber,
+      items,
+      pageNumber,
       totalPages: Math.ceil(totalCount / pageSize),
       totalCount,
       hasPreviousPage: pageNumber > 1,
       hasNextPage: pageNumber * pageSize < totalCount,
-      items: data,
     };
   }
 
@@ -72,19 +76,6 @@ export class PaymentsService {
     return {
       message: 'Ödeme bulundu',
       data: payment,
-    };
-  }
-
-  async update(id: string, dto: UpdatePaymentDto, companyId: string): Promise<CommandResponseDto> {
-    ensureValidObjectId(id, 'Geçersiz ödeme ID');
-
-    const updated = await this.paymentModel.findOneAndUpdate({ _id: id, companyId }, dto, { new: true });
-
-    if (!updated) throw new NotFoundException('Güncellenecek ödeme bulunamadı');
-
-    return {
-      statusCode: 204,
-      id: updated.id.toString(),
     };
   }
 

@@ -1,37 +1,53 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Transform } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
+import { IsEnum } from 'class-validator';
+import { BaseDto } from '../../../common/DTO/base/base.dto';
 import { CategoryDto } from '../../categories/dto/category.dto';
 
-export class ExpenseDto {
-  @ApiProperty({ example: '666abc123def4567890fedcba', description: 'Gider ID' })
-  @Expose()
-  @Transform(({ obj }) => obj._id?.toString())
-  id: string;
-
+export class ExpenseDto extends BaseDto {
   @ApiProperty({ example: '2025-06-18T12:00:00.000Z', description: 'İşlem tarihi' })
+  @Expose()
   operationDate: string;
 
   @ApiProperty({ description: 'Kategori bilgisi' })
+  @Type(() => CategoryDto)
+  @Expose()
   category: Pick<CategoryDto, 'name'>;
 
   @ApiProperty({ example: 1500.75, description: 'Gider miktarı' })
+  @Expose()
   amount: number;
 
   @ApiProperty({ example: 'Fatura ödemesi', description: 'Açıklama' })
+  @Expose()
   description: string;
 
   @ApiPropertyOptional({ example: '664eab32123e1a0001bb1234', description: 'İlgili belge ya da nesne ID’si' })
+  @Expose()
   relatedToId?: string;
 
-  @ApiPropertyOptional({ example: 'Vehicle', description: 'İlgili model türü (Vehicle veya Emplooye)' })
-  relatedModel?: 'Vehicle' | 'Emplooye';
+  @IsEnum(['Vehicle', 'Emplooye', 'Other'])
+  @ApiProperty({ enum: ['Vehicle', 'Emplooye', 'Other'] })
+  @Expose()
+  relatedModel: 'Vehicle' | 'Emplooye' | 'Other';
 
-  @ApiProperty({ example: '665fab123abc1234567890ef', description: 'Firma ID’si' })
-  companyId: string;
+  @Expose()
+  @ApiPropertyOptional({
+    example: { plateNumber: '34ABC123', fullName: 'Ahmet Yılmaz' },
+    description: 'İlgili belge nesnesinin populated hali',
+  })
+  get relatedTo(): { plateNumber?: string; fullName?: string } | null {
+    const related = this['relatedToId'];
+    if (!related) return null;
 
-  @ApiProperty({ example: '2025-06-18T12:34:56.000Z', description: 'Kayıt oluşturulma tarihi' })
-  createdAt: string;
+    return {
+      plateNumber: this.relatedTo?.plateNumber,
+      fullName: this.relatedTo?.fullName,
+    };
+  }
 
-  @ApiProperty({ example: '2025-06-19T08:15:00.000Z', description: 'Son güncelleme tarihi' })
-  updatedAt: string;
+  @Expose()
+  get categoryName(): string | undefined {
+    return this.category?.name;
+  }
 }

@@ -1,44 +1,40 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Transform } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 import { IsOptional } from 'class-validator';
+import { BaseDto } from '../../../common/DTO/base/base.dto';
 
-export class EmployeeDto {
-  @ApiProperty({ example: '64f5f1a134abc3f1c2d8b234', description: 'Çalışan ID değeri' })
-  @Expose()
-  @Transform(({ obj }) => obj._id?.toString())
-  id: string;
-
+@Exclude()
+export class EmployeeDto extends BaseDto {
   @ApiProperty({ example: 'Ahmet Yılmaz', description: 'Çalışanın tam adı' })
+  @Expose()
   fullName: string;
 
   @ApiProperty({ example: '+90 532 123 45 67', description: 'Telefon numarası' })
+  @Expose()
   phone?: string;
 
   @ApiProperty({ example: 'Muhasebe', description: 'Departman adı' })
+  @Expose()
   departmentName: string;
 
   @ApiProperty({ example: '2024-06-01T00:00:00.000Z', description: 'İşe giriş tarihi' })
+  @Expose()
   hireDate?: string;
 
   @ApiPropertyOptional({ example: '2024-12-01T00:00:00.000Z', description: 'İşten ayrılış tarihi' })
+  @Expose()
   terminationDate?: string;
 
   @ApiProperty({ example: 15000, description: 'Maaş (₺)' })
   @IsOptional()
+  @Expose()
   salary?: number;
 
   @ApiProperty({ example: true, description: 'Çalışan aktif mi?' })
+  @Expose()
   isActive: boolean;
 
   @ApiPropertyOptional({ example: 'Kıdemli çalışan', description: 'Notlar' })
+  @Expose()
   description?: string;
-
-  @ApiProperty({ example: '64f5f1a134abc3f1c2d8a111', description: 'Bağlı olduğu firma ID' })
-  companyId: string;
-
-  @ApiProperty({ example: '2024-06-01T12:00:00.000Z', description: 'Oluşturulma tarihi' })
-  createdAt: string;
-
-  @ApiProperty({ example: '2024-06-05T08:30:00.000Z', description: 'Güncellenme tarihi' })
-  updatedAt?: string;
 }

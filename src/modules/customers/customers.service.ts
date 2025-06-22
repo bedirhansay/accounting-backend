@@ -88,7 +88,9 @@ export class CustomersService {
 
     if (!customer) throw new NotFoundException('Müşteri bulunamadı');
 
-    const data = plainToInstance(CustomerDto, customer);
+    const data = plainToInstance(CustomerDto, customer, {
+      excludeExtraneousValues: true,
+    });
 
     return data;
   }

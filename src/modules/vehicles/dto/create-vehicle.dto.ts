@@ -24,19 +24,13 @@ export class CreateVehicleDto {
   @IsString()
   model: string;
 
-  @ApiProperty({
-    example: '2025-12-31',
-    description: 'Muayene tarihi (ISO format)',
-  })
+  @ApiPropertyOptional({ description: 'Muayne Tarihi', type: String, format: 'date-time' })
   @Type(() => Date)
   @IsDate()
   @IsOptional()
   inspectionDate?: string;
 
-  @ApiProperty({
-    example: '2025-08-15',
-    description: 'Sigorta bitiş tarihi (ISO format)',
-  })
+  @ApiPropertyOptional({ description: 'Sigorta Tarihi', type: String, format: 'date-time' })
   @Type(() => Date)
   @IsDate()
   @IsOptional()

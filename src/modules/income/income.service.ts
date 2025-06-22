@@ -62,7 +62,7 @@ export class IncomeService {
     const data = await this.incomeModel
       .find(filter)
       .populate('customerId', 'name')
-      .populate('customerId', 'name')
+      .populate('categoryId', 'name')
       .sort({ operationDate: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
@@ -85,7 +85,7 @@ export class IncomeService {
     const income = await this.incomeModel
       .findOne({ _id: id, companyId })
       .populate('customerId', 'name')
-      .populate('customerId', 'name')
+      .populate('categoryId', 'name')
       .lean()
       .exec();
     if (!income) throw new NotFoundException('Gelir kaydı bulunamadı');

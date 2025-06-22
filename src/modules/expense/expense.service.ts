@@ -6,10 +6,11 @@ import { Model } from 'mongoose';
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../common/constant/pagination.param';
 import { CompanyListQueryDto } from '../../common/DTO/request/company.list.request.dto';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
-import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { ensureValidObjectId } from '../../common/helper/object.id';
+import { Emplooye, EmplooyeDocument } from '../emplooye/employee.schema';
+import { Vehicle, VehicleDocument } from '../vehicles/vehicle.schema';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { ExpenseDto } from './dto/expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
@@ -24,7 +25,11 @@ interface WithIdAndCompanyId {
 export class ExpenseService {
   constructor(
     @InjectModel(Expense.name)
-    private readonly expenseModel: Model<ExpenseDocument>
+    private readonly expenseModel: Model<ExpenseDocument>,
+    @InjectModel(Vehicle.name)
+    private readonly vehicleModel: Model<VehicleDocument>,
+    @InjectModel(Emplooye.name)
+    private readonly employeeModel: Model<EmplooyeDocument>
   ) {}
 
   async create(dto: CreateExpenseDto & { companyId: string }): Promise<CommandResponseDto> {
@@ -60,22 +65,50 @@ export class ExpenseService {
     }
 
     const totalCount = await this.expenseModel.countDocuments(filter);
-    const expenses = await this.expenseModel
+
+    const rawExpenses = await this.expenseModel
       .find(filter)
       .sort({ operationDate: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
       .lean()
       .collation({ locale: 'tr', strength: 1 })
-      .populate('relatedToId', 'plateNumber fullName')
       .select('-__v')
       .exec();
 
-    const items = plainToInstance(ExpenseDto, expenses);
+    // Polymorphic populate işlemi
+    const populatedExpenses = await Promise.all(
+      rawExpenses.map(async (expense) => {
+        if (expense.relatedToId && expense.relatedModel) {
+          const modelMap: Record<'Vehicle' | 'Emplooye', Model<any>> = {
+            Vehicle: this.vehicleModel,
+            Emplooye: this.employeeModel,
+          };
+
+          const model = modelMap[expense.relatedModel as 'Vehicle' | 'Emplooye'];
+
+          if (model) {
+            const related = await model.findById(expense.relatedToId).select('plateNumber fullName').lean();
+
+            return {
+              ...expense,
+              relatedTo: related || null,
+            };
+          }
+        }
+
+        return {
+          ...expense,
+          relatedTo: null,
+        };
+      })
+    );
+
+    const items = plainToInstance(ExpenseDto, populatedExpenses);
 
     return {
       items,
-      pageNumber: pageNumber,
+      pageNumber,
       totalPages: Math.ceil(totalCount / pageSize),
       totalCount,
       hasPreviousPage: pageNumber > 1,
@@ -83,17 +116,32 @@ export class ExpenseService {
     };
   }
 
-  async findOne({ id, companyId }: WithIdAndCompanyId): Promise<BaseResponseDto<ExpenseDto>> {
+  async findOne({ id, companyId }: WithIdAndCompanyId): Promise<ExpenseDto> {
     ensureValidObjectId(id, 'Geçersiz gider ID');
-
     const expense = await this.expenseModel.findOne({ _id: id, companyId }).lean().exec();
     if (!expense) throw new NotFoundException('Gider kaydı bulunamadı');
 
-    const data = plainToInstance(ExpenseDto, expense);
+    const finalExpense = {
+      ...expense,
+      relatedTo: null,
+    } as typeof expense & { relatedTo: any | null };
 
-    return {
-      data,
-    };
+    if (expense.relatedToId && expense.relatedModel) {
+      const modelMap: Record<'Vehicle' | 'Emplooye', Model<any>> = {
+        Vehicle: this.vehicleModel,
+        Emplooye: this.employeeModel,
+      };
+
+      const model = modelMap[expense.relatedModel as 'Vehicle' | 'Emplooye'];
+
+      if (model) {
+        const related = await model.findById(expense.relatedToId).select('plateNumber fullName').lean();
+        finalExpense.relatedTo = related || null;
+      }
+    }
+
+    const data = plainToInstance(ExpenseDto, finalExpense);
+    return data;
   }
 
   async update({ id, companyId }: WithIdAndCompanyId, dto: UpdateExpenseDto): Promise<CommandResponseDto> {

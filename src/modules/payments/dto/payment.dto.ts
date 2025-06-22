@@ -1,31 +1,29 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform } from 'class-transformer';
+import { Exclude, Expose, plainToInstance, Transform } from 'class-transformer';
+import { BaseDto } from '../../../common/DTO/base/base.dto';
 import { CustomerDto } from '../../customers/dto/customer.dto';
 
-export class PaymentDto {
-  @ApiProperty({ example: '64f5f1a134abc3f1c2d8b234', description: 'Ödemenin ID değeri' })
-  @Expose()
-  @Transform(({ obj }) => obj._id?.toString())
-  id: string;
-
+@Exclude()
+export class PaymentDto extends BaseDto {
   @ApiProperty({
     description: 'Ödeme yapılan müşteri bilgisi',
     type: () => CustomerDto,
   })
-  customer: Partial<CustomerDto>; // sadece name gibi alanlar dönecekse
+  @Expose()
+  @Transform(({ obj }) => plainToInstance(CustomerDto, obj.customer, { excludeExtraneousValues: true }), {
+    toClassOnly: true,
+  })
+  customer: Pick<CustomerDto, 'id' | 'name'>;
 
   @ApiProperty({ example: 1000, description: 'Ödeme miktarı (₺)' })
+  @Expose()
   amount: number;
 
   @ApiProperty({ example: '2024-06-01T12:00:00.000Z', description: 'Ödeme işlem tarihi' })
+  @Expose()
   operationDate: string;
 
   @ApiProperty({ example: 'Nakit ödeme', description: 'Açıklama' })
+  @Expose()
   description: string;
-
-  @ApiProperty({ example: '2024-06-01T12:30:00.000Z', description: 'Kayıt oluşturulma tarihi' })
-  createdAt: string;
-
-  @ApiProperty({ example: '2024-06-01T12:35:00.000Z', description: 'Kayıt güncellenme tarihi' })
-  updatedAt: string;
 }

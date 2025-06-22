@@ -63,7 +63,9 @@ export class CategoriesService {
       .lean()
       .exec();
 
-    const items = plainToInstance(CategoryDto, categories);
+    const items = plainToInstance(CategoryDto, categories, {
+      excludeExtraneousValues: true,
+    });
 
     return {
       items,

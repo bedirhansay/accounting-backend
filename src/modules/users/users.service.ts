@@ -4,7 +4,6 @@ import { plainToInstance } from 'class-transformer';
 import { Model, Types } from 'mongoose';
 
 import { PaginatedSearchDTO } from '../../common/DTO/request/search.request.dto';
-import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -44,9 +43,6 @@ export class UsersService {
       .limit(pageSize)
       .lean()
       .collation({ locale: 'tr', strength: 1 })
-      .populate('companyId', 'name')
-      .select('-password')
-      .select('-__v') //
       .exec();
 
     const items = plainToInstance(UserDto, users);
@@ -61,7 +57,7 @@ export class UsersService {
     };
   }
 
-  async findOne(id: string): Promise<BaseResponseDto<UserDto>> {
+  async findOne(id: string): Promise<UserDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Geçersiz kullanıcı ID');
     }
@@ -71,9 +67,7 @@ export class UsersService {
 
     const data = plainToInstance(UserDto, user);
 
-    return {
-      data,
-    };
+    return data;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<CommandResponseDto> {

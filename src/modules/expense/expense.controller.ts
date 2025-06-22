@@ -1,15 +1,19 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiExtraModels,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company.id';
 import { CompanyGuard } from '../../common/guards/company.id';
 
-import {
-  ApiBaseResponse,
-  ApiCommandResponse,
-  ApiPaginatedResponse,
-  ApiSearchDatePaginatedQuery,
-} from '../../common/decorator/swagger';
+import { ApiCommandResponse, ApiPaginatedResponse, ApiSearchDatePaginatedQuery } from '../../common/decorator/swagger';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
@@ -56,7 +60,7 @@ export class ExpenseController {
   @Get(':id')
   @ApiOperation({ summary: 'ID ile gider detayı getir', operationId: 'getExpenseById' })
   @ApiParam({ name: 'id', description: 'Gider ID' })
-  @ApiBaseResponse(Expense)
+  @ApiOkResponse({ type: Expense })
   findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.expenseService.findOne({ id, companyId });
   }
@@ -78,25 +82,24 @@ export class ExpenseController {
     return this.expenseService.remove({ id, companyId });
   }
 
-  @Get(':vehicleId')
+  @Get('vehicle/:id')
   @ApiOperation({ summary: 'Araca ait giderler', operationId: 'getExpensesByVehicle' })
-  @ApiParam({ name: 'vehicleId', description: 'Araç ID' })
+  @ApiParam({ name: 'id', description: 'Araç ID' })
   @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(Expense)
   getExpensesByVehicle(
-    @Param('vehicleId') vehicleId: string,
+    @Param('id') vehicleId: string,
     @Query() query: PaginatedDateSearchDTO,
     @CurrentCompany() companyId: string
   ) {
     return this.expenseService.getVehicleExpenses(vehicleId, companyId, query);
   }
-
-  @Get(':employeeId/expenses')
+  @Get('employee/:id')
   @ApiOperation({ summary: 'Personele ait giderler', operationId: 'getExpensesByEmployee' })
   @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(Expense)
   getExpensesByEmployee(
-    @Param('employeeId') vehicleId: string,
+    @Param('id') vehicleId: string,
     @Query() query: PaginatedDateSearchDTO,
     @CurrentCompany() companyId: string
   ) {

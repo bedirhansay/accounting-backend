@@ -1,16 +1,19 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiExtraModels,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company.id';
 
 import { CompanyGuard } from '../../common/guards/company.id';
 
-import {
-  ApiBaseResponse,
-  ApiCommandResponse,
-  ApiPaginatedResponse,
-  ApiSearchDatePaginatedQuery,
-} from '../../common/decorator/swagger';
+import { ApiCommandResponse, ApiPaginatedResponse, ApiSearchDatePaginatedQuery } from '../../common/decorator/swagger';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
@@ -54,7 +57,7 @@ export class VehicleController {
   @Get(':id')
   @ApiOperation({ summary: 'ID ile araç getir', operationId: 'getVehicleById' })
   @ApiParam({ name: 'id', description: 'Araç ID' })
-  @ApiBaseResponse(VehicleDto)
+  @ApiOkResponse({ type: VehicleDto })
   findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.vehicleService.findOne(id, companyId);
   }

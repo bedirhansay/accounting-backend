@@ -1,43 +1,45 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Transform } from 'class-transformer';
+import { Exclude, Expose, Type } from 'class-transformer';
+import { BaseDto } from '../../../common/DTO/base/base.dto';
 import { EmployeeDto } from '../../emplooye/dto/employee.dto';
 
-export class VehicleDto {
-  @ApiProperty({ example: '665b776f58e4d5be07e7e8c4', description: 'Araç ID' })
-  @Expose()
-  @Transform(({ obj }) => obj._id?.toString())
-  id: string;
-
+@Exclude()
+export class VehicleDto extends BaseDto {
   @ApiProperty({ example: 'TR34ABC123', description: 'Plaka numarası' })
+  @Expose()
   plateNumber: string;
 
   @ApiProperty({ example: 'Ford', description: 'Araç markası' })
+  @Expose()
   brand: string;
 
   @ApiProperty({ example: 'Focus', description: 'Araç modeli' })
+  @Expose()
   model: string;
 
-  @ApiProperty({ example: '2025-06-01T00:00:00.000Z', description: 'Muayene tarihi' })
+  @ApiPropertyOptional({ example: '2025-06-01T00:00:00.000Z', description: 'Muayene tarihi' })
+  @Expose()
   inspectionDate?: string;
 
-  @ApiProperty({ example: '2025-07-01T00:00:00.000Z', description: 'Sigorta bitiş tarihi' })
+  @ApiPropertyOptional({ example: '2025-07-01T00:00:00.000Z', description: 'Sigorta bitiş tarihi' })
+  @Expose()
   insuranceDate?: string;
 
   @ApiProperty({ example: true, description: 'Araç aktif mi?' })
+  @Expose()
   isActive: boolean;
 
   @ApiPropertyOptional({ example: 'Servis aracı', description: 'Açıklama' })
+  @Expose()
   description?: string;
 
-  @ApiProperty({ example: '2025-06-18T12:00:00.000Z', description: 'Oluşturulma tarihi' })
-  createdAt: Date;
+  @ApiPropertyOptional({ description: 'Sürücü bilgisi (sadece id ve adı)', type: () => EmployeeDto })
+  @Expose()
+  @Type(() => EmployeeDto)
+  driverId?: Pick<EmployeeDto, 'id' | 'fullName'>;
 
-  @ApiProperty({ example: '2025-06-18T12:00:00.000Z', description: 'Güncellenme tarihi' })
-  updatedAt: Date;
-
-  @ApiProperty({ description: 'Sürücü bilgisi (populate edilmiş)' })
-  driverId: Partial<EmployeeDto>;
-
-  @ApiProperty({ example: '665a1234bcf8f47e4b76cdef', description: 'Firma ID' })
-  companyId: string;
+  // @Expose()
+  // get driverFull(): string | undefined {
+  //   return this.driverId?.fullName;
+  // }
 }

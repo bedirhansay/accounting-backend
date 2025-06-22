@@ -5,7 +5,6 @@ import { Model } from 'mongoose';
 import { plainToInstance } from 'class-transformer';
 
 import { CompanyListQueryDto } from '../../common/DTO/request/company.list.request.dto';
-import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { ensureValidObjectId } from '../../common/helper/object.id';
@@ -57,13 +56,15 @@ export class VehicleService {
     const data = await this.vehicleModel
       .find(filter)
       .sort({ createdAt: -1 })
-      .populate('driverId', 'fullName phone')
+      .populate('driverId', 'fullName')
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
       .lean()
       .exec();
 
-    const items = plainToInstance(VehicleDto, data);
+    const items = plainToInstance(VehicleDto, data, {
+      excludeExtraneousValues: true,
+    });
 
     return {
       items,
@@ -75,23 +76,23 @@ export class VehicleService {
     };
   }
 
-  async findOne(id: string, companyId: string): Promise<BaseResponseDto<VehicleDto>> {
+  async findOne(id: string, companyId: string): Promise<VehicleDto> {
     ensureValidObjectId(id, 'Geçersiz araç ID');
+
     const vehicle = await this.vehicleModel
       .findOne({ _id: id, companyId })
-      .populate('driverId', 'fullName phone')
+      .populate('driverId', 'fullName')
       .lean()
       .exec();
 
     if (!vehicle) throw new NotFoundException('Araç bulunamadı');
 
-    const data = plainToInstance(VehicleDto, vehicle);
+    const data = plainToInstance(VehicleDto, vehicle, {
+      excludeExtraneousValues: true,
+    });
 
-    return {
-      data,
-    };
+    return data;
   }
-
   async update(id: string, dto: UpdateVehicleDto, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz araç ID');
 

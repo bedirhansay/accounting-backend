@@ -61,7 +61,6 @@ export class FuelService {
     const data = await this.fuelModel
       .find(filter)
       .collation({ locale: 'tr', strength: 1 })
-      .populate('driverId', 'fullName')
       .populate('vehicleId', 'plateNumber')
       .sort({ operationDate: -1 })
       .skip((pageNumber - 1) * pageSize)
@@ -69,7 +68,9 @@ export class FuelService {
       .lean()
       .exec();
 
-    const items = plainToInstance(FuelDto, data);
+    const items = plainToInstance(FuelDto, data, {
+      excludeExtraneousValues: true,
+    });
 
     return {
       items,
@@ -86,7 +87,7 @@ export class FuelService {
       throw new BadRequestException('Geçersiz yakıt ID');
     }
 
-    const fuel = await this.fuelModel.findOne({ _id: id, companyId }).exec();
+    const fuel = await this.fuelModel.findOne({ _id: id, companyId }).populate('vehicleId', 'plateNumber').exec();
     if (!fuel) throw new NotFoundException('Yakıt kaydı bulunamadı');
 
     return {
