@@ -1,7 +1,7 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../common/constant/pagination.param';
 import { CompanyListQueryDto } from '../../common/DTO/request/company.list.request.dto';
@@ -9,6 +9,7 @@ import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.requ
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { ensureValidObjectId } from '../../common/helper/object.id';
+
 import { CreateFuelDto } from './dto/create-fuel.dto';
 import { FuelDto } from './dto/fuel.dto';
 import { UpdateFuelDto } from './dto/update-fuel.dto';
@@ -22,17 +23,12 @@ export class FuelService {
   ) {}
 
   async create(dto: CreateFuelDto & { companyId: string }): Promise<CommandResponseDto> {
-    try {
-      const created = new this.fuelModel(dto);
-      await created.save();
+    const created = await new this.fuelModel(dto).save();
 
-      return {
-        statusCode: 201,
-        id: created.id.toString(),
-      };
-    } catch (err) {
-      throw new InternalServerErrorException({ _message: err.message });
-    }
+    return {
+      statusCode: 201,
+      id: created.id.toString(),
+    };
   }
 
   async findAll(params: CompanyListQueryDto): Promise<PaginatedResponseDto<FuelDto>> {
@@ -58,6 +54,7 @@ export class FuelService {
     }
 
     const totalCount = await this.fuelModel.countDocuments(filter);
+
     const data = await this.fuelModel
       .find(filter)
       .collation({ locale: 'tr', strength: 1 })
@@ -82,39 +79,41 @@ export class FuelService {
     };
   }
 
-  async findOne(id: string, companyId: string): Promise<CommandResponseDto> {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('Geçersiz yakıt ID');
+  async findOne(id: string, companyId: string): Promise<FuelDto> {
+    ensureValidObjectId(id, 'Geçersiz yakıt ID');
+
+    const fuel = await this.fuelModel
+      .findOne({ _id: id, companyId })
+      .populate('vehicleId', 'plateNumber')
+      .lean()
+      .exec();
+
+    if (!fuel) {
+      throw new NotFoundException('Yakıt kaydı bulunamadı');
     }
 
-    const fuel = await this.fuelModel.findOne({ _id: id, companyId }).populate('vehicleId', 'plateNumber').exec();
-    if (!fuel) throw new NotFoundException('Yakıt kaydı bulunamadı');
-
-    return {
-      statusCode: 201,
-      id: fuel.id.toString(),
-    };
+    return plainToInstance(FuelDto, fuel, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async update(id: string, dto: UpdateFuelDto, companyId: string): Promise<CommandResponseDto> {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('Geçersiz yakıt ID');
-    }
+    ensureValidObjectId(id, 'Geçersiz yakıt ID');
 
     const updated = await this.fuelModel.findOneAndUpdate({ _id: id, companyId }, dto, { new: true }).exec();
 
-    if (!updated) throw new NotFoundException('Güncellenecek yakıt kaydı bulunamadı');
+    if (!updated) {
+      throw new NotFoundException('Güncellenecek yakıt kaydı bulunamadı');
+    }
 
     return {
-      statusCode: 201,
+      statusCode: 200,
       id: updated.id.toString(),
     };
   }
 
   async remove(id: string, companyId: string): Promise<CommandResponseDto> {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('Geçersiz yakıt ID');
-    }
+    ensureValidObjectId(id, 'Geçersiz yakıt ID');
 
     const deleted = await this.fuelModel.findOneAndDelete({ _id: id, companyId }).exec();
 
@@ -123,7 +122,7 @@ export class FuelService {
     }
 
     return {
-      statusCode: 201,
+      statusCode: 204,
       id: deleted.id.toString(),
     };
   }
@@ -132,10 +131,17 @@ export class FuelService {
     vehicleId: string,
     companyId: string,
     query: PaginatedDateSearchDTO
-  ): Promise<PaginatedResponseDto<Fuel>> {
+  ): Promise<PaginatedResponseDto<FuelDto>> {
     ensureValidObjectId(vehicleId, 'Geçersiz araç ID');
 
-    const { pageNumber, pageSize, search, beginDate, endDate } = query;
+    const {
+      pageNumber = PAGINATION_DEFAULT_PAGE,
+      pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
+      search,
+      beginDate,
+      endDate,
+    } = query;
+
     const filter: any = { vehicleId, companyId };
 
     if (search) {
@@ -156,9 +162,16 @@ export class FuelService {
 
     const fuels = await this.fuelModel
       .find(filter)
+      .populate('vehicleId', 'plateNumber')
       .sort({ operationDate: -1 })
       .skip((pageNumber - 1) * pageSize)
-      .limit(pageSize);
+      .limit(pageSize)
+      .lean()
+      .exec();
+
+    const items = plainToInstance(FuelDto, fuels, {
+      excludeExtraneousValues: true,
+    });
 
     return {
       pageNumber,
@@ -166,7 +179,7 @@ export class FuelService {
       totalCount,
       hasPreviousPage: pageNumber > 1,
       hasNextPage: pageNumber * pageSize < totalCount,
-      items: fuels,
+      items,
     };
   }
 }

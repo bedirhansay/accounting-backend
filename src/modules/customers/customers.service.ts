@@ -69,11 +69,13 @@ export class CustomersService {
       .lean()
       .exec();
 
-    const items = plainToInstance(CustomerDto, customers);
+    const items = plainToInstance(CustomerDto, customers, {
+      excludeExtraneousValues: true,
+    });
 
     return {
       items,
-      pageNumber: pageNumber,
+      pageNumber,
       totalPages: Math.ceil(totalCount / pageSize),
       totalCount,
       hasPreviousPage: pageNumber > 1,
@@ -85,27 +87,22 @@ export class CustomersService {
     ensureValidObjectId(id, 'Geçersiz müşteri ID');
 
     const customer = await this.customerModel.findOne({ _id: id, companyId }).lean().exec();
-
     if (!customer) throw new NotFoundException('Müşteri bulunamadı');
 
-    const data = plainToInstance(CustomerDto, customer, {
+    return plainToInstance(CustomerDto, customer, {
       excludeExtraneousValues: true,
     });
-
-    return data;
   }
 
   async update(id: string, dto: UpdateCustomerDto, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz müşteri ID');
 
-    const updated = await this.customerModel.findOneAndUpdate({ _id: id, companyId }, dto, {
-      new: true,
-    });
+    const updated = await this.customerModel.findOneAndUpdate({ _id: id, companyId }, dto, { new: true }).exec();
 
     if (!updated) throw new NotFoundException('Güncellenecek müşteri bulunamadı');
 
     return {
-      statusCode: 204,
+      statusCode: 200,
       id: updated.id.toString(),
     };
   }
@@ -113,11 +110,11 @@ export class CustomersService {
   async remove(id: string, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz müşteri ID');
 
-    const deleted = await this.customerModel.findOneAndDelete({ _id: id, companyId });
+    const deleted = await this.customerModel.findOneAndDelete({ _id: id, companyId }).exec();
     if (!deleted) throw new NotFoundException('Silinecek müşteri bulunamadı');
 
     return {
-      statusCode: 204,
+      statusCode: 200,
       id: deleted.id.toString(),
     };
   }

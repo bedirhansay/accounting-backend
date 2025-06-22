@@ -9,7 +9,7 @@ import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.requ
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { ensureValidObjectId } from '../../common/helper/object.id';
-import { Emplooye, EmplooyeDocument } from '../emplooye/employee.schema';
+import { Employee, EmployeeDocument } from '../emplooye/employee.schema';
 import { Vehicle, VehicleDocument } from '../vehicles/vehicle.schema';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { ExpenseDto } from './dto/expense.dto';
@@ -28,8 +28,8 @@ export class ExpenseService {
     private readonly expenseModel: Model<ExpenseDocument>,
     @InjectModel(Vehicle.name)
     private readonly vehicleModel: Model<VehicleDocument>,
-    @InjectModel(Emplooye.name)
-    private readonly employeeModel: Model<EmplooyeDocument>
+    @InjectModel(Employee.name)
+    private readonly employeeModel: Model<EmployeeDocument>
   ) {}
 
   async create(dto: CreateExpenseDto & { companyId: string }): Promise<CommandResponseDto> {

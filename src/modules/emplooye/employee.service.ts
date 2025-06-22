@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
 import { Model } from 'mongoose';
@@ -11,22 +11,26 @@ import { ensureValidObjectId } from '../../common/helper/object.id';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { EmployeeDto } from './dto/employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
-import { Emplooye, EmplooyeDocument } from './employee.schema';
+import { Employee, EmployeeDocument } from './employee.schema';
 
 @Injectable()
 export class EmployeeService {
   constructor(
-    @InjectModel(Emplooye.name)
-    private readonly emplooyeModel: Model<EmplooyeDocument>
+    @InjectModel(Employee.name)
+    private readonly EmployeeModel: Model<EmployeeDocument>
   ) {}
 
   async create(dto: CreateEmployeeDto, companyId: string): Promise<CommandResponseDto> {
-    const existing = await this.emplooyeModel.findOne({ fullName: dto.fullName, companyId });
+    const exists = await this.EmployeeModel.findOne({
+      fullName: dto.fullName,
+      companyId,
+    });
 
-    if (existing) {
-      throw new BadRequestException('Bu isimde bir personel zaten var.');
+    if (exists) {
+      throw new ConflictException('Bu isimde bir personel zaten mevcut.');
     }
-    const created = await new this.emplooyeModel({ ...dto, companyId }).save();
+
+    const created = await new this.EmployeeModel({ ...dto, companyId }).save();
 
     return {
       statusCode: 201,
@@ -55,15 +59,14 @@ export class EmployeeService {
     }
 
     if (beginDate || endDate) {
-      filter.hireDate = { $ne: null };
+      filter.hireDate = { $exists: true, $ne: null };
       if (beginDate) filter.hireDate.$gte = new Date(beginDate);
       if (endDate) filter.hireDate.$lte = new Date(endDate);
     }
 
-    const totalCount = await this.emplooyeModel.countDocuments(filter);
+    const totalCount = await this.EmployeeModel.countDocuments(filter);
 
-    const data = await this.emplooyeModel
-      .find(filter)
+    const data = await this.EmployeeModel.find(filter)
       .collation({ locale: 'tr', strength: 1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
@@ -74,7 +77,7 @@ export class EmployeeService {
     const items = plainToInstance(EmployeeDto, data);
 
     return {
-      pageNumber: pageNumber,
+      pageNumber,
       totalPages: Math.ceil(totalCount / pageSize),
       totalCount,
       hasPreviousPage: pageNumber > 1,
@@ -86,22 +89,20 @@ export class EmployeeService {
   async findOne(id: string, companyId: string): Promise<EmployeeDto> {
     ensureValidObjectId(id, 'Geçersiz personel ID');
 
-    const data = await this.emplooyeModel.findOne({ _id: id, companyId }).lean().exec();
+    const data = await this.EmployeeModel.findOne({ _id: id, companyId }).lean().exec();
     if (!data) throw new NotFoundException('Personel bulunamadı');
 
-    const item = plainToInstance(EmployeeDto, data);
-
-    return item;
+    return plainToInstance(EmployeeDto, data);
   }
 
   async update(id: string, dto: UpdateEmployeeDto, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz personel ID');
 
-    const updated = await this.emplooyeModel.findOneAndUpdate({ _id: id, companyId }, dto, {
-      new: true,
-    });
+    const updated = await this.EmployeeModel.findOneAndUpdate({ _id: id, companyId }, dto, { new: true }).exec();
 
-    if (!updated) throw new NotFoundException('Güncellenecek personel bulunamadı');
+    if (!updated) {
+      throw new NotFoundException('Güncellenecek personel bulunamadı');
+    }
 
     return {
       statusCode: 200,
@@ -112,12 +113,15 @@ export class EmployeeService {
   async remove(id: string, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz personel ID');
 
-    const deleted = await this.emplooyeModel.findOneAndDelete({ _id: id, companyId });
-    if (!deleted) throw new NotFoundException('Silinecek personel bulunamadı');
+    const deleted = await this.EmployeeModel.findOneAndDelete({ _id: id, companyId }).exec();
+
+    if (!deleted) {
+      throw new NotFoundException('Silinecek personel bulunamadı');
+    }
 
     return {
       statusCode: 204,
-      id: id,
+      id,
     };
   }
 }

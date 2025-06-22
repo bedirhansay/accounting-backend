@@ -57,6 +57,7 @@ import { VehiclesModule } from './modules/vehicles/vehicle.module';
     },
   ],
 })
+
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(CorsMiddleware).forRoutes('*');

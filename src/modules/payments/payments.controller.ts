@@ -1,18 +1,17 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company.id';
-
-import { CompanyGuard } from '../../common/guards/company.id';
-
 import {
   ApiBaseResponse,
   ApiCommandResponse,
   ApiPaginatedResponse,
   ApiSearchDatePaginatedQuery,
 } from '../../common/decorator/swagger';
+import { CompanyGuard } from '../../common/guards/company.id';
+
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
-import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
+
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentDto } from './dto/payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
@@ -21,7 +20,6 @@ import { PaymentsService } from './payments.service';
 @ApiTags('Payments')
 @ApiBearerAuth('Bearer')
 @ApiSecurity('x-company-id')
-@ApiExtraModels(PaymentDto, CommandResponseDto, PaymentDto, CreatePaymentDto, UpdatePaymentDto)
 @UseGuards(CompanyGuard)
 @Controller('payments')
 export class PaymentsController {
@@ -31,8 +29,8 @@ export class PaymentsController {
   @ApiOperation({ summary: 'Yeni ödeme oluştur', operationId: 'createPayment' })
   @ApiCommandResponse()
   @ApiBody({ type: CreatePaymentDto })
-  create(@Body() createPaymentDto: CreatePaymentDto, @CurrentCompany() companyId: string) {
-    return this.paymentsService.create({ ...createPaymentDto, companyId });
+  create(@Body() dto: CreatePaymentDto, @CurrentCompany() companyId: string) {
+    return this.paymentsService.create({ ...dto, companyId });
   }
 
   @Get()
@@ -41,6 +39,19 @@ export class PaymentsController {
   @ApiPaginatedResponse(PaymentDto)
   findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
     return this.paymentsService.findAll({ ...query, companyId });
+  }
+
+  @Get('customer/:customerId')
+  @ApiOperation({ summary: 'Müşteriye ait ödemeleri listele', operationId: 'getPaymentsByCustomer' })
+  @ApiParam({ name: 'customerId', description: 'Müşteri ID' })
+  @ApiSearchDatePaginatedQuery()
+  @ApiPaginatedResponse(PaymentDto)
+  getPaymentsByCustomer(
+    @Param('customerId') customerId: string,
+    @Query() query: PaginatedDateSearchDTO,
+    @CurrentCompany() companyId: string
+  ) {
+    return this.paymentsService.getPaymentsByCustomer(customerId, query, companyId);
   }
 
   @Get(':id')
@@ -54,30 +65,17 @@ export class PaymentsController {
   @Patch(':id')
   @ApiOperation({ summary: 'Ödeme güncelle', operationId: 'updatePayment' })
   @ApiParam({ name: 'id', description: 'Ödeme ID' })
-  @ApiBaseResponse(PaymentDto)
+  @ApiCommandResponse()
   @ApiBody({ type: UpdatePaymentDto })
-  update(@Param('id') id: string, @Body() updatePaymentDto: UpdatePaymentDto, @CurrentCompany() companyId: string) {
-    return this.paymentsService.update(id, updatePaymentDto, companyId);
+  update(@Param('id') id: string, @Body() dto: UpdatePaymentDto, @CurrentCompany() companyId: string) {
+    return this.paymentsService.update(id, dto, companyId);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Ödemeyi sil', operationId: 'deletePayment' })
   @ApiParam({ name: 'id', description: 'Ödeme ID' })
-  @ApiBaseResponse(PaymentDto)
+  @ApiCommandResponse()
   remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.paymentsService.remove(id, companyId);
-  }
-
-  @Get(':customerId')
-  @ApiOperation({ summary: 'Müşteriye ait ödemeleri listele', operationId: 'getPaymentsByCustomer' })
-  @ApiParam({ name: 'customerId', description: 'Müşteri ID' })
-  @ApiSearchDatePaginatedQuery()
-  @ApiPaginatedResponse(PaymentDto)
-  getPaymentsByCustomer(
-    @Param('customerId') customerId: string,
-    @Query() query: PaginatedDateSearchDTO,
-    @CurrentCompany() companyId: string
-  ) {
-    return this.paymentsService.getPaymentsByCustomer(customerId, query, companyId);
   }
 }

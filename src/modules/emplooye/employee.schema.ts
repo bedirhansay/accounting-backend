@@ -1,13 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-export type EmplooyeDocument = Emplooye & Document;
-@Schema({
-  timestamps: true,
-})
+export type EmployeeDocument = Employee & Document;
 @Schema({ timestamps: true })
-export class Emplooye {
-  @Prop({ required: true })
+export class Employee {
+  @Prop({ required: true, unique: true, lowercase: true, trim: true })
   fullName: string;
 
   @Prop()
@@ -35,4 +32,5 @@ export class Emplooye {
   companyId: Types.ObjectId;
 }
 
-export const EmplooyeSchema = SchemaFactory.createForClass(Emplooye);
+export const EmployeeSchema = SchemaFactory.createForClass(Employee);
+EmployeeSchema.index({ fullName: 1, companyId: 1 }, { unique: true });

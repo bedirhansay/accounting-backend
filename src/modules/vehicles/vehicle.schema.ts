@@ -34,3 +34,4 @@ export class Vehicle {
 }
 
 export const VehicleSchema = SchemaFactory.createForClass(Vehicle);
+VehicleSchema.index({ plateNumber: 1, companyId: 1 }, { unique: true });

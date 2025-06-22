@@ -3,20 +3,20 @@ import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiSecu
 import { Response } from 'express';
 
 import { CurrentCompany } from '../../common/decorator/company.id';
-
-import { CompanyGuard } from '../../common/guards/company.id';
-import { CreateIncomeDto } from './dto/create-income.dto';
-
 import {
   ApiBaseResponse,
   ApiCommandResponse,
   ApiPaginatedResponse,
   ApiSearchDatePaginatedQuery,
 } from '../../common/decorator/swagger';
+import { CompanyGuard } from '../../common/guards/company.id';
+
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
+
+import { CreateIncomeDto } from './dto/create-income.dto';
 import { IncomeDto } from './dto/income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
 import { IncomeService } from './income.service';
@@ -39,15 +39,15 @@ export class IncomeController {
   constructor(private readonly incomeService: IncomeService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Yeni gelir oluştur', operationId: 'createIncome' })
+  @ApiOperation({ summary: 'Yeni gelir oluşturur', operationId: 'createIncome' })
   @ApiCommandResponse()
   @ApiBody({ type: CreateIncomeDto })
-  create(@Body() createIncomeDto: CreateIncomeDto, @CurrentCompany() companyId: string) {
-    return this.incomeService.create({ ...createIncomeDto, companyId });
+  create(@Body() dto: CreateIncomeDto, @CurrentCompany() companyId: string) {
+    return this.incomeService.create({ ...dto, companyId });
   }
 
   @Get()
-  @ApiOperation({ summary: 'Gelirleri sayfalı listele', operationId: 'getAllIncomes' })
+  @ApiOperation({ summary: 'Tüm gelirleri sayfalı olarak listeler', operationId: 'getAllIncomes' })
   @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(IncomeDto)
   findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
@@ -55,7 +55,7 @@ export class IncomeController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'ID ile gelir detayı getir', operationId: 'getIncomeById' })
+  @ApiOperation({ summary: 'Belirli bir gelir kaydını getirir', operationId: 'getIncomeById' })
   @ApiParam({ name: 'id', description: 'Gelir ID' })
   @ApiBaseResponse(IncomeDto)
   findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
@@ -63,16 +63,16 @@ export class IncomeController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Gelir kaydını güncelle', operationId: 'updateIncome' })
+  @ApiOperation({ summary: 'Gelir kaydını günceller', operationId: 'updateIncome' })
   @ApiParam({ name: 'id', description: 'Gelir ID' })
   @ApiCommandResponse()
   @ApiBody({ type: UpdateIncomeDto })
-  update(@Param('id') id: string, @Body() updateIncomeDto: UpdateIncomeDto, @CurrentCompany() companyId: string) {
-    return this.incomeService.update(id, updateIncomeDto, companyId);
+  update(@Param('id') id: string, @Body() dto: UpdateIncomeDto, @CurrentCompany() companyId: string) {
+    return this.incomeService.update(id, dto, companyId);
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Gelir kaydını sil', operationId: 'deleteIncome' })
+  @ApiOperation({ summary: 'Gelir kaydını siler', operationId: 'deleteIncome' })
   @ApiParam({ name: 'id', description: 'Gelir ID' })
   @ApiCommandResponse()
   remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
@@ -80,27 +80,23 @@ export class IncomeController {
   }
 
   @Get(':id/incomes')
-  @ApiOperation({ summary: 'Müşteriye ait gelirleri listele', operationId: 'getCustomerIncomes' })
+  @ApiOperation({ summary: 'Belirli müşterinin gelirlerini listeler', operationId: 'getCustomerIncomes' })
   @ApiParam({ name: 'id', description: 'Müşteri ID' })
   @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(IncomeDto)
   getCustomerIncomes(
-    @Param('id') id: string,
+    @Param('id') customerId: string,
     @Query() query: PaginatedDateSearchDTO,
     @CurrentCompany() companyId: string
   ) {
-    return this.incomeService.getIncomesByCustomer(id, query, companyId);
+    return this.incomeService.getIncomesByCustomer(customerId, query, companyId);
   }
 
   @Get('export')
+  @ApiOperation({ summary: 'Gelirleri .zip dosyası olarak dışa aktarır', operationId: 'exportIncomes' })
   @Header('Content-Type', 'application/zip')
   @Header('Content-Disposition', 'attachment; filename=incomes.zip')
-  @ApiOperation({ summary: 'Gelirleri zip dosyası olarak dışa aktar', operationId: 'exportIncomes' })
-  async exportIncomes(
-    @Query() query: PaginatedDateSearchDTO,
-    @CurrentCompany() companyId: string,
-    @Res() res: Response
-  ) {
-    await this.incomeService.exportGroupedIncomes(query, companyId, res);
+  exportIncomes(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string, @Res() res: Response) {
+    return this.incomeService.exportGroupedIncomes(query, companyId, res);
   }
 }

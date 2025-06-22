@@ -1,16 +1,23 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiExtraModels,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company.id';
-
 import { CompanyGuard } from '../../common/guards/company.id';
 
-import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
-
-import { ApiBaseResponse, ApiPaginatedResponse, ApiSearchDatePaginatedQuery } from '../../common/decorator/swagger';
+import { ApiPaginatedResponse, ApiSearchDatePaginatedQuery } from '../../common/decorator/swagger';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
+import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
+
 import { CreateFuelDto } from './dto/create-fuel.dto';
 import { FuelDto } from './dto/fuel.dto';
 import { UpdateFuelDto } from './dto/update-fuel.dto';
@@ -35,7 +42,7 @@ export class FuelController {
 
   @Post()
   @ApiOperation({ summary: 'Yeni yakıt kaydı oluştur', operationId: 'createFuel' })
-  @ApiBaseResponse(FuelDto)
+  @ApiResponse({ status: 201, description: 'Yakıt kaydı başarıyla oluşturuldu', type: CommandResponseDto })
   create(@Body() createFuelDto: CreateFuelDto, @CurrentCompany() companyId: string) {
     return this.fuelService.create({ ...createFuelDto, companyId });
   }
@@ -51,7 +58,8 @@ export class FuelController {
   @Get(':id')
   @ApiOperation({ summary: 'ID ile yakıt kaydı getir', operationId: 'getFuelById' })
   @ApiParam({ name: 'id', description: 'Yakıt ID' })
-  @ApiBaseResponse(FuelDto)
+  @ApiResponse({ status: 200, description: 'Yakıt kaydı getirildi', type: FuelDto })
+  @ApiResponse({ status: 404, description: 'Yakıt kaydı bulunamadı' })
   findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.fuelService.findOne(id, companyId);
   }
@@ -59,7 +67,8 @@ export class FuelController {
   @Patch(':id')
   @ApiOperation({ summary: 'Yakıt kaydını güncelle', operationId: 'updateFuel' })
   @ApiParam({ name: 'id', description: 'Yakıt ID' })
-  @ApiBaseResponse(FuelDto)
+  @ApiResponse({ status: 200, description: 'Yakıt kaydı başarıyla güncellendi', type: CommandResponseDto })
+  @ApiResponse({ status: 404, description: 'Güncellenecek yakıt kaydı bulunamadı' })
   update(@Param('id') id: string, @Body() updateFuelDto: UpdateFuelDto, @CurrentCompany() companyId: string) {
     return this.fuelService.update(id, updateFuelDto, companyId);
   }
@@ -67,7 +76,9 @@ export class FuelController {
   @Delete(':id')
   @ApiOperation({ summary: 'Yakıt kaydını sil', operationId: 'deleteFuel' })
   @ApiParam({ name: 'id', description: 'Yakıt ID' })
-  @ApiBaseResponse(FuelDto)
+  @ApiResponse({ status: 204, description: 'Yakıt kaydı başarıyla silindi' })
+  @ApiResponse({ status: 404, description: 'Silinecek yakıt kaydı bulunamadı' })
+  @HttpCode(204)
   remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.fuelService.remove(id, companyId);
   }

@@ -1,13 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-
 import { plainToInstance } from 'class-transformer';
+import { Model, Types } from 'mongoose';
 
 import { CompanyListQueryDto } from '../../common/DTO/request/company.list.request.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { ensureValidObjectId } from '../../common/helper/object.id';
+
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { VehicleDto } from './dto/vehicle.dto';
@@ -15,10 +15,21 @@ import { Vehicle, VehicleDocument } from './vehicle.schema';
 
 @Injectable()
 export class VehicleService {
-  constructor(@InjectModel(Vehicle.name) private readonly vehicleModel: Model<VehicleDocument>) {}
+  constructor(
+    @InjectModel(Vehicle.name)
+    private readonly vehicleModel: Model<VehicleDocument>
+  ) {}
 
   async create(dto: CreateVehicleDto & { companyId: string }): Promise<CommandResponseDto> {
-    const existing = await this.vehicleModel.findOne({ plateNumber: dto.plateNumber, companyId: dto.companyId });
+    if (!Types.ObjectId.isValid(dto.driverId)) {
+      throw new BadRequestException('Geçersiz sürücü ID');
+    }
+
+    const existing = await this.vehicleModel.findOne({
+      plateNumber: dto.plateNumber,
+      companyId: dto.companyId,
+    });
+
     if (existing) {
       throw new BadRequestException('Bu plaka ile kayıtlı bir araç zaten var.');
     }
@@ -68,8 +79,8 @@ export class VehicleService {
 
     return {
       items,
-      pageNumber: pageNumber,
-      totalCount: totalCount,
+      pageNumber,
+      totalCount,
       totalPages: Math.ceil(totalCount / pageSize),
       hasPreviousPage: pageNumber > 1,
       hasNextPage: pageNumber * pageSize < totalCount,
@@ -85,23 +96,30 @@ export class VehicleService {
       .lean()
       .exec();
 
-    if (!vehicle) throw new NotFoundException('Araç bulunamadı');
+    if (!vehicle) {
+      throw new NotFoundException('Araç bulunamadı');
+    }
 
-    const data = plainToInstance(VehicleDto, vehicle, {
+    return plainToInstance(VehicleDto, vehicle, {
       excludeExtraneousValues: true,
     });
-
-    return data;
   }
+
   async update(id: string, dto: UpdateVehicleDto, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz araç ID');
 
+    if (dto.driverId && !Types.ObjectId.isValid(dto.driverId)) {
+      throw new BadRequestException('Geçersiz sürücü ID');
+    }
+
     const updated = await this.vehicleModel.findOneAndUpdate({ _id: id, companyId }, dto, { new: true });
 
-    if (!updated) throw new NotFoundException('Güncellenecek araç bulunamadı');
+    if (!updated) {
+      throw new NotFoundException('Güncellenecek araç bulunamadı');
+    }
 
     return {
-      statusCode: 204,
+      statusCode: 200,
       id: updated.id.toString(),
     };
   }
@@ -111,7 +129,9 @@ export class VehicleService {
 
     const deleted = await this.vehicleModel.findOneAndDelete({ _id: id, companyId });
 
-    if (!deleted) throw new NotFoundException('Silinecek araç bulunamadı');
+    if (!deleted) {
+      throw new NotFoundException('Silinecek araç bulunamadı');
+    }
 
     return {
       statusCode: 204,

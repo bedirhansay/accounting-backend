@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { plainToInstance } from 'class-transformer';
 
@@ -10,7 +10,6 @@ import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../com
 import { CompanyListQueryDto } from '../../common/DTO/request/company.list.request.dto';
 import { DateRangeDTO } from '../../common/DTO/request/date.range.request.dto';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
-import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { ensureValidObjectId } from '../../common/helper/object.id';
@@ -49,7 +48,7 @@ export class IncomeService {
     const filter: any = { companyId };
 
     if (search) {
-      filter.$or = [{ customerId: { $regex: search, $options: 'i' } }];
+      filter.$or = [{ description: new RegExp(search, 'i') }];
     }
 
     if (beginDate || endDate) {
@@ -79,7 +78,7 @@ export class IncomeService {
     };
   }
 
-  async findOne(id: string, companyId: string): Promise<BaseResponseDto<IncomeDto>> {
+  async findOne(id: string, companyId: string): Promise<IncomeDto> {
     ensureValidObjectId(id, 'Geçersiz gelir ID');
 
     const income = await this.incomeModel
@@ -90,12 +89,7 @@ export class IncomeService {
       .exec();
     if (!income) throw new NotFoundException('Gelir kaydı bulunamadı');
 
-    const data = plainToInstance(IncomeDto, income);
-
-    return {
-      statusCode: 200,
-      data,
-    };
+    return plainToInstance(IncomeDto, income);
   }
 
   async update(id: string, dto: UpdateIncomeDto, companyId: string): Promise<CommandResponseDto> {
@@ -124,18 +118,16 @@ export class IncomeService {
     };
   }
 
-  async exportGroupedIncomes(query: DateRangeDTO, companyId: string, res: Response) {
-    const { beginDate, endDate } = query;
-
+  async exportGroupedIncomes(query: DateRangeDTO, companyId: string, res: Response): Promise<void> {
     const now = new Date();
     const defaultStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const defaultEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
-    const start = beginDate ? new Date(beginDate) : defaultStart;
-    const end = endDate ? new Date(endDate) : defaultEnd;
+    const start = query.beginDate ? new Date(query.beginDate) : defaultStart;
+    const end = query.endDate ? new Date(query.endDate) : defaultEnd;
 
     type PopulatedIncome = Omit<Income, 'customerId'> & {
-      customerId: { name: string };
+      customerId: { name: string } | null;
     };
 
     const incomes = (await this.incomeModel
@@ -147,44 +139,42 @@ export class IncomeService {
       .lean()
       .exec()) as unknown as PopulatedIncome[];
 
-    const grouped = incomes.reduce(
-      (acc, income) => {
-        const name = income.customerId?.name || 'Unknown';
-        if (!acc[name]) {
-          acc[name] = {
-            totalDocuments: 0,
-            totalUnitCount: 0,
-            totalAmount: 0,
-          };
-        }
+    const grouped = incomes.reduce<
+      Record<string, { totalDocuments: number; totalUnitCount: number; totalAmount: number }>
+    >((acc, income) => {
+      const name = income.customerId?.name || 'Bilinmeyen Müşteri';
 
-        acc[name].totalDocuments += 1;
-        acc[name].totalUnitCount += income.unitCount;
-        acc[name].totalAmount += income.totalAmount;
+      if (!acc[name]) {
+        acc[name] = {
+          totalDocuments: 0,
+          totalUnitCount: 0,
+          totalAmount: 0,
+        };
+      }
 
-        return acc;
-      },
-      {} as Record<string, { totalDocuments: number; totalUnitCount: number; totalAmount: number }>
-    );
+      acc[name].totalDocuments += 1;
+      acc[name].totalUnitCount += income.unitCount;
+      acc[name].totalAmount += income.totalAmount;
+
+      return acc;
+    }, {});
 
     const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet('Income Summary');
+    const sheet = workbook.addWorksheet('Gelir Özeti');
 
     sheet.columns = [
-      { header: 'Firma Adı', key: 'customerName', width: 30 },
+      { header: 'Müşteri Adı', key: 'customerName', width: 30 },
       { header: 'Belge Sayısı', key: 'totalDocuments', width: 15 },
       { header: 'Toplam Birim Adet', key: 'totalUnitCount', width: 20 },
       { header: 'Toplam Tutar', key: 'totalAmount', width: 20 },
     ];
 
-    for (const [customerName, data] of Object.entries(grouped)) {
+    Object.entries(grouped).forEach(([customerName, data]) => {
       sheet.addRow({
         customerName,
-        totalDocuments: data.totalDocuments,
-        totalUnitCount: data.totalUnitCount,
-        totalAmount: data.totalAmount,
+        ...data,
       });
-    }
+    });
 
     const buffer = await workbook.xlsx.writeBuffer();
 
@@ -192,6 +182,7 @@ export class IncomeService {
     res.setHeader('Content-Disposition', 'attachment; filename=incomes-summary.xlsx');
     res.end(buffer);
   }
+
   async getIncomesByCustomer(
     customerId: string,
     query: PaginatedDateSearchDTO,
@@ -201,7 +192,7 @@ export class IncomeService {
 
     const { pageNumber, pageSize, search, beginDate, endDate } = query;
 
-    const filter: any = { customerId, companyId };
+    const filter: any = { customerId: new Types.ObjectId(customerId), companyId };
 
     if (search) {
       filter.description = { $regex: search, $options: 'i' };
@@ -224,7 +215,7 @@ export class IncomeService {
 
     return {
       items: incomes,
-      pageNumber: pageNumber,
+      pageNumber,
       totalPages: Math.ceil(totalCount / pageSize),
       totalCount,
       hasPreviousPage: pageNumber > 1,

@@ -2,11 +2,6 @@ import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from
 import { Request, Response } from 'express';
 import { ErrorLoggerService } from '../../modules/logger/logger.service';
 
-interface ErrorDetail {
-  field?: string;
-  message: string;
-}
-
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   constructor(private readonly errorLogger: ErrorLoggerService) {}
@@ -18,16 +13,20 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     const status = exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
 
+    const timestamp = new Date().toISOString();
+    const path = req.url;
+    const method = req.method;
+
     const message = this.getErrorMessage(exception);
-    const errors = this.getErrorDetails(exception);
+    const error = exception?.name ?? 'InternalServerError';
     const stack = exception?.stack ?? '';
 
     await this.errorLogger.logError({
       message,
       stack,
-      context: exception?.name ?? 'UnknownException',
-      path: req.url,
-      method: req.method,
+      context: error,
+      path,
+      method,
       companyId: req['companyId'],
     });
 
@@ -35,7 +34,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       success: false,
       statusCode: status,
       message,
-      errors: errors.length > 0 ? errors : undefined,
+      error,
+      path,
+      timestamp,
     });
   }
 
@@ -59,34 +60,5 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
 
     return 'Internal server error';
-  }
-
-  private getErrorDetails(exception: any): ErrorDetail[] {
-    const details: ErrorDetail[] = [];
-
-    if (exception instanceof HttpException) {
-      const response = exception.getResponse();
-
-      if (typeof response === 'object' && response !== null) {
-        const res = response as Record<string, any>;
-
-        // class-validator hataları
-        if (Array.isArray(res.message)) {
-          for (const msg of res.message) {
-            const [field, ...msgParts] = msg.split(' ');
-            details.push({
-              field,
-              message: msgParts.join(' ') || msg,
-            });
-          }
-        }
-
-        if (Array.isArray(res.errors)) {
-          return res.errors;
-        }
-      }
-    }
-
-    return details;
   }
 }

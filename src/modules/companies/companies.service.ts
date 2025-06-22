@@ -1,12 +1,12 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
 import { PaginationDTO } from '../../common/DTO/request/pagination.request.dto';
-import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
+import { ensureValidObjectId } from '../../common/helper/object.id';
 import { Company, CompanyDocument } from './company.schema';
 import { CompanyDto } from './dto/company-dto';
 import { CreateCompanyDto } from './dto/create-company.dto';
@@ -20,7 +20,7 @@ export class CompaniesService {
   ) {}
 
   async create(createCompanyDto: CreateCompanyDto): Promise<CommandResponseDto> {
-    const existing = await this.companyModel.findOne({ name: createCompanyDto.name });
+    const existing = await this.companyModel.findOne({ name: createCompanyDto.name }).lean();
     if (existing) {
       throw new ConflictException('Bu isimde bir firma zaten var.');
     }
@@ -48,7 +48,9 @@ export class CompaniesService {
       .lean()
       .exec();
 
-    const items = plainToInstance(CompanyDto, companies);
+    const items = plainToInstance(CompanyDto, companies, {
+      excludeExtraneousValues: true,
+    });
 
     return {
       items,
@@ -60,29 +62,25 @@ export class CompaniesService {
     };
   }
 
-  async findOne(id: string): Promise<BaseResponseDto<CompanyDto>> {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new NotFoundException('Geçersiz firma ID');
-    }
+  async findOne(id: string): Promise<CompanyDto> {
+    ensureValidObjectId(id, 'Geçersiz firma ID');
 
     const company = await this.companyModel.findById(id).lean().select('-__v').exec();
     if (!company) {
       throw new NotFoundException('Firma bulunamadı');
     }
-    const items = plainToInstance(CompanyDto, company);
 
-    return {
-      statusCode: 200,
-      data: items,
-    };
+    const data = plainToInstance(CompanyDto, company, {
+      excludeExtraneousValues: true,
+    });
+
+    return data;
   }
 
   async update(id: string, updateCompanyDto: UpdateCompanyDto): Promise<CommandResponseDto> {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new NotFoundException('Geçersiz firma ID');
-    }
+    ensureValidObjectId(id, 'Geçersiz firma ID');
 
-    const updated = await this.companyModel.findByIdAndUpdate(id, updateCompanyDto, { new: true }).exec();
+    const updated = await this.companyModel.findByIdAndUpdate(id, updateCompanyDto, { new: true }).lean().exec();
 
     if (!updated) {
       throw new NotFoundException('Güncellenecek firma bulunamadı');
@@ -95,11 +93,10 @@ export class CompaniesService {
   }
 
   async remove(id: string): Promise<CommandResponseDto> {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new NotFoundException('Geçersiz firma ID');
-    }
+    ensureValidObjectId(id, 'Geçersiz firma ID');
 
-    const deleted = await this.companyModel.findByIdAndDelete(id).exec();
+    const deleted = await this.companyModel.findByIdAndDelete(id).lean().exec();
+
     if (!deleted) {
       throw new NotFoundException('Silinecek firma bulunamadı');
     }

@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -23,6 +35,7 @@ import { PaginatedSearchDTO } from '../../common/DTO/request/search.request.dto'
 import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
+
 @ApiTags('Customers')
 @ApiBearerAuth('Bearer')
 @ApiSecurity('x-company-id')
@@ -41,6 +54,7 @@ export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Yeni müşteri oluştur', operationId: 'createCustomer' })
   @ApiCommandResponse()
   @ApiBody({ type: CreateCustomerDto })
@@ -49,6 +63,7 @@ export class CustomersController {
   }
 
   @Get()
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Tüm müşterileri listele', operationId: 'getAllCustomers' })
   @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(CustomerDto)
@@ -57,6 +72,7 @@ export class CustomersController {
   }
 
   @Get(':id')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Müşteri detayı getir', operationId: 'getCustomerById' })
   @ApiParam({ name: 'id', description: 'Müşteri ID' })
   @ApiOkResponse({ type: CustomerDto })
@@ -65,6 +81,7 @@ export class CustomersController {
   }
 
   @Patch(':id')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Müşteri bilgilerini güncelle', operationId: 'updateCustomer' })
   @ApiParam({ name: 'id', description: 'Müşteri ID' })
   @ApiCommandResponse()
@@ -74,6 +91,7 @@ export class CustomersController {
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Müşteriyi sil', operationId: 'deleteCustomer' })
   @ApiParam({ name: 'id', description: 'Müşteri ID' })
   @ApiCommandResponse()

@@ -6,7 +6,7 @@ export type CustomerDocument = Customer & Document;
   timestamps: true,
 })
 export class Customer {
-  @Prop({ required: true })
+  @Prop({ required: true, trim: true, lowercase: true })
   name: string;
 
   @Prop({ required: false })
