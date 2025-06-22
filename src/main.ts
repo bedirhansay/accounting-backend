@@ -62,6 +62,8 @@ async function bootstrap() {
   const errorLogger = app.get(ErrorLoggerService);
   app.useGlobalFilters(new GlobalExceptionFilter(errorLogger));
 
+  console.log('Logger service loaded:', !!errorLogger);
+
   app
     .getHttpAdapter()
     .getInstance()

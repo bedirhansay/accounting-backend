@@ -5,7 +5,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { JwtAuthGuard } from './common/guards/jwt';
-import { GlobalExceptionFilter } from './common/interceptor/global.exception';
 import { CorsMiddleware } from './middleware/cors';
 import { AuthModule } from './modules/auth/auth.module';
 import { CustomJwtModule } from './modules/auth/jwt-strategy';
@@ -50,7 +49,6 @@ import { VehiclesModule } from './modules/vehicles/vehicle.module';
   controllers: [AppController],
   providers: [
     AppService,
-    GlobalExceptionFilter,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
