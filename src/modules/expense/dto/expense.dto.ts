@@ -26,10 +26,10 @@ export class ExpenseDto extends BaseDto {
   @Expose()
   relatedToId?: string;
 
-  @IsEnum(['Vehicle', 'Emplooye', 'Other'])
-  @ApiProperty({ enum: ['Vehicle', 'Emplooye', 'Other'] })
+  @IsEnum(['Vehicle', 'Employee', 'Other'])
+  @ApiProperty({ enum: ['Vehicle', 'Employee', 'Other'] })
   @Expose()
-  relatedModel: 'Vehicle' | 'Emplooye' | 'Other';
+  relatedModel: 'Vehicle' | 'Employee' | 'Other';
 
   @Expose()
   @ApiPropertyOptional({

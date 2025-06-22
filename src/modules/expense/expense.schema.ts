@@ -25,8 +25,8 @@ export class Expense {
   @Prop({ type: Types.ObjectId, refPath: 'relatedModel', required: false })
   relatedToId?: Types.ObjectId;
 
-  @Prop({ type: String, enum: ['Vehicle', 'Emplooye'], required: false })
-  relatedModel?: 'Vehicle' | 'Emplooye';
+  @Prop({ type: String, enum: ['Vehicle', 'Employee'], required: false })
+  relatedModel?: 'Vehicle' | 'Employee';
 }
 
 export const ExpenseSchema = SchemaFactory.createForClass(Expense);

@@ -20,7 +20,7 @@ export class Vehicle {
   @Prop({ type: Date })
   insuranceDate?: Date;
 
-  @Prop({ type: Types.ObjectId, ref: 'Emplooye', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'Employee', required: true })
   driverId: Types.ObjectId;
 
   @Prop({ required: true, default: true })

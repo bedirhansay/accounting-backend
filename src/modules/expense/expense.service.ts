@@ -80,12 +80,12 @@ export class ExpenseService {
     const populatedExpenses = await Promise.all(
       rawExpenses.map(async (expense) => {
         if (expense.relatedToId && expense.relatedModel) {
-          const modelMap: Record<'Vehicle' | 'Emplooye', Model<any>> = {
+          const modelMap: Record<'Vehicle' | 'Employee', Model<any>> = {
             Vehicle: this.vehicleModel,
-            Emplooye: this.employeeModel,
+            Employee: this.employeeModel,
           };
 
-          const model = modelMap[expense.relatedModel as 'Vehicle' | 'Emplooye'];
+          const model = modelMap[expense.relatedModel as 'Vehicle' | 'Employee'];
 
           if (model) {
             const related = await model.findById(expense.relatedToId).select('plateNumber fullName').lean();
@@ -127,12 +127,12 @@ export class ExpenseService {
     } as typeof expense & { relatedTo: any | null };
 
     if (expense.relatedToId && expense.relatedModel) {
-      const modelMap: Record<'Vehicle' | 'Emplooye', Model<any>> = {
+      const modelMap: Record<'Vehicle' | 'Employee', Model<any>> = {
         Vehicle: this.vehicleModel,
-        Emplooye: this.employeeModel,
+        Employee: this.employeeModel,
       };
 
-      const model = modelMap[expense.relatedModel as 'Vehicle' | 'Emplooye'];
+      const model = modelMap[expense.relatedModel as 'Vehicle' | 'Employee'];
 
       if (model) {
         const related = await model.findById(expense.relatedToId).select('plateNumber fullName').lean();
