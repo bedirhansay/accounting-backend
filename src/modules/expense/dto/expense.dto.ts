@@ -1,18 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Exclude, Expose, plainToInstance, Transform } from 'class-transformer';
 import { IsEnum } from 'class-validator';
 import { BaseDto } from '../../../common/DTO/base/base.dto';
 import { CategoryDto } from '../../categories/dto/category.dto';
 
+export enum RelatedModelEnum {
+  Vehicle = 'Vehicle',
+  Employee = 'Employee',
+  Other = 'Other',
+}
+
+@Exclude()
 export class ExpenseDto extends BaseDto {
   @ApiProperty({ example: '2025-06-18T12:00:00.000Z', description: 'İşlem tarihi' })
   @Expose()
   operationDate: string;
-
-  @ApiProperty({ description: 'Kategori bilgisi' })
-  @Type(() => CategoryDto)
-  @Expose()
-  category: Pick<CategoryDto, 'name'>;
 
   @ApiProperty({ example: 1500.75, description: 'Gider miktarı' })
   @Expose()
@@ -22,32 +24,29 @@ export class ExpenseDto extends BaseDto {
   @Expose()
   description: string;
 
+  @ApiProperty({ description: 'Kategori bilgileri (populated)', type: () => CategoryDto })
+  @Expose()
+  @Transform(({ obj }) => plainToInstance(CategoryDto, obj.categoryId, { excludeExtraneousValues: true }), {
+    toClassOnly: true,
+  })
+  category: Pick<CategoryDto, 'id' | 'name'>;
+
   @ApiPropertyOptional({ example: '664eab32123e1a0001bb1234', description: 'İlgili belge ya da nesne ID’si' })
   @Expose()
   relatedToId?: string;
 
-  @IsEnum(['Vehicle', 'Employee', 'Other'])
-  @ApiProperty({ enum: ['Vehicle', 'Employee', 'Other'] })
+  @IsEnum(RelatedModelEnum)
+  @ApiProperty({ enum: RelatedModelEnum })
   @Expose()
-  relatedModel: 'Vehicle' | 'Employee' | 'Other';
+  relatedModel: RelatedModelEnum;
 
-  @Expose()
   @ApiPropertyOptional({
     example: { plateNumber: '34ABC123', fullName: 'Ahmet Yılmaz' },
-    description: 'İlgili belge nesnesinin populated hali',
+    description: 'İlgili belge nesnesinin populated hali (araç ya da personel)',
   })
-  get relatedTo(): { plateNumber?: string; fullName?: string } | null {
-    const related = this['relatedToId'];
-    if (!related) return null;
-
-    return {
-      plateNumber: this.relatedTo?.plateNumber,
-      fullName: this.relatedTo?.fullName,
-    };
-  }
-
   @Expose()
-  get categoryName(): string | undefined {
-    return this.category?.name;
-  }
+  relatedTo?: {
+    plateNumber?: string;
+    fullName?: string;
+  };
 }

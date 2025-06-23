@@ -2,22 +2,20 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
 export type ExpenseDocument = Expense & Document;
-@Schema({
-  timestamps: true,
-})
+
 @Schema({ timestamps: true })
 export class Expense {
   @Prop({ type: Date, required: true })
   operationDate: Date;
 
-  @Prop({ type: Types.ObjectId, ref: 'Category', required: true })
-  categoryId: Types.ObjectId;
-
   @Prop({ type: Number, required: true })
   amount: number;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String, required: false })
   description: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'Category', required: true })
+  categoryId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
   companyId: Types.ObjectId;

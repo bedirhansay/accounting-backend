@@ -69,6 +69,7 @@ export class ExpenseService {
     const rawExpenses = await this.expenseModel
       .find(filter)
       .sort({ operationDate: -1 })
+      .populate('categoryId', 'name')
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
       .lean()
@@ -118,7 +119,11 @@ export class ExpenseService {
 
   async findOne({ id, companyId }: WithIdAndCompanyId): Promise<ExpenseDto> {
     ensureValidObjectId(id, 'Geçersiz gider ID');
-    const expense = await this.expenseModel.findOne({ _id: id, companyId }).lean().exec();
+    const expense = await this.expenseModel
+      .findOne({ _id: id, companyId })
+      .populate('categoryId', 'name')
+      .lean()
+      .exec();
     if (!expense) throw new NotFoundException('Gider kaydı bulunamadı');
 
     const finalExpense = {

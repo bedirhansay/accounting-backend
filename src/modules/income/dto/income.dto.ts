@@ -34,7 +34,7 @@ export class IncomeDto extends BaseDto {
   })
   customer: Pick<CustomerDto, 'id' | 'name'>;
 
-  @ApiProperty({ description: 'Kategori bilgileri (populated)', type: () => CustomerDto })
+  @ApiProperty({ description: 'Kategori bilgileri (populated)', type: () => CategoryDto })
   @Expose()
   @Transform(({ obj }) => plainToInstance(CategoryDto, obj.categoryId, { excludeExtraneousValues: true }), {
     toClassOnly: true,
