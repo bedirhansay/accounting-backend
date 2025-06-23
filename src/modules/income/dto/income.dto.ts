@@ -6,7 +6,6 @@ import { CustomerDto } from '../../customers/dto/customer.dto';
 
 @Exclude()
 export class IncomeDto extends BaseDto {
-  @ApiProperty({ description: 'Kategori bilgileri (populated)', type: () => CategoryDto })
   @ApiProperty({ example: 5, description: 'Hizmet/ürün adedi' })
   @Expose()
   unitCount: number;
@@ -33,6 +32,11 @@ export class IncomeDto extends BaseDto {
     toClassOnly: true,
   })
   customer: Pick<CustomerDto, 'id' | 'name'>;
+
+  // @Expose()
+  // @Transform(({ obj }) => obj.categoryId?._id || obj.categoryId, { toClassOnly: true })
+  // @ApiProperty({ example: '6856b80f5a2566bf8644c148', description: 'Kategori ID bilgisi' })
+  // categoryId: string;
 
   @ApiProperty({ description: 'Kategori bilgileri (populated)', type: () => CategoryDto })
   @Expose()
