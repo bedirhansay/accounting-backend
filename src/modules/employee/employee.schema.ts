@@ -26,7 +26,7 @@ export class Employee {
   isActive: boolean;
 
   @Prop({ default: '' })
-  notes?: string;
+  description?: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
   companyId: Types.ObjectId;

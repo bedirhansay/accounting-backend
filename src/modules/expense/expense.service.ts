@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../common/constant/pagination.param';
 import { CompanyListQueryDto } from '../../common/DTO/request/company.list.request.dto';
@@ -52,10 +52,12 @@ export class ExpenseService {
       companyId,
     } = params;
 
-    const filter: any = { companyId };
+    const filter: any = {
+      companyId: new Types.ObjectId(companyId),
+    };
 
     if (search) {
-      filter.$or = [{ category: { $regex: search, $options: 'i' } }];
+      filter.$or = [{ description: { $regex: search, $options: 'i' } }];
     }
 
     if (beginDate || endDate) {
@@ -80,16 +82,24 @@ export class ExpenseService {
     // Polymorphic populate işlemi
     const populatedExpenses = await Promise.all(
       rawExpenses.map(async (expense) => {
-        if (expense.relatedToId && expense.relatedModel) {
-          const modelMap: Record<'Vehicle' | 'Employee', Model<any>> = {
-            Vehicle: this.vehicleModel,
-            Employee: this.employeeModel,
+        const { relatedToId, relatedModel } = expense;
+
+        if (relatedToId && relatedModel) {
+          const modelMap: Record<'Vehicle' | 'Employee', { model: Model<any>; select: string }> = {
+            Vehicle: {
+              model: this.vehicleModel,
+              select: 'plateNumber',
+            },
+            Employee: {
+              model: this.employeeModel,
+              select: 'fullName',
+            },
           };
 
-          const model = modelMap[expense.relatedModel as 'Vehicle' | 'Employee'];
+          const relatedConfig = modelMap[relatedModel as 'Vehicle' | 'Employee'];
 
-          if (model) {
-            const related = await model.findById(expense.relatedToId).select('plateNumber fullName').lean();
+          if (relatedConfig) {
+            const related = await relatedConfig.model.findById(relatedToId).select(relatedConfig.select).lean();
 
             return {
               ...expense,

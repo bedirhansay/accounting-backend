@@ -1,9 +1,9 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
-import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../common/constant/pagination.param';
+import { PAGINATION_DEFAULT_PAGE } from '../../common/constant/pagination.param';
 import { CompanyListQueryDto } from '../../common/DTO/request/company.list.request.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
@@ -41,14 +41,15 @@ export class EmployeeService {
   async findAll(params: CompanyListQueryDto): Promise<PaginatedResponseDto<EmployeeDto>> {
     const {
       pageNumber = PAGINATION_DEFAULT_PAGE,
-      pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
+      pageSize = 20,
       search,
-      beginDate,
-      endDate,
+
       companyId,
     } = params;
 
-    const filter: any = { companyId };
+    const filter: any = {
+      companyId: new Types.ObjectId(companyId),
+    };
 
     if (search) {
       filter.$or = [
@@ -58,19 +59,13 @@ export class EmployeeService {
       ];
     }
 
-    if (beginDate || endDate) {
-      filter.hireDate = { $exists: true, $ne: null };
-      if (beginDate) filter.hireDate.$gte = new Date(beginDate);
-      if (endDate) filter.hireDate.$lte = new Date(endDate);
-    }
-
     const totalCount = await this.EmployeeModel.countDocuments(filter);
 
     const data = await this.EmployeeModel.find(filter)
       .collation({ locale: 'tr', strength: 1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
-      .sort({ hireDate: -1 })
+      .sort({ createdAt: -1 })
       .lean()
       .exec();
 
@@ -89,7 +84,9 @@ export class EmployeeService {
   async findOne(id: string, companyId: string): Promise<EmployeeDto> {
     ensureValidObjectId(id, 'Geçersiz personel ID');
 
-    const data = await this.EmployeeModel.findOne({ _id: id, companyId }).lean().exec();
+    const data = await this.EmployeeModel.findOne({ _id: id, companyId: new Types.ObjectId(companyId) })
+      .lean()
+      .exec();
     if (!data) throw new NotFoundException('Personel bulunamadı');
 
     return plainToInstance(EmployeeDto, data);

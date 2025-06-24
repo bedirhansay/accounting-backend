@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../common/constant/pagination.param';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
@@ -47,7 +47,9 @@ export class CustomersService {
       endDate,
     } = query;
 
-    const filter: any = { companyId };
+    const filter: any = {
+      companyId: new Types.ObjectId(companyId),
+    };
 
     if (search) {
       filter.$or = [{ name: { $regex: search, $options: 'i' } }];

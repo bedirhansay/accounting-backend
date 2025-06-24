@@ -1,9 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Exclude, Expose, plainToInstance, Transform } from 'class-transformer';
+import { Expose, plainToInstance, Transform } from 'class-transformer';
 import { BaseDto } from '../../../common/DTO/base/base.dto';
 import { EmployeeDto } from '../../employee/dto/employee.dto';
 
-@Exclude()
 export class VehicleDto extends BaseDto {
   @ApiProperty({ example: 'TR34ABC123', description: 'Plaka numarası' })
   @Expose()
@@ -39,6 +38,9 @@ export class VehicleDto extends BaseDto {
     toClassOnly: true,
   })
   driver: Pick<EmployeeDto, 'id' | 'fullName'>;
+
+  @Expose()
+  driverId: string;
 
   // @Expose()
   // get driverFull(): string | undefined {

@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type CategoryDocument = Category & Document;
 @Schema({
@@ -12,16 +12,16 @@ export class Category {
   @Prop({ required: false })
   description: string;
 
-  @Prop({ required: true })
-  type: string;
+  @Prop({ required: true, enum: ['income', 'expense'] })
+  type: 'income' | 'expense';
 
   @Prop({ required: true })
   isActive: boolean;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true })
-  companyId: string;
+  @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
+  companyId: Types.ObjectId;
 }
 
 export const CategorySchema = SchemaFactory.createForClass(Category);
 
-CategorySchema.index({ name: 1, companyId: 1 }, { unique: true });
+CategorySchema.index({ name: 1, companyId: 1, type: 1 }, { unique: true });

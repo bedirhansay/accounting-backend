@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { Employee } from '../employee/employee.schema';
 
 export type VehicleDocument = Vehicle & Document;
 
@@ -20,14 +21,14 @@ export class Vehicle {
   @Prop({ type: Date })
   insuranceDate?: Date;
 
-  @Prop({ type: Types.ObjectId, ref: 'Employee', required: true })
-  driverId: Types.ObjectId;
-
   @Prop({ required: true, default: true })
   isActive: boolean;
 
   @Prop({ type: String, trim: true, default: '' })
   description?: string;
+
+  @Prop({ type: Types.ObjectId, ref: Employee.name, required: true })
+  driverId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
   companyId: Types.ObjectId;

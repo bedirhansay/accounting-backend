@@ -46,7 +46,9 @@ export class VehicleService {
   async findAll(params: CompanyListQueryDto): Promise<PaginatedResponseDto<VehicleDto>> {
     const { pageNumber, pageSize, search, beginDate, endDate, companyId } = params;
 
-    const filter: any = { companyId };
+    const filter: any = {
+      companyId: new Types.ObjectId(companyId),
+    };
 
     if (search) {
       filter.$or = [
@@ -112,7 +114,11 @@ export class VehicleService {
       throw new BadRequestException('Geçersiz sürücü ID');
     }
 
-    const updated = await this.vehicleModel.findOneAndUpdate({ _id: id, companyId }, dto, { new: true });
+    const updated = await this.vehicleModel.findOneAndUpdate(
+      { _id: id, companyId: new Types.ObjectId(companyId) },
+      dto,
+      { new: true }
+    );
 
     if (!updated) {
       throw new NotFoundException('Güncellenecek araç bulunamadı');

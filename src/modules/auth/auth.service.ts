@@ -1,12 +1,13 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcryptjs';
+import { plainToInstance } from 'class-transformer';
 import { Model } from 'mongoose';
 
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { User, UserDocument } from '../users/user.schema';
-import { LoginDto, LoginResponseDto } from './dto/login.dto';
+import { LoginDto, LoginResponseDto, UserResponseDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -17,7 +18,12 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto): Promise<LoginResponseDto> {
-    const user = await this.findUserByEmailOrUsername(dto.username);
+    const identifier = dto.username.trim().toLowerCase();
+
+    const user = await this.findUserByEmailOrUsername(identifier);
+
+    console.log('Gelen username:', dto.username);
+    console.log('Normalize edilen:', identifier);
 
     if (!user || !user.password) {
       throw new UnauthorizedException('Kullanıcı bulunamadı veya şifresi geçersiz');
@@ -34,51 +40,51 @@ export class AuthService {
       username: user.username,
     };
 
-    const token = await this.jwtService.signAsync(payload);
+    const token = await this.jwtService.signAsync(payload, {
+      expiresIn: '365d',
+    });
 
     return {
       token,
-      user: {
-        id: user._id as string,
-        username: user.username,
-        email: user.email,
-      },
+      user: plainToInstance(UserResponseDto, user, { excludeExtraneousValues: true }),
     };
   }
 
   async register(dto: CreateUserDto) {
-    try {
-      const existingUser = await this.userModel.findOne({ email: dto.email });
-      if (existingUser) {
-        throw new ConflictException('Bu e-posta zaten kayıtlı');
-      }
+    const email = dto.email.trim().toLowerCase();
+    const username = dto.username.trim().toLowerCase();
 
+    const existingUser = await this.userModel.findOne({ email });
+    if (existingUser) {
+      throw new ConflictException('Bu e-posta zaten kayıtlı');
+    }
+
+    try {
       const hashedPassword = await bcrypt.hash(dto.password, 10);
 
       const newUser = new this.userModel({
-        username: dto.username,
-        email: dto.email,
+        username,
+        email,
         password: hashedPassword,
+        role: 'user',
+        isActive: true,
       });
 
       await newUser.save();
 
       return {
         message: 'Kayıt başarılı',
-        user: {
-          id: newUser._id,
-          email: newUser.email,
-          username: newUser.username,
-        },
       };
     } catch (error) {
-      throw new ConflictException('Kayıt başarısız');
+      throw new InternalServerErrorException('Kayıt sırasında bir hata oluştu');
     }
   }
 
   private async findUserByEmailOrUsername(identifier: string) {
-    return this.userModel.findOne({
-      $or: [{ username: identifier }, { email: identifier }],
-    });
+    return this.userModel
+      .findOne({
+        $or: [{ username: identifier }, { email: identifier }],
+      })
+      .select('+password');
   }
 }

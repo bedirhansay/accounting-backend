@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { plainToInstance } from 'class-transformer';
 
@@ -45,7 +45,7 @@ export class IncomeService {
       companyId,
     } = params;
 
-    const filter: any = { companyId };
+    const filter: any = { companyId: new Types.ObjectId(companyId) };
 
     if (search) {
       filter.$or = [{ description: new RegExp(search, 'i') }];
@@ -193,7 +193,6 @@ export class IncomeService {
     const { pageNumber, pageSize, search, beginDate, endDate } = query;
 
     const filter: any = { companyId, customerId };
-    console.log('Filter:', JSON.stringify(filter, null, 2));
     if (search) {
       filter.description = { $regex: search, $options: 'i' };
     }

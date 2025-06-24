@@ -1,50 +1,40 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ApiBaseResponse } from '../../common/decorator/swagger';
-import { CreateUserDto } from '../users/dto/create-user.dto';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+
 import { AuthService } from './auth.service';
 import { LoginDto, LoginResponseDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register-dto';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @ApiOperation({
-    summary: 'Kullanıcı kaydı oluşturur',
-    operationId: 'registerUser',
-  })
-  @ApiOkResponse({
-    description: 'Kullanıcı kaydı başarıyla oluşturuldu',
-  })
   @Post('register')
-  async register(@Body() dto: CreateUserDto) {
-    try {
-      return await this.authService.register(dto);
-    } catch (error) {
-      return {
-        statusCode: error.status || 500,
-        message: error.message || 'Bilinmeyen bir hata oluştu',
-        error: error.name || 'InternalServerError',
-      };
-    }
+  @ApiOperation({ summary: 'Yeni kullanıcı kaydı oluşturur' })
+  @ApiCreatedResponse({
+    description: 'Kullanıcı başarıyla kaydedildi',
+    schema: {
+      example: {
+        user: {
+          id: '665b77abc123456789abcdef',
+          username: 'bedirhansay',
+          email: 'bedirhan@example.com',
+        },
+      },
+    },
+  })
+  async register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
   }
 
-  @ApiOperation({
-    summary: 'Kullanıcı girişi yapar',
-    operationId: 'login',
-  })
-  @ApiBaseResponse(LoginResponseDto)
   @Post('login')
-  async login(@Body() dto: LoginDto) {
-    try {
-      return await this.authService.login(dto);
-    } catch (error) {
-      return {
-        statusCode: error.status || 500,
-        message: error.message || 'Bilinmeyen bir hata oluştu',
-        error: error.name || 'InternalServerError',
-      };
-    }
+  @ApiOperation({ summary: 'Kullanıcı girişi yapar' })
+  @ApiOkResponse({
+    description: 'Giriş başarılı',
+    type: LoginResponseDto,
+  })
+  async login(@Body() dto: LoginDto): Promise<LoginResponseDto> {
+    return this.authService.login(dto);
   }
 }

@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { PaginatedSearchDTO } from '../../common/DTO/request/search.request.dto';
 import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
@@ -43,7 +43,10 @@ export class CategoriesService {
 
   async findAll(companyId: string, query: PaginatedSearchDTO): Promise<PaginatedResponseDto<CategoryDto>> {
     const { pageNumber = 1, pageSize = 10, search } = query;
-    const filter: any = { companyId };
+
+    const filter: any = {
+      companyId: new Types.ObjectId(companyId),
+    };
 
     if (search) {
       filter.$or = [{ name: { $regex: search, $options: 'i' } }];

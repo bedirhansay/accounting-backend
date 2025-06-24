@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../common/constant/pagination.param';
 import { CompanyListQueryDto } from '../../common/DTO/request/company.list.request.dto';
@@ -41,7 +41,7 @@ export class FuelService {
       companyId,
     } = params;
 
-    const filter: any = { companyId };
+    const filter: any = { companyId: new Types.ObjectId(companyId) };
 
     if (search) {
       filter.$or = [{ fuelType: new RegExp(search, 'i') }, { invoiceNo: new RegExp(search, 'i') }];
@@ -83,7 +83,7 @@ export class FuelService {
     ensureValidObjectId(id, 'Geçersiz yakıt ID');
 
     const fuel = await this.fuelModel
-      .findOne({ _id: id, companyId })
+      .findOne({ _id: id, companyId: new Types.ObjectId(companyId) })
       .populate('vehicleId', 'plateNumber')
       .lean()
       .exec();
@@ -142,7 +142,7 @@ export class FuelService {
       endDate,
     } = query;
 
-    const filter: any = { vehicleId, companyId };
+    const filter: any = { vehicleId: new Types.ObjectId(companyId), companyId: new Types.ObjectId(companyId) };
 
     if (search) {
       filter.$or = [
