@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Header, Param, Patch, Post, Query, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Header, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 
@@ -87,8 +87,10 @@ export class IncomeController {
   getCustomerIncomes(
     @Param('id') customerId: string,
     @Query() query: PaginatedDateSearchDTO,
-    @CurrentCompany() companyId: string
+    @CurrentCompany() companyId: string,
+    @Req() req: Request
   ) {
+    console.log('x-company-id:', req.headers['x-company-id']);
     return this.incomeService.getIncomesByCustomer(customerId, query, companyId);
   }
 

@@ -88,21 +88,21 @@ export class ExpenseController {
   @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(Expense)
   getExpensesByVehicle(
-    @Param('id') vehicleId: string,
+    @Param('id') id: string,
     @Query() query: PaginatedDateSearchDTO,
     @CurrentCompany() companyId: string
   ) {
-    return this.expenseService.getVehicleExpenses(vehicleId, companyId, query);
+    return this.expenseService.getVehicleExpenses(id, companyId, query);
   }
   @Get('employee/:id')
   @ApiOperation({ summary: 'Personele ait giderler', operationId: 'getExpensesByEmployee' })
   @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(Expense)
   getExpensesByEmployee(
-    @Param('id') vehicleId: string,
+    @Param('id') id: string,
     @Query() query: PaginatedDateSearchDTO,
     @CurrentCompany() companyId: string
   ) {
-    return this.expenseService.getEmployeeExpense(vehicleId, companyId, query);
+    return this.expenseService.getEmployeeExpense(id, companyId, query);
   }
 }

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
 import { plainToInstance } from 'class-transformer';
 
@@ -187,21 +187,15 @@ export class IncomeService {
     customerId: string,
     query: PaginatedDateSearchDTO,
     companyId: string
-  ): Promise<PaginatedResponseDto<Income>> {
+  ): Promise<PaginatedResponseDto<IncomeDto>> {
     ensureValidObjectId(customerId, 'Geçersiz müşteri ID');
 
     const { pageNumber, pageSize, search, beginDate, endDate } = query;
 
-    const filter: any = { customerId: new Types.ObjectId(customerId), companyId };
-
+    const filter: any = { companyId, customerId };
+    console.log('Filter:', JSON.stringify(filter, null, 2));
     if (search) {
       filter.description = { $regex: search, $options: 'i' };
-    }
-
-    if (beginDate || endDate) {
-      filter.operationDate = {};
-      if (beginDate) filter.operationDate.$gte = new Date(beginDate);
-      if (endDate) filter.operationDate.$lte = new Date(endDate);
     }
 
     const totalCount = await this.incomeModel.countDocuments(filter);
@@ -210,11 +204,16 @@ export class IncomeService {
       .find(filter)
       .sort({ operationDate: -1 })
       .skip((pageNumber - 1) * pageSize)
+      .populate('customerId', 'name')
+      .populate('categoryId', 'name')
+      .lean()
       .limit(pageSize)
       .exec();
 
+    const items = plainToInstance(IncomeDto, incomes);
+
     return {
-      items: incomes,
+      items,
       pageNumber,
       totalPages: Math.ceil(totalCount / pageSize),
       totalCount,

@@ -176,15 +176,19 @@ export class ExpenseService {
   }
 
   async getVehicleExpenses(
-    vehicleId: string,
+    id: string,
     companyId: string,
     query: PaginatedDateSearchDTO
-  ): Promise<PaginatedResponseDto<Expense>> {
-    ensureValidObjectId(vehicleId, 'Geçersiz araç ID');
+  ): Promise<PaginatedResponseDto<ExpenseDto>> {
+    ensureValidObjectId(id, 'Geçersiz araç ID');
 
     const { pageNumber, pageSize, search, beginDate, endDate } = query;
 
-    const filter: any = { vehicleId, companyId };
+    const filter: any = {
+      relatedToId: id,
+      relatedModel: 'Vehicle',
+      companyId,
+    };
 
     if (search) {
       filter.$or = [
@@ -206,7 +210,10 @@ export class ExpenseService {
       .find(filter)
       .sort({ expenseDate: -1 })
       .skip((pageNumber - 1) * pageSize)
+      .populate('categoryId')
       .limit(pageSize);
+
+    const items = plainToInstance(ExpenseDto, expenses);
 
     return {
       pageNumber,
@@ -214,20 +221,24 @@ export class ExpenseService {
       totalCount,
       hasPreviousPage: pageNumber > 1,
       hasNextPage: pageNumber * pageSize < totalCount,
-      items: expenses,
+      items,
     };
   }
 
   async getEmployeeExpense(
-    employeeId: string,
+    id: string,
     companyId: string,
     query: PaginatedDateSearchDTO
-  ): Promise<PaginatedResponseDto<Expense>> {
-    ensureValidObjectId(employeeId, 'Geçersiz araç ID');
+  ): Promise<PaginatedResponseDto<ExpenseDto>> {
+    ensureValidObjectId(id, 'Geçersiz araç ID');
 
     const { pageNumber, pageSize, search, beginDate, endDate } = query;
 
-    const filter: any = { employeeId, companyId };
+    const filter: any = {
+      relatedToId: id,
+      relatedModel: 'Employee',
+      companyId,
+    };
 
     if (search) {
       filter.$or = [
@@ -247,9 +258,14 @@ export class ExpenseService {
 
     const expenses = await this.expenseModel
       .find(filter)
+      .populate('categoryId')
       .sort({ expenseDate: -1 })
       .skip((pageNumber - 1) * pageSize)
-      .limit(pageSize);
+      .limit(pageSize)
+      .lean()
+      .exec();
+
+    const items = plainToInstance(ExpenseDto, expenses);
 
     return {
       pageNumber,
@@ -257,7 +273,7 @@ export class ExpenseService {
       totalCount,
       hasPreviousPage: pageNumber > 1,
       hasNextPage: pageNumber * pageSize < totalCount,
-      items: expenses,
+      items,
     };
   }
 }
