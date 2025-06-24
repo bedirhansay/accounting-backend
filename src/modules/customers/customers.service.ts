@@ -22,7 +22,7 @@ export class CustomersService {
 
   async create(dto: CreateCustomerDto & { companyId: string }): Promise<CommandResponseDto> {
     const existing = await this.customerModel.findOne({
-      companyId: dto.companyId,
+      companyId: new Types.ObjectId(dto.companyId),
       name: dto.name,
     });
 
@@ -88,7 +88,10 @@ export class CustomersService {
   async findOne(id: string, companyId: string): Promise<CustomerDto> {
     ensureValidObjectId(id, 'Geçersiz müşteri ID');
 
-    const customer = await this.customerModel.findOne({ _id: id, companyId }).lean().exec();
+    const customer = await this.customerModel
+      .findOne({ _id: id, companyId: new Types.ObjectId(companyId) })
+      .lean()
+      .exec();
     if (!customer) throw new NotFoundException('Müşteri bulunamadı');
 
     return plainToInstance(CustomerDto, customer, {
@@ -99,7 +102,9 @@ export class CustomersService {
   async update(id: string, dto: UpdateCustomerDto, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz müşteri ID');
 
-    const updated = await this.customerModel.findOneAndUpdate({ _id: id, companyId }, dto, { new: true }).exec();
+    const updated = await this.customerModel
+      .findOneAndUpdate({ _id: id, companyId: new Types.ObjectId(companyId) }, dto, { new: true })
+      .exec();
 
     if (!updated) throw new NotFoundException('Güncellenecek müşteri bulunamadı');
 
@@ -112,7 +117,9 @@ export class CustomersService {
   async remove(id: string, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz müşteri ID');
 
-    const deleted = await this.customerModel.findOneAndDelete({ _id: id, companyId }).exec();
+    const deleted = await this.customerModel
+      .findOneAndDelete({ _id: id, companyId: new Types.ObjectId(companyId) })
+      .exec();
     if (!deleted) throw new NotFoundException('Silinecek müşteri bulunamadı');
 
     return {

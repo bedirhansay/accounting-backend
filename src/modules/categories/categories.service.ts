@@ -81,7 +81,11 @@ export class CategoriesService {
   async findOne(id: string, companyId: string): Promise<BaseResponseDto<CategoryDto>> {
     ensureValidObjectId(id, 'Geçersiz kategori ID');
 
-    const category = await this.categoryModel.findOne({ _id: id, companyId }).lean().select('-__v').exec();
+    const category = await this.categoryModel
+      .findOne({ _id: id, companyId: new Types.ObjectId(companyId) })
+      .lean()
+      .select('-__v')
+      .exec();
 
     if (!category) {
       throw new NotFoundException('Kategori bulunamadı');
@@ -97,7 +101,9 @@ export class CategoriesService {
   async update(id: string, dto: UpdateCategoryDto, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz kategori ID');
 
-    const updated = await this.categoryModel.findOneAndUpdate({ _id: id, companyId }, dto, { new: true }).exec();
+    const updated = await this.categoryModel
+      .findOneAndUpdate({ _id: id, companyId: new Types.ObjectId(companyId) }, dto, { new: true })
+      .exec();
 
     if (!updated) {
       throw new NotFoundException('Güncellenecek kategori bulunamadı');
@@ -112,7 +118,9 @@ export class CategoriesService {
   async remove(id: string, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz kategori ID');
 
-    const deleted = await this.categoryModel.findOneAndDelete({ _id: id, companyId }).exec();
+    const deleted = await this.categoryModel
+      .findOneAndDelete({ _id: id, companyId: new Types.ObjectId(companyId) })
+      .exec();
 
     if (!deleted) {
       throw new NotFoundException('Silinecek kategori bulunamadı');

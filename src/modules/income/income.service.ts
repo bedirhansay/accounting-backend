@@ -1,10 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { plainToInstance } from 'class-transformer';
 import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
 import { Model, Types } from 'mongoose';
-
-import { plainToInstance } from 'class-transformer';
 
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../common/constant/pagination.param';
 import { CompanyListQueryDto } from '../../common/DTO/request/company.list.request.dto';
@@ -26,7 +25,10 @@ export class IncomeService {
   ) {}
 
   async create(dto: CreateIncomeDto & { companyId: string }): Promise<CommandResponseDto> {
-    const created = new this.incomeModel(dto);
+    const created = new this.incomeModel({
+      ...dto,
+      companyId: new Types.ObjectId(dto.companyId),
+    });
     await created.save();
 
     return {
@@ -170,10 +172,7 @@ export class IncomeService {
     ];
 
     Object.entries(grouped).forEach(([customerName, data]) => {
-      sheet.addRow({
-        customerName,
-        ...data,
-      });
+      sheet.addRow({ customerName, ...data });
     });
 
     const buffer = await workbook.xlsx.writeBuffer();
@@ -195,6 +194,12 @@ export class IncomeService {
     const filter: any = { companyId, customerId };
     if (search) {
       filter.description = { $regex: search, $options: 'i' };
+    }
+
+    if (beginDate || endDate) {
+      filter.operationDate = {};
+      if (beginDate) filter.operationDate.$gte = new Date(beginDate);
+      if (endDate) filter.operationDate.$lte = new Date(endDate);
     }
 
     const totalCount = await this.incomeModel.countDocuments(filter);

@@ -33,7 +33,13 @@ export class ExpenseService {
   ) {}
 
   async create(dto: CreateExpenseDto & { companyId: string }): Promise<CommandResponseDto> {
-    const created = new this.expenseModel(dto);
+    ensureValidObjectId(dto.companyId, 'Geçersiz firma ID');
+
+    const created = new this.expenseModel({
+      ...dto,
+      companyId: new Types.ObjectId(dto.companyId),
+    });
+
     await created.save();
 
     return {
@@ -70,12 +76,13 @@ export class ExpenseService {
 
     const rawExpenses = await this.expenseModel
       .find(filter)
+      .collation({ locale: 'tr', strength: 1 })
       .sort({ operationDate: -1 })
       .populate('categoryId', 'name')
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
       .lean()
-      .collation({ locale: 'tr', strength: 1 })
+
       .select('-__v')
       .exec();
 
@@ -130,7 +137,7 @@ export class ExpenseService {
   async findOne({ id, companyId }: WithIdAndCompanyId): Promise<ExpenseDto> {
     ensureValidObjectId(id, 'Geçersiz gider ID');
     const expense = await this.expenseModel
-      .findOne({ _id: id, companyId })
+      .findOne({ _id: id, companyId: new Types.ObjectId(companyId) })
       .populate('categoryId', 'name')
       .lean()
       .exec();
@@ -155,14 +162,18 @@ export class ExpenseService {
       }
     }
 
-    const data = plainToInstance(ExpenseDto, finalExpense);
+    const data = plainToInstance(ExpenseDto, finalExpense, {
+      excludeExtraneousValues: true,
+    });
     return data;
   }
 
   async update({ id, companyId }: WithIdAndCompanyId, dto: UpdateExpenseDto): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz gider ID');
 
-    const updated = await this.expenseModel.findOneAndUpdate({ _id: id, companyId }, dto, { new: true }).exec();
+    const updated = await this.expenseModel
+      .findOneAndUpdate({ _id: id, companyId: new Types.ObjectId(companyId) }, dto, { new: true })
+      .exec();
 
     if (!updated) throw new NotFoundException('Gider güncellenemedi');
 
@@ -175,7 +186,9 @@ export class ExpenseService {
   async remove({ id, companyId }: WithIdAndCompanyId): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz gider ID');
 
-    const deleted = await this.expenseModel.findOneAndDelete({ _id: id, companyId }).exec();
+    const deleted = await this.expenseModel
+      .findOneAndDelete({ _id: id, companyId: new Types.ObjectId(companyId) })
+      .exec();
 
     if (!deleted) throw new NotFoundException('Silinecek gider bulunamadı');
 
@@ -197,7 +210,7 @@ export class ExpenseService {
     const filter: any = {
       relatedToId: id,
       relatedModel: 'Vehicle',
-      companyId,
+      companyId: new Types.ObjectId(companyId),
     };
 
     if (search) {
@@ -247,7 +260,7 @@ export class ExpenseService {
     const filter: any = {
       relatedToId: id,
       relatedModel: 'Employee',
-      companyId,
+      companyId: new Types.ObjectId(companyId),
     };
 
     if (search) {

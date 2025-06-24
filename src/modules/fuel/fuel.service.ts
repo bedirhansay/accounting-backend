@@ -23,7 +23,13 @@ export class FuelService {
   ) {}
 
   async create(dto: CreateFuelDto & { companyId: string }): Promise<CommandResponseDto> {
-    const created = await new this.fuelModel(dto).save();
+    ensureValidObjectId(dto.companyId, 'Geçersiz firma ID');
+
+    const created = await new this.fuelModel({
+      ...dto,
+      companyId: new Types.ObjectId(dto.companyId),
+      vehicleId: dto.vehicleId ? new Types.ObjectId(dto.vehicleId) : undefined,
+    }).save();
 
     return {
       statusCode: 201,
@@ -41,10 +47,16 @@ export class FuelService {
       companyId,
     } = params;
 
+    ensureValidObjectId(companyId, 'Geçersiz firma ID');
+
     const filter: any = { companyId: new Types.ObjectId(companyId) };
 
     if (search) {
-      filter.$or = [{ fuelType: new RegExp(search, 'i') }, { invoiceNo: new RegExp(search, 'i') }];
+      filter.$or = [
+        { fuelType: { $regex: search, $options: 'i' } },
+        { invoiceNo: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+      ];
     }
 
     if (beginDate || endDate) {
@@ -58,7 +70,7 @@ export class FuelService {
     const data = await this.fuelModel
       .find(filter)
       .collation({ locale: 'tr', strength: 1 })
-      .populate('vehicleId', 'plateNumber')
+      .populate({ path: 'vehicleId', select: 'plateNumber' })
       .sort({ operationDate: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
@@ -81,10 +93,11 @@ export class FuelService {
 
   async findOne(id: string, companyId: string): Promise<FuelDto> {
     ensureValidObjectId(id, 'Geçersiz yakıt ID');
+    ensureValidObjectId(companyId, 'Geçersiz firma ID');
 
     const fuel = await this.fuelModel
       .findOne({ _id: id, companyId: new Types.ObjectId(companyId) })
-      .populate('vehicleId', 'plateNumber')
+      .populate({ path: 'vehicleId', select: 'plateNumber' })
       .lean()
       .exec();
 
@@ -99,8 +112,11 @@ export class FuelService {
 
   async update(id: string, dto: UpdateFuelDto, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz yakıt ID');
+    ensureValidObjectId(companyId, 'Geçersiz firma ID');
 
-    const updated = await this.fuelModel.findOneAndUpdate({ _id: id, companyId }, dto, { new: true }).exec();
+    const updated = await this.fuelModel
+      .findOneAndUpdate({ _id: id, companyId: new Types.ObjectId(companyId) }, dto, { new: true })
+      .exec();
 
     if (!updated) {
       throw new NotFoundException('Güncellenecek yakıt kaydı bulunamadı');
@@ -114,8 +130,14 @@ export class FuelService {
 
   async remove(id: string, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz yakıt ID');
+    ensureValidObjectId(companyId, 'Geçersiz firma ID');
 
-    const deleted = await this.fuelModel.findOneAndDelete({ _id: id, companyId }).exec();
+    const deleted = await this.fuelModel
+      .findOneAndDelete({
+        _id: id,
+        companyId: new Types.ObjectId(companyId),
+      })
+      .exec();
 
     if (!deleted) {
       throw new NotFoundException('Silinecek yakıt kaydı bulunamadı');
@@ -133,6 +155,7 @@ export class FuelService {
     query: PaginatedDateSearchDTO
   ): Promise<PaginatedResponseDto<FuelDto>> {
     ensureValidObjectId(vehicleId, 'Geçersiz araç ID');
+    ensureValidObjectId(companyId, 'Geçersiz firma ID');
 
     const {
       pageNumber = PAGINATION_DEFAULT_PAGE,
@@ -142,7 +165,10 @@ export class FuelService {
       endDate,
     } = query;
 
-    const filter: any = { vehicleId: new Types.ObjectId(companyId), companyId: new Types.ObjectId(companyId) };
+    const filter: any = {
+      vehicleId: new Types.ObjectId(vehicleId),
+      companyId: new Types.ObjectId(companyId),
+    };
 
     if (search) {
       filter.$or = [
@@ -162,7 +188,7 @@ export class FuelService {
 
     const fuels = await this.fuelModel
       .find(filter)
-      .populate('vehicleId', 'plateNumber')
+      .populate({ path: 'vehicleId', select: 'plateNumber' })
       .sort({ operationDate: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)

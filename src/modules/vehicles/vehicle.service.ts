@@ -21,20 +21,24 @@ export class VehicleService {
   ) {}
 
   async create(dto: CreateVehicleDto & { companyId: string }): Promise<CommandResponseDto> {
-    if (!Types.ObjectId.isValid(dto.driverId)) {
-      throw new BadRequestException('Geçersiz sürücü ID');
-    }
+    ensureValidObjectId(dto.companyId, 'Geçersiz firma ID');
+    ensureValidObjectId(dto.driverId, 'Geçersiz sürücü ID');
 
     const existing = await this.vehicleModel.findOne({
       plateNumber: dto.plateNumber,
-      companyId: dto.companyId,
+      companyId: new Types.ObjectId(dto.companyId),
     });
 
     if (existing) {
       throw new BadRequestException('Bu plaka ile kayıtlı bir araç zaten var.');
     }
 
-    const created = new this.vehicleModel(dto);
+    const created = new this.vehicleModel({
+      ...dto,
+      companyId: new Types.ObjectId(dto.companyId),
+      driverId: new Types.ObjectId(dto.driverId),
+    });
+
     await created.save();
 
     return {
@@ -45,6 +49,8 @@ export class VehicleService {
 
   async findAll(params: CompanyListQueryDto): Promise<PaginatedResponseDto<VehicleDto>> {
     const { pageNumber, pageSize, search, beginDate, endDate, companyId } = params;
+
+    ensureValidObjectId(companyId, 'Geçersiz firma ID');
 
     const filter: any = {
       companyId: new Types.ObjectId(companyId),
@@ -91,9 +97,10 @@ export class VehicleService {
 
   async findOne(id: string, companyId: string): Promise<VehicleDto> {
     ensureValidObjectId(id, 'Geçersiz araç ID');
+    ensureValidObjectId(companyId, 'Geçersiz firma ID');
 
     const vehicle = await this.vehicleModel
-      .findOne({ _id: id, companyId })
+      .findOne({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) })
       .populate('driverId', 'fullName')
       .lean()
       .exec();
@@ -109,13 +116,11 @@ export class VehicleService {
 
   async update(id: string, dto: UpdateVehicleDto, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz araç ID');
-
-    if (dto.driverId && !Types.ObjectId.isValid(dto.driverId)) {
-      throw new BadRequestException('Geçersiz sürücü ID');
-    }
+    ensureValidObjectId(companyId, 'Geçersiz firma ID');
+    if (dto.driverId) ensureValidObjectId(dto.driverId, 'Geçersiz sürücü ID');
 
     const updated = await this.vehicleModel.findOneAndUpdate(
-      { _id: id, companyId: new Types.ObjectId(companyId) },
+      { _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) },
       dto,
       { new: true }
     );
@@ -132,8 +137,12 @@ export class VehicleService {
 
   async remove(id: string, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz araç ID');
+    ensureValidObjectId(companyId, 'Geçersiz firma ID');
 
-    const deleted = await this.vehicleModel.findOneAndDelete({ _id: id, companyId });
+    const deleted = await this.vehicleModel.findOneAndDelete({
+      _id: new Types.ObjectId(id),
+      companyId: new Types.ObjectId(companyId),
+    });
 
     if (!deleted) {
       throw new NotFoundException('Silinecek araç bulunamadı');

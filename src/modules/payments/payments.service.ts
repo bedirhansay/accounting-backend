@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
@@ -21,8 +21,14 @@ export class PaymentsService {
   ) {}
 
   async create(dto: CreatePaymentDto & { companyId: string }): Promise<CommandResponseDto> {
-    const created = new this.paymentModel(dto);
-    await created.save();
+    ensureValidObjectId(dto.companyId, 'Geçersiz firma ID');
+    if (dto.customerId) ensureValidObjectId(dto.customerId, 'Geçersiz müşteri ID');
+
+    const created = await new this.paymentModel({
+      ...dto,
+      companyId: new Types.ObjectId(dto.companyId),
+      customerId: dto.customerId ? new Types.ObjectId(dto.customerId) : undefined,
+    }).save();
 
     return {
       statusCode: 201,
@@ -32,7 +38,9 @@ export class PaymentsService {
 
   async findAll(params: PaginatedDateSearchDTO & { companyId: string }): Promise<PaginatedResponseDto<PaymentDto>> {
     const { pageNumber, pageSize, search, beginDate, endDate, companyId } = params;
-    const filter: any = { companyId };
+    ensureValidObjectId(companyId, 'Geçersiz firma ID');
+
+    const filter: any = { companyId: new Types.ObjectId(companyId) };
 
     if (search) {
       filter.$or = [{ description: { $regex: search, $options: 'i' } }];
@@ -45,7 +53,8 @@ export class PaymentsService {
     }
 
     const totalCount = await this.paymentModel.countDocuments(filter);
-    const data = await this.paymentModel
+
+    const payments = await this.paymentModel
       .find(filter)
       .populate('customerId', 'name')
       .sort({ operationDate: -1 })
@@ -54,7 +63,7 @@ export class PaymentsService {
       .lean()
       .exec();
 
-    const items = plainToInstance(PaymentDto, data, { excludeExtraneousValues: true });
+    const items = plainToInstance(PaymentDto, payments, { excludeExtraneousValues: true });
 
     return {
       items,
@@ -68,9 +77,10 @@ export class PaymentsService {
 
   async findOne(id: string, companyId: string): Promise<PaymentDto> {
     ensureValidObjectId(id, 'Geçersiz ödeme ID');
+    ensureValidObjectId(companyId, 'Geçersiz firma ID');
 
     const payment = await this.paymentModel
-      .findOne({ _id: id, companyId })
+      .findOne({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) })
       .populate('customerId', 'name')
       .lean()
       .exec();
@@ -82,14 +92,22 @@ export class PaymentsService {
 
   async update(id: string, dto: UpdatePaymentDto, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz ödeme ID');
+    ensureValidObjectId(companyId, 'Geçersiz firma ID');
 
-    const updated = await this.paymentModel.findOneAndUpdate({ _id: id, companyId }, dto, {
-      new: true,
-    });
+    if (dto.customerId) ensureValidObjectId(dto.customerId, 'Geçersiz müşteri ID');
 
-    if (!updated) {
-      throw new NotFoundException('Güncellenecek ödeme kaydı bulunamadı');
-    }
+    const updated = await this.paymentModel
+      .findOneAndUpdate(
+        { _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) },
+        {
+          ...dto,
+          customerId: dto.customerId ? new Types.ObjectId(dto.customerId) : undefined,
+        },
+        { new: true }
+      )
+      .exec();
+
+    if (!updated) throw new NotFoundException('Güncellenecek ödeme kaydı bulunamadı');
 
     return {
       statusCode: 200,
@@ -99,12 +117,13 @@ export class PaymentsService {
 
   async remove(id: string, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz ödeme ID');
+    ensureValidObjectId(companyId, 'Geçersiz firma ID');
 
-    const deleted = await this.paymentModel.findOneAndDelete({ _id: id, companyId }).exec();
+    const deleted = await this.paymentModel
+      .findOneAndDelete({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) })
+      .exec();
 
-    if (!deleted) {
-      throw new NotFoundException('Silinecek ödeme kaydı bulunamadı');
-    }
+    if (!deleted) throw new NotFoundException('Silinecek ödeme kaydı bulunamadı');
 
     return {
       statusCode: 204,
@@ -118,9 +137,14 @@ export class PaymentsService {
     companyId: string
   ): Promise<PaginatedResponseDto<PaymentDto>> {
     ensureValidObjectId(customerId, 'Geçersiz müşteri ID');
+    ensureValidObjectId(companyId, 'Geçersiz firma ID');
 
     const { pageNumber, pageSize, search, beginDate, endDate } = query;
-    const filter: any = { customerId, companyId };
+
+    const filter: any = {
+      customerId: new Types.ObjectId(customerId),
+      companyId: new Types.ObjectId(companyId),
+    };
 
     if (search) {
       filter.description = { $regex: search, $options: 'i' };
@@ -133,6 +157,7 @@ export class PaymentsService {
     }
 
     const totalCount = await this.paymentModel.countDocuments(filter);
+
     const data = await this.paymentModel
       .find(filter)
       .populate('customerId', 'name')

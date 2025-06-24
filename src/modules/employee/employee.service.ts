@@ -23,14 +23,14 @@ export class EmployeeService {
   async create(dto: CreateEmployeeDto, companyId: string): Promise<CommandResponseDto> {
     const exists = await this.EmployeeModel.findOne({
       fullName: dto.fullName,
-      companyId,
+      companyId: new Types.ObjectId(companyId),
     });
 
     if (exists) {
       throw new ConflictException('Bu isimde bir personel zaten mevcut.');
     }
 
-    const created = await new this.EmployeeModel({ ...dto, companyId }).save();
+    const created = await new this.EmployeeModel({ ...dto, companyId: new Types.ObjectId(companyId) }).save();
 
     return {
       statusCode: 201,
@@ -69,7 +69,9 @@ export class EmployeeService {
       .lean()
       .exec();
 
-    const items = plainToInstance(EmployeeDto, data);
+    const items = plainToInstance(EmployeeDto, data, {
+      excludeExtraneousValues: true,
+    });
 
     return {
       pageNumber,
@@ -95,7 +97,11 @@ export class EmployeeService {
   async update(id: string, dto: UpdateEmployeeDto, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz personel ID');
 
-    const updated = await this.EmployeeModel.findOneAndUpdate({ _id: id, companyId }, dto, { new: true }).exec();
+    const updated = await this.EmployeeModel.findOneAndUpdate(
+      { _id: id, companyId: new Types.ObjectId(companyId) },
+      dto,
+      { new: true }
+    ).exec();
 
     if (!updated) {
       throw new NotFoundException('Güncellenecek personel bulunamadı');
@@ -110,7 +116,10 @@ export class EmployeeService {
   async remove(id: string, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz personel ID');
 
-    const deleted = await this.EmployeeModel.findOneAndDelete({ _id: id, companyId }).exec();
+    const deleted = await this.EmployeeModel.findOneAndDelete({
+      _id: id,
+      companyId: new Types.ObjectId(companyId),
+    }).exec();
 
     if (!deleted) {
       throw new NotFoundException('Silinecek personel bulunamadı');
