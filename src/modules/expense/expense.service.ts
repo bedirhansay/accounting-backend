@@ -208,7 +208,7 @@ export class ExpenseService {
     const { pageNumber, pageSize, search, beginDate, endDate } = query;
 
     const filter: any = {
-      relatedToId: id,
+      relatedToId: new Types.ObjectId(id),
       relatedModel: 'Vehicle',
       companyId: new Types.ObjectId(companyId),
     };
@@ -258,7 +258,7 @@ export class ExpenseService {
     const { pageNumber, pageSize, search, beginDate, endDate } = query;
 
     const filter: any = {
-      relatedToId: id,
+      relatedToId: new Types.ObjectId(id),
       relatedModel: 'Employee',
       companyId: new Types.ObjectId(companyId),
     };

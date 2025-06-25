@@ -191,7 +191,10 @@ export class IncomeService {
 
     const { pageNumber, pageSize, search, beginDate, endDate } = query;
 
-    const filter: any = { companyId, customerId };
+    const filter: any = {
+      companyId: new Types.ObjectId(companyId),
+      customerId: new Types.ObjectId(customerId),
+    };
     if (search) {
       filter.description = { $regex: search, $options: 'i' };
     }

@@ -30,7 +30,12 @@ export class CustomersService {
       throw new ConflictException('Bu isimde bir müşteri zaten mevcut');
     }
 
-    const created = await new this.customerModel(dto).save();
+    const created = await new this.customerModel({
+      ...dto,
+      companyId: new Types.ObjectId(dto.companyId),
+    }).save();
+
+    console.log(created);
 
     return {
       statusCode: 201,
