@@ -19,6 +19,8 @@ import { LoggerModule } from './modules/logger/logger.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { UsersModule } from './modules/users/users.module';
 import { VehiclesModule } from './modules/vehicles/vehicle.module';
+import { ReportsModule } from './modules/reports/reports.module';
+
 
 @Module({
   imports: [
@@ -45,6 +47,7 @@ import { VehiclesModule } from './modules/vehicles/vehicle.module';
     ExpenseModule,
     IncomeModule,
     PaymentsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [

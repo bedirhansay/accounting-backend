@@ -6,7 +6,7 @@ export type CategoryDocument = Category & Document;
   timestamps: true,
 })
 export class Category {
-  @Prop({ required: true, trim: true, lowercase: true })
+  @Prop({ required: true, trim: true, lowercase: true, index: true })
   name: string;
 
   @Prop({ required: false })
