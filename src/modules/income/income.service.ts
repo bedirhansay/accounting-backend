@@ -6,14 +6,15 @@ import { Response } from 'express';
 import { Model, Types } from 'mongoose';
 
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../common/constant/pagination.param';
-import { CompanyListQueryDto } from '../../common/DTO/request/company.list.request.dto';
 import { DateRangeDTO } from '../../common/DTO/request/date.range.request.dto';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { ensureValidObjectId } from '../../common/helper/object.id';
+import { Customer, CustomerDocument } from '../customers/customer.schema';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { IncomeDto } from './dto/income.dto';
+import { IncomeQueryDto } from './dto/query-dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
 import { Income, IncomeDocument } from './income.schema';
 
@@ -21,7 +22,10 @@ import { Income, IncomeDocument } from './income.schema';
 export class IncomeService {
   constructor(
     @InjectModel(Income.name)
-    private readonly incomeModel: Model<IncomeDocument>
+    private readonly incomeModel: Model<IncomeDocument>,
+
+    @InjectModel(Customer.name)
+    private readonly customerModel: Model<CustomerDocument>
   ) {}
 
   async create(dto: CreateIncomeDto & { companyId: string }): Promise<CommandResponseDto> {
@@ -37,29 +41,48 @@ export class IncomeService {
     };
   }
 
-  async findAll(params: CompanyListQueryDto): Promise<PaginatedResponseDto<IncomeDto>> {
+  async findAll(params: IncomeQueryDto, companyId: string): Promise<PaginatedResponseDto<IncomeDto>> {
     const {
       pageNumber = PAGINATION_DEFAULT_PAGE,
       pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
       search,
       beginDate,
       endDate,
-      companyId,
+      isPaid,
     } = params;
 
-    const filter: any = { companyId: new Types.ObjectId(companyId) };
+    const filter: any = {
+      companyId: new Types.ObjectId(companyId),
+    };
 
-    if (search) {
-      filter.$or = [{ description: new RegExp(search, 'i') }];
-    }
-
+    // Tarih filtresi
     if (beginDate || endDate) {
       filter.operationDate = {};
       if (beginDate) filter.operationDate.$gte = new Date(beginDate);
       if (endDate) filter.operationDate.$lte = new Date(endDate);
     }
 
+    // isPaid filtresi
+    if (typeof isPaid == 'boolean') {
+      filter.isPaid = isPaid;
+    }
+
+    console.log(typeof isPaid);
+
+    // Arama filtresi
+    if (search) {
+      const matchedCustomers = await this.customerModel
+        .find({ name: new RegExp(search, 'i') }, '_id')
+        .lean()
+        .exec();
+
+      const customerIds: Types.ObjectId[] = matchedCustomers.map((c) => new Types.ObjectId(c._id as string));
+
+      filter.$or = [{ description: new RegExp(search, 'i') }, { customerId: { $in: customerIds } }];
+    }
+
     const totalCount = await this.incomeModel.countDocuments(filter);
+
     const data = await this.incomeModel
       .find(filter)
       .populate('customerId', 'name')
@@ -69,7 +92,9 @@ export class IncomeService {
       .limit(pageSize)
       .lean()
       .exec();
+
     const items = plainToInstance(IncomeDto, data);
+
     return {
       items,
       pageNumber,
@@ -84,7 +109,7 @@ export class IncomeService {
     ensureValidObjectId(id, 'Geçersiz gelir ID');
 
     const income = await this.incomeModel
-      .findOne({ _id: id, companyId })
+      .findOne({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) })
       .populate('customerId', 'name')
       .populate('categoryId', 'name')
       .lean()
@@ -97,7 +122,9 @@ export class IncomeService {
   async update(id: string, dto: UpdateIncomeDto, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz gelir ID');
 
-    const updated = await this.incomeModel.findOneAndUpdate({ _id: id, companyId }, dto, { new: true }).exec();
+    const updated = await this.incomeModel
+      .findOneAndUpdate({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) }, dto, { new: true })
+      .exec();
 
     if (!updated) throw new NotFoundException('Güncellenecek gelir kaydı bulunamadı');
 
@@ -110,7 +137,9 @@ export class IncomeService {
   async remove(id: string, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz gelir ID');
 
-    const deleted = await this.incomeModel.findOneAndDelete({ _id: id, companyId }).exec();
+    const deleted = await this.incomeModel
+      .findOneAndDelete({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) })
+      .exec();
 
     if (!deleted) throw new NotFoundException('Silinecek gelir kaydı bulunamadı');
 

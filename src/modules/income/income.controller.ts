@@ -1,11 +1,21 @@
 import { Body, Controller, Delete, Get, Header, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiExtraModels,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Response } from 'express';
 
 import { CurrentCompany } from '../../common/decorator/company.id';
 import {
   ApiBaseResponse,
   ApiCommandResponse,
+  ApiIncomeQueryDto,
   ApiPaginatedResponse,
   ApiSearchDatePaginatedQuery,
 } from '../../common/decorator/swagger';
@@ -16,8 +26,10 @@ import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 
+import { DateRangeDto } from '../../common/DTO/request';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { IncomeDto } from './dto/income.dto';
+import { IncomeQueryDto } from './dto/query-dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
 import { IncomeService } from './income.service';
 
@@ -48,17 +60,32 @@ export class IncomeController {
 
   @Get()
   @ApiOperation({ summary: 'Tüm gelirleri sayfalı olarak listeler', operationId: 'getAllIncomes' })
-  @ApiSearchDatePaginatedQuery()
+  @ApiIncomeQueryDto()
   @ApiPaginatedResponse(IncomeDto)
-  findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
-    return this.incomeService.findAll({ ...query, companyId });
+  findAll(@Query() query: IncomeQueryDto, @CurrentCompany() companyId: string) {
+    return this.incomeService.findAll({ ...query }, companyId);
   }
 
   @Get('export-customer-excel')
-  @ApiOperation({ summary: 'Gelirleri .zip dosyası olarak dışa aktarır', operationId: 'exportGroupedIncomes' })
+  @ApiOperation({
+    summary: 'Gelirleri .zip dosyası olarak dışa aktarır',
+    operationId: 'exportGroupedIncomes',
+  })
+  @ApiQuery({
+    name: 'beginDate',
+    required: false,
+    description: 'Başlangıç tarihi (ISO formatında)',
+    type: String,
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    description: 'Bitiş tarihi (ISO formatında)',
+    type: String,
+  })
   @Header('Content-Type', 'application/zip')
   @Header('Content-Disposition', 'attachment; filename=incomes.zip')
-  exportIncomes(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string, @Res() res: Response) {
+  exportIncomes(@Query() query: DateRangeDto, @CurrentCompany() companyId: string, @Res() res: Response) {
     return this.incomeService.exportGroupedIncomes(query, companyId, res);
   }
 

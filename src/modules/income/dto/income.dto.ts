@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Expose, plainToInstance, Transform } from 'class-transformer';
+import { IsBoolean } from 'class-validator';
 import { BaseDto } from '../../../common/DTO/base/base.dto';
 import { CategoryDto } from '../../categories/dto/category.dto';
 import { CustomerDto } from '../../customers/dto/customer.dto';
@@ -26,17 +27,17 @@ export class IncomeDto extends BaseDto {
   @Expose()
   operationDate: string;
 
+  @ApiPropertyOptional({ example: true, description: 'Gelir tahsil edildi mi?' })
+  @IsBoolean()
+  @Expose()
+  isPaid: boolean;
+
   @ApiProperty({ description: 'Müşteri bilgileri (populated)', type: () => CustomerDto })
   @Expose()
   @Transform(({ obj }) => plainToInstance(CustomerDto, obj.customerId, { excludeExtraneousValues: true }), {
     toClassOnly: true,
   })
   customer: Pick<CustomerDto, 'id' | 'name'>;
-
-  // @Expose()
-  // @Transform(({ obj }) => obj.categoryId?._id || obj.categoryId, { toClassOnly: true })
-  // @ApiProperty({ example: '6856b80f5a2566bf8644c148', description: 'Kategori ID bilgisi' })
-  // categoryId: string;
 
   @ApiProperty({ description: 'Kategori bilgileri (populated)', type: () => CategoryDto })
   @Expose()

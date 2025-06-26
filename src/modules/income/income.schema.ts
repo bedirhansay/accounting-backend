@@ -3,13 +3,16 @@ import { Document, Types } from 'mongoose';
 
 export type IncomeDocument = Income & Document;
 
-@Schema({ timestamps: { createdAt: true, updatedAt: false } })
+@Schema({ timestamps: true })
 export class Income {
   @Prop({ type: Number, required: true, min: 0 })
   unitCount: number;
 
   @Prop({ type: Number, required: true, min: 0 })
   unitPrice: number;
+
+  @Prop({ type: Boolean, required: true, default: undefined })
+  isPaid: number;
 
   @Prop({ type: Number, required: true, min: 0 })
   totalAmount: number;
