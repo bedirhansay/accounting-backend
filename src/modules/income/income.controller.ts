@@ -54,6 +54,14 @@ export class IncomeController {
     return this.incomeService.findAll({ ...query, companyId });
   }
 
+  @Get('export-customer-excel')
+  @ApiOperation({ summary: 'Gelirleri .zip dosyası olarak dışa aktarır', operationId: 'exportGroupedIncomes' })
+  @Header('Content-Type', 'application/zip')
+  @Header('Content-Disposition', 'attachment; filename=incomes.zip')
+  exportIncomes(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string, @Res() res: Response) {
+    return this.incomeService.exportGroupedIncomes(query, companyId, res);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Belirli bir gelir kaydını getirir', operationId: 'getIncomeById' })
   @ApiParam({ name: 'id', description: 'Gelir ID' })
@@ -90,15 +98,6 @@ export class IncomeController {
     @CurrentCompany() companyId: string,
     @Req() req: Request
   ) {
-    console.log('x-company-id:', req.headers['x-company-id']);
     return this.incomeService.getIncomesByCustomer(customerId, query, companyId);
-  }
-
-  @Get('export')
-  @ApiOperation({ summary: 'Gelirleri .zip dosyası olarak dışa aktarır', operationId: 'exportIncomes' })
-  @Header('Content-Type', 'application/zip')
-  @Header('Content-Disposition', 'attachment; filename=incomes.zip')
-  exportIncomes(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string, @Res() res: Response) {
-    return this.incomeService.exportGroupedIncomes(query, companyId, res);
   }
 }

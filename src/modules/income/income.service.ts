@@ -128,14 +128,15 @@ export class IncomeService {
     const start = query.beginDate ? new Date(query.beginDate) : defaultStart;
     const end = query.endDate ? new Date(query.endDate) : defaultEnd;
 
+    console.log(start, end);
+
     type PopulatedIncome = Omit<Income, 'customerId'> & {
       customerId: { name: string } | null;
     };
 
     const incomes = (await this.incomeModel
       .find({
-        companyId,
-        operationDate: { $gte: start, $lte: end },
+        companyId: new Types.ObjectId(companyId),
       })
       .populate('customerId', 'name')
       .lean()
@@ -155,8 +156,8 @@ export class IncomeService {
       }
 
       acc[name].totalDocuments += 1;
-      acc[name].totalUnitCount += income.unitCount;
-      acc[name].totalAmount += income.totalAmount;
+      acc[name].totalUnitCount += Number(income.unitCount);
+      acc[name].totalAmount += Number(income.totalAmount);
 
       return acc;
     }, {});
@@ -164,13 +165,41 @@ export class IncomeService {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet('Gelir Özeti');
 
+    // 🔸 Başlık: 1. Satıra
+    sheet.mergeCells('A1:D1');
+    const titleRow = sheet.getRow(1);
+    titleRow.getCell(1).value =
+      `Yükleme Özeti: ${start.toLocaleDateString('tr-TR')} - ${end.toLocaleDateString('tr-TR')}`;
+    titleRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+    titleRow.getCell(1).font = { bold: true };
+    titleRow.getCell(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFFF00' },
+    };
+    titleRow.getCell(1).border = {
+      bottom: { style: 'thin' },
+    };
+
+    sheet.getRow(2).values = ['Müşteri Adı', 'Yükleme Seferi', 'Toplam Kamyon Sayısı', 'Toplam Tutar (₺)'];
+    sheet.getRow(2).font = { bold: true };
+
     sheet.columns = [
-      { header: 'Müşteri Adı', key: 'customerName', width: 30 },
-      { header: 'Belge Sayısı', key: 'totalDocuments', width: 15 },
-      { header: 'Toplam Birim Adet', key: 'totalUnitCount', width: 20 },
-      { header: 'Toplam Tutar', key: 'totalAmount', width: 20 },
+      { key: 'customerName', width: 30 },
+      { key: 'totalDocuments', width: 15 },
+      { key: 'totalUnitCount', width: 20 },
+      { key: 'totalAmount', width: 20 },
     ];
 
+    let rowIndex = 3;
+    Object.entries(grouped).forEach(([customerName, data]) => {
+      sheet.insertRow(rowIndex++, {
+        customerName,
+        ...data,
+      });
+    });
+
+    sheet.getColumn(4).numFmt = '#,##0.00 ₺';
     Object.entries(grouped).forEach(([customerName, data]) => {
       sheet.addRow({ customerName, ...data });
     });

@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
+import * as ExcelJS from 'exceljs';
+import { Response } from 'express';
 import { Model, Types } from 'mongoose';
-
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../common/constant/pagination.param';
 import { CompanyListQueryDto } from '../../common/DTO/request/company.list.request.dto';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
@@ -10,6 +11,7 @@ import { CommandResponseDto } from '../../common/DTO/response/command-response.d
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { ensureValidObjectId } from '../../common/helper/object.id';
 
+import { DateRangeDTO } from '../../common/DTO/request';
 import { CreateFuelDto } from './dto/create-fuel.dto';
 import { FuelDto } from './dto/fuel.dto';
 import { UpdateFuelDto } from './dto/update-fuel.dto';
@@ -207,5 +209,85 @@ export class FuelService {
       hasNextPage: pageNumber * pageSize < totalCount,
       items,
     };
+  }
+
+  async exportGroupedFuels(query: DateRangeDTO, companyId: string, res: Response): Promise<void> {
+    const now = new Date();
+    const defaultStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const defaultEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    const start = query.beginDate ? new Date(query.beginDate) : defaultStart;
+    const end = query.endDate ? new Date(query.endDate) : defaultEnd;
+
+    const fuels = await this.fuelModel
+      .find({
+        companyId: new Types.ObjectId(companyId),
+        operationDate: { $gte: start, $lte: end },
+      })
+      .populate('vehicleId', 'plateNumber') // NOT: plate yerine plateNumber
+      .lean()
+      .exec();
+
+    // 🔸 Plaka + Şoför adına göre grupla
+    const grouped = fuels.reduce<
+      Record<string, { driverName: string; plateNumber: string; totalRecords: number; totalAmount: number }>
+    >((acc, fuel) => {
+      const plateNumber = (fuel.vehicleId as any)?.plateNumber || 'Bilinmeyen Araç';
+      const driverName = fuel.driverName || 'Bilinmeyen Şoför';
+
+      const key = `${plateNumber}-${driverName}`;
+
+      if (!acc[key]) {
+        acc[key] = {
+          plateNumber,
+          driverName,
+          totalRecords: 0,
+          totalAmount: 0,
+        };
+      }
+
+      acc[key].totalRecords += 1;
+      acc[key].totalAmount += Number(fuel.totalPrice || 0);
+
+      return acc;
+    }, {});
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Yakıt Özeti');
+
+    // Başlık satırı
+    sheet.mergeCells('A1:D1');
+    const titleRow = sheet.getRow(1);
+    titleRow.getCell(1).value =
+      `Araç Yakıt Özeti: ${start.toLocaleDateString('tr-TR')} - ${end.toLocaleDateString('tr-TR')}`;
+    titleRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+    titleRow.getCell(1).font = { bold: true };
+    titleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF00' } };
+    titleRow.getCell(1).border = { bottom: { style: 'thin' } };
+
+    // Kolon başlıkları
+    sheet.getRow(2).values = ['Plaka', 'Şoför', 'Yakıt Fişi Sayısı', 'Toplam Tutar (₺)'];
+    sheet.getRow(2).font = { bold: true };
+
+    sheet.columns = [
+      { key: 'plateNumber', width: 20 },
+      { key: 'driverName', width: 25 },
+      { key: 'totalRecords', width: 20 },
+      { key: 'totalAmount', width: 20 },
+    ];
+
+    // Veri satırları
+    let rowIndex = 3;
+    Object.values(grouped).forEach((data) => {
+      sheet.insertRow(rowIndex++, data);
+    });
+
+    sheet.getColumn('totalAmount').numFmt = '#,##0.00 ₺';
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=vehicle-fuel-summary.xlsx');
+    res.end(buffer);
   }
 }
