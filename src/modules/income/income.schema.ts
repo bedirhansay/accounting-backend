@@ -12,7 +12,7 @@ export class Income {
   unitPrice: number;
 
   @Prop({ type: Boolean, required: true, default: undefined })
-  isPaid: number;
+  isPaid: boolean;
 
   @Prop({ type: Number, required: true, min: 0 })
   totalAmount: number;

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
+import { monthEnd, monthStart } from '../../common/constant/date';
 import { Expense } from '../expense/expense.schema';
 import { Fuel } from '../fuel/fuel.schema';
 import { Income } from '../income/income.schema';
@@ -39,8 +40,8 @@ export class ReportsService {
 
     const [expenseAgg, incomeAgg, fuelAgg] = await Promise.all([
       this.expenseModel.aggregate([
-        { $match: { companyId: companyObjectId, expenseDate: { $gte: start, $lt: end } } },
-        { $group: { _id: { $month: '$expenseDate' }, totalExpense: { $sum: '$amount' } } },
+        { $match: { companyId: companyObjectId, operationDate: { $gte: start, $lt: end } } },
+        { $group: { _id: { $month: '$operationDate' }, totalExpense: { $sum: '$amount' } } },
       ]),
       this.incomeModel.aggregate([
         { $match: { companyId: companyObjectId, operationDate: { $gte: start, $lt: end } } },
@@ -48,11 +49,10 @@ export class ReportsService {
       ]),
       this.fuelModel.aggregate([
         { $match: { companyId: companyObjectId, operationDate: { $gte: start, $lt: end } } },
-        { $group: { _id: { $month: '$operationDate' }, totalFuel: { $sum: '$totalPrice' } } },
+        { $group: { _id: { $month: '$operationDate' }, totalFuel: { $sum: { $toDouble: '$totalPrice' } } } },
       ]),
     ]);
 
-    // 1-12 ayları kapsayan boş DTO listesi oluştur
     const monthlyData: MonthlyReportItemDto[] = Array.from({ length: 12 }, (_, index) => ({
       monthName: monthMap[index + 1],
       totalIncome: 0,
@@ -60,7 +60,6 @@ export class ReportsService {
       totalFuel: 0,
     }));
 
-    // Verileri yerleştir
     incomeAgg.forEach((item) => {
       if (monthlyData[item._id - 1]) {
         monthlyData[item._id - 1].totalIncome = item.totalIncome;
@@ -80,5 +79,62 @@ export class ReportsService {
     });
 
     return monthlyData;
+  }
+
+  async getCustomerBalance(customerId: string, companyId: string) {
+    const customerObjectId = new Types.ObjectId(customerId);
+    const companyObjectId = new Types.ObjectId(companyId);
+
+    const result = await this.incomeModel.aggregate([
+      {
+        $match: {
+          customerId: customerObjectId,
+          companyId: companyObjectId,
+          operationDate: {
+            $gte: monthStart,
+            $lte: monthEnd,
+          },
+        },
+      },
+      {
+        $addFields: {
+          numericTotalAmount: { $toDouble: '$totalAmount' },
+          numericUnitCount: { $toInt: '$unitCount' },
+        },
+      },
+      {
+        $group: {
+          _id: '$customerId',
+          totalInvoiced: { $sum: '$numericTotalAmount' },
+          totalPaid: {
+            $sum: {
+              $cond: [{ $eq: ['$isPaid', true] }, '$numericTotalAmount', 0],
+            },
+          },
+          totalCount: { $sum: '$numericUnitCount' },
+        },
+      },
+      {
+        $project: {
+          customerId: '$_id',
+          totalInvoiced: 1,
+          totalPaid: 1,
+          totalCount: 1,
+          remainingReceivable: {
+            $subtract: ['$totalInvoiced', '$totalPaid'],
+          },
+          _id: 0,
+        },
+      },
+    ]);
+
+    return (
+      result?.[0] ?? {
+        totalInvoiced: 0,
+        totalPaid: 0,
+        totalCount: 0,
+        remainingReceivable: 0,
+      }
+    );
   }
 }

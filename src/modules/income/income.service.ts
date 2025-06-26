@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
+
 import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
 import { Model, Types } from 'mongoose';
@@ -18,6 +19,8 @@ import { IncomeQueryDto } from './dto/query-dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
 import { Income, IncomeDocument } from './income.schema';
 
+import dayjs from 'dayjs';
+
 @Injectable()
 export class IncomeService {
   constructor(
@@ -32,6 +35,8 @@ export class IncomeService {
     const created = new this.incomeModel({
       ...dto,
       companyId: new Types.ObjectId(dto.companyId),
+      customerId: new Types.ObjectId(dto.customerId),
+      categoryId: dto.categoryId ? new Types.ObjectId(dto.categoryId) : undefined,
     });
     await created.save();
 
@@ -258,9 +263,13 @@ export class IncomeService {
     }
 
     if (beginDate || endDate) {
-      filter.operationDate = {};
-      if (beginDate) filter.operationDate.$gte = new Date(beginDate);
-      if (endDate) filter.operationDate.$lte = new Date(endDate);
+      const start = beginDate ? dayjs(beginDate).startOf('day').toDate() : undefined;
+      const end = endDate ? dayjs(endDate).endOf('day').toDate() : undefined;
+
+      filter.operationDate = {
+        ...(start && { $gte: start }),
+        ...(end && { $lte: end }),
+      };
     }
 
     const totalCount = await this.incomeModel.countDocuments(filter);
