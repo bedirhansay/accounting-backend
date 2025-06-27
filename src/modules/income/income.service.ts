@@ -20,6 +20,7 @@ import { UpdateIncomeDto } from './dto/update-income.dto';
 import { Income, IncomeDocument } from './income.schema';
 
 import dayjs from 'dayjs';
+import { getMonthRange } from '../../common/helper/date';
 
 @Injectable()
 export class IncomeService {
@@ -56,25 +57,30 @@ export class IncomeService {
       isPaid,
     } = params;
 
+    const { beginDate: defaultBegin, endDate: defaultEnd } = getMonthRange();
+
+    const finalBeginDate = beginDate ?? defaultBegin;
+    const finalEndDate = endDate ?? defaultEnd;
+
     const filter: any = {
       companyId: new Types.ObjectId(companyId),
     };
 
-    // Tarih filtresi
-    if (beginDate || endDate) {
-      filter.operationDate = {};
-      if (beginDate) filter.operationDate.$gte = new Date(beginDate);
-      if (endDate) filter.operationDate.$lte = new Date(endDate);
+    if (search) {
+      filter.$or = [{ description: { $regex: search, $options: 'i' } }];
     }
 
-    // isPaid filtresi
+    if (beginDate || endDate) {
+      filter.operationDate = {};
+      if (finalBeginDate) filter.operationDate.$gte = new Date(finalBeginDate);
+      if (finalEndDate) filter.operationDate.$lte = new Date(finalEndDate);
+    }
     if (typeof isPaid == 'boolean') {
       filter.isPaid = isPaid;
     }
 
     console.log(typeof isPaid);
 
-    // Arama filtresi
     if (search) {
       const matchedCustomers = await this.customerModel
         .find({ name: new RegExp(search, 'i') }, '_id')

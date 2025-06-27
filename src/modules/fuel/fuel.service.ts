@@ -11,7 +11,9 @@ import { CommandResponseDto } from '../../common/DTO/response/command-response.d
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 import { ensureValidObjectId } from '../../common/helper/object.id';
 
+import { monthEnd, monthStart } from '../../common/constant/date';
 import { DateRangeDTO } from '../../common/DTO/request';
+import { getMonthRange } from '../../common/helper/date';
 import { CreateFuelDto } from './dto/create-fuel.dto';
 import { FuelDto } from './dto/fuel.dto';
 import { UpdateFuelDto } from './dto/update-fuel.dto';
@@ -44,29 +46,29 @@ export class FuelService {
       pageNumber = PAGINATION_DEFAULT_PAGE,
       pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
       search,
-      beginDate,
-      endDate,
+      beginDate = monthStart,
+      endDate = monthEnd,
       companyId,
     } = params;
 
-    ensureValidObjectId(companyId, 'Geçersiz firma ID');
+    const { beginDate: defaultBegin, endDate: defaultEnd } = getMonthRange();
 
-    const filter: any = { companyId: new Types.ObjectId(companyId) };
+    const finalBeginDate = beginDate ?? defaultBegin;
+    const finalEndDate = endDate ?? defaultEnd;
+
+    const filter: any = {
+      companyId: new Types.ObjectId(companyId),
+    };
 
     if (search) {
-      filter.$or = [
-        { fuelType: { $regex: search, $options: 'i' } },
-        { invoiceNo: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-      ];
+      filter.$or = [{ description: { $regex: search, $options: 'i' } }];
     }
 
     if (beginDate || endDate) {
       filter.operationDate = {};
-      if (beginDate) filter.operationDate.$gte = new Date(beginDate);
-      if (endDate) filter.operationDate.$lte = new Date(endDate);
+      if (finalBeginDate) filter.operationDate.$gte = new Date(finalBeginDate);
+      if (finalEndDate) filter.operationDate.$lte = new Date(finalEndDate);
     }
-
     const totalCount = await this.fuelModel.countDocuments(filter);
 
     const data = await this.fuelModel
@@ -98,7 +100,7 @@ export class FuelService {
     ensureValidObjectId(companyId, 'Geçersiz firma ID');
 
     const fuel = await this.fuelModel
-      .findOne({ _id: id, companyId: new Types.ObjectId(companyId) })
+      .findOne({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) })
       .populate({ path: 'vehicleId', select: 'plateNumber' })
       .lean()
       .exec();

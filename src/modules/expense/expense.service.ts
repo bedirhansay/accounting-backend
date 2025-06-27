@@ -3,11 +3,17 @@ import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
 import { Model, Types } from 'mongoose';
 
+import { Workbook } from 'exceljs';
+import * as fs from 'fs';
+import * as path from 'path';
+
+import { monthEnd, monthStart } from '../../common/constant/date';
 import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../common/constant/pagination.param';
 import { CompanyListQueryDto } from '../../common/DTO/request/company.list.request.dto';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
+import { getMonthRange } from '../../common/helper/date';
 import { ensureValidObjectId } from '../../common/helper/object.id';
 import { Employee, EmployeeDocument } from '../employee/employee.schema';
 import { Vehicle, VehicleDocument } from '../vehicles/vehicle.schema';
@@ -53,10 +59,15 @@ export class ExpenseService {
       pageNumber = PAGINATION_DEFAULT_PAGE,
       pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
       search,
-      beginDate,
-      endDate,
+      beginDate = monthStart,
+      endDate = monthEnd,
       companyId,
     } = params;
+
+    const { beginDate: defaultBegin, endDate: defaultEnd } = getMonthRange();
+
+    const finalBeginDate = beginDate ?? defaultBegin;
+    const finalEndDate = endDate ?? defaultEnd;
 
     const filter: any = {
       companyId: new Types.ObjectId(companyId),
@@ -68,8 +79,8 @@ export class ExpenseService {
 
     if (beginDate || endDate) {
       filter.operationDate = {};
-      if (beginDate) filter.operationDate.$gte = new Date(beginDate);
-      if (endDate) filter.operationDate.$lte = new Date(endDate);
+      if (finalBeginDate) filter.operationDate.$gte = new Date(finalBeginDate);
+      if (finalEndDate) filter.operationDate.$lte = new Date(finalEndDate);
     }
 
     const totalCount = await this.expenseModel.countDocuments(filter);
@@ -82,7 +93,7 @@ export class ExpenseService {
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
       .lean()
-
+      .sort({ createdAt: -1 })
       .select('-__v')
       .exec();
 
@@ -172,7 +183,7 @@ export class ExpenseService {
     ensureValidObjectId(id, 'Geçersiz gider ID');
 
     const updated = await this.expenseModel
-      .findOneAndUpdate({ _id: id, companyId: new Types.ObjectId(companyId) }, dto, { new: true })
+      .findOneAndUpdate({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) }, dto, { new: true })
       .exec();
 
     if (!updated) throw new NotFoundException('Gider güncellenemedi');
@@ -187,7 +198,7 @@ export class ExpenseService {
     ensureValidObjectId(id, 'Geçersiz gider ID');
 
     const deleted = await this.expenseModel
-      .findOneAndDelete({ _id: id, companyId: new Types.ObjectId(companyId) })
+      .findOneAndDelete({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) })
       .exec();
 
     if (!deleted) throw new NotFoundException('Silinecek gider bulunamadı');
@@ -298,5 +309,67 @@ export class ExpenseService {
       hasNextPage: pageNumber * pageSize < totalCount,
       items,
     };
+  }
+
+  async exportAllExpensesToExcel(companyId: string): Promise<string> {
+    ensureValidObjectId(companyId, 'Geçersiz firma ID');
+
+    const expenses = await this.expenseModel
+      .find({ companyId: new Types.ObjectId(companyId) })
+      .populate('categoryId', 'name')
+      .lean()
+      .exec();
+
+    const workbook = new Workbook();
+    const sheet = workbook.addWorksheet('Giderler');
+
+    // Türkçe başlıklar
+    sheet.columns = [
+      { header: 'Tarih', key: 'operationDate', width: 20 },
+      { header: 'Tutar (₺)', key: 'amount', width: 15 },
+      { header: 'Açıklama', key: 'description', width: 30 },
+      { header: 'Kategori', key: 'categoryName', width: 20 },
+      { header: 'İlgili Tip', key: 'relatedModel', width: 15 },
+      { header: 'İlgili', key: 'relatedTo', width: 20 },
+    ];
+
+    for (const expense of expenses) {
+      let relatedName = '-';
+
+      if (expense.relatedToId && expense.relatedModel) {
+        const modelMap: Record<'Vehicle' | 'Employee', { model: Model<any>; field: string }> = {
+          Vehicle: { model: this.vehicleModel, field: 'plateNumber' },
+          Employee: { model: this.employeeModel, field: 'fullName' },
+        };
+
+        const config = modelMap[expense.relatedModel as 'Vehicle' | 'Employee'];
+        if (config) {
+          const related = await config.model.findById(expense.relatedToId).select(config.field).lean();
+          relatedName = related?.[config.field] || '-';
+        }
+      }
+
+      sheet.addRow({
+        operationDate: new Date(expense.operationDate).toLocaleDateString('tr-TR'),
+        amount: expense.amount,
+        description: expense.description || '-',
+        categoryName:
+          typeof expense.categoryId === 'object' && 'name' in expense.categoryId
+            ? (expense.categoryId as any).name
+            : '-',
+        relatedModel: expense.relatedModel || '-',
+        relatedTo: relatedName,
+      });
+    }
+
+    const exportDir = path.resolve(__dirname, '../../../exports');
+    if (!fs.existsSync(exportDir)) {
+      fs.mkdirSync(exportDir, { recursive: true });
+    }
+
+    const filePath = path.join(exportDir, `giderler-${Date.now()}.xlsx`);
+    await workbook.xlsx.writeFile(filePath);
+
+    return filePath;
   }
 }

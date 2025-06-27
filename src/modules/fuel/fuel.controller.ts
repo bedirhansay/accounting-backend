@@ -69,13 +69,23 @@ export class FuelController {
     return this.fuelService.findAll({ ...query, companyId });
   }
 
-  @Get('export-fuel-excel')
+  @Get('export-grouped-fuel-excel')
   @ApiOperation({
     summary: 'Araç yakıt verilerini Excel olarak dışa aktarır',
     operationId: 'exportGroupedFuel',
   })
   @Header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
   exportIncomes(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string, @Res() res: Response) {
+    return this.fuelService.exportGroupedFuels(query, companyId, res);
+  }
+
+  @Get('export-fuel-excel')
+  @ApiOperation({
+    summary: 'Araç yakıt verilerini Excel olarak dışa aktarır',
+    operationId: 'exportFuel',
+  })
+  @Header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+  export(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string, @Res() res: Response) {
     return this.fuelService.exportGroupedFuels(query, companyId, res);
   }
 

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
-import { monthEnd, monthStart } from '../../common/constant/date';
+import { getMonthRange } from '../../common/helper/date';
 import { Expense } from '../expense/expense.schema';
 import { Fuel } from '../fuel/fuel.schema';
 import { Income } from '../income/income.schema';
@@ -85,14 +85,15 @@ export class ReportsService {
     const customerObjectId = new Types.ObjectId(customerId);
     const companyObjectId = new Types.ObjectId(companyId);
 
+    const { beginDate, endDate } = getMonthRange();
     const result = await this.incomeModel.aggregate([
       {
         $match: {
           customerId: customerObjectId,
           companyId: companyObjectId,
           operationDate: {
-            $gte: monthStart,
-            $lte: monthEnd,
+            $gte: beginDate,
+            $lte: endDate,
           },
         },
       },
