@@ -32,6 +32,7 @@ import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
 
+import { DateRangeDTO } from '../../common/DTO/request';
 import { CreateFuelDto } from './dto/create-fuel.dto';
 import { FuelDto } from './dto/fuel.dto';
 import { UpdateFuelDto } from './dto/update-fuel.dto';
@@ -75,7 +76,7 @@ export class FuelController {
     operationId: 'exportGroupedFuel',
   })
   @Header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-  exportIncomes(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string, @Res() res: Response) {
+  exportIncomes(@Query() query: DateRangeDTO, @CurrentCompany() companyId: string, @Res() res: Response) {
     return this.fuelService.exportGroupedFuels(query, companyId, res);
   }
 

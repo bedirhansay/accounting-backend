@@ -119,7 +119,9 @@ export class FuelService {
     ensureValidObjectId(companyId, 'Geçersiz firma ID');
 
     const updated = await this.fuelModel
-      .findOneAndUpdate({ _id: id, companyId: new Types.ObjectId(companyId) }, dto, { new: true })
+      .findOneAndUpdate({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) }, dto, {
+        new: true,
+      })
       .exec();
 
     if (!updated) {
@@ -214,23 +216,23 @@ export class FuelService {
   }
 
   async exportGroupedFuels(query: DateRangeDTO, companyId: string, res: Response): Promise<void> {
-    const now = new Date();
-    const defaultStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const defaultEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-
-    const start = query.beginDate ? new Date(query.beginDate) : defaultStart;
-    const end = query.endDate ? new Date(query.endDate) : defaultEnd;
+    const { beginDate, endDate } =
+      query.beginDate && query.endDate
+        ? {
+            beginDate: new Date(query.beginDate),
+            endDate: new Date(query.endDate),
+          }
+        : getMonthRange();
 
     const fuels = await this.fuelModel
       .find({
         companyId: new Types.ObjectId(companyId),
-        operationDate: { $gte: start, $lte: end },
+        operationDate: { $gte: beginDate, $lte: endDate },
       })
-      .populate('vehicleId', 'plateNumber') // NOT: plate yerine plateNumber
+      .populate('vehicleId', 'plateNumber')
       .lean()
       .exec();
 
-    // 🔸 Plaka + Şoför adına göre grupla
     const grouped = fuels.reduce<
       Record<string, { driverName: string; plateNumber: string; totalRecords: number; totalAmount: number }>
     >((acc, fuel) => {
@@ -261,7 +263,7 @@ export class FuelService {
     sheet.mergeCells('A1:D1');
     const titleRow = sheet.getRow(1);
     titleRow.getCell(1).value =
-      `Araç Yakıt Özeti: ${start.toLocaleDateString('tr-TR')} - ${end.toLocaleDateString('tr-TR')}`;
+      `Araç Yakıt Özeti: ${beginDate.toLocaleDateString('tr-TR')} - ${endDate.toLocaleDateString('tr-TR')}`;
     titleRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
     titleRow.getCell(1).font = { bold: true };
     titleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF00' } };

@@ -117,6 +117,7 @@ export class VehicleService {
   async update(id: string, dto: UpdateVehicleDto, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, 'Geçersiz araç ID');
     ensureValidObjectId(companyId, 'Geçersiz firma ID');
+
     if (dto.driverId) ensureValidObjectId(dto.driverId, 'Geçersiz sürücü ID');
 
     const updated = await this.vehicleModel.findOneAndUpdate(

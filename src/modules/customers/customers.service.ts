@@ -35,8 +35,6 @@ export class CustomersService {
       companyId: new Types.ObjectId(dto.companyId),
     }).save();
 
-    console.log(created);
-
     return {
       statusCode: 201,
       id: created.id.toString(),

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Header, Param, Patch, Post, Query, Res, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -13,7 +13,9 @@ import {
 import { CurrentCompany } from '../../common/decorator/company.id';
 import { CompanyGuard } from '../../common/guards/company.id';
 
+import { Response } from 'express';
 import { ApiCommandResponse, ApiPaginatedResponse, ApiSearchDatePaginatedQuery } from '../../common/decorator/swagger';
+import { DateRangeDTO } from '../../common/DTO/request';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
@@ -55,6 +57,16 @@ export class ExpenseController {
   @ApiPaginatedResponse(ExpenseDto)
   findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
     return this.expenseService.findAll({ ...query, companyId });
+  }
+
+  @Get('export-grouped-fuel-excel')
+  @ApiOperation({
+    summary: 'Araç yakıt verilerini Excel olarak dışa aktarır',
+    operationId: 'exportGroupedExpense',
+  })
+  @Header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+  exportIncomes(@Query() query: DateRangeDTO, @CurrentCompany() companyId: string, @Res() res: Response) {
+    return this.expenseService.exportAllExpensesToExcel(companyId, res, query);
   }
 
   @Get(':id')

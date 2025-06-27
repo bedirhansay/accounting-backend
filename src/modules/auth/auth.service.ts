@@ -22,9 +22,6 @@ export class AuthService {
 
     const user = await this.findUserByEmailOrUsername(identifier);
 
-    console.log('Gelen username:', dto.username);
-    console.log('Normalize edilen:', identifier);
-
     if (!user || !user.password) {
       throw new UnauthorizedException('Kullanıcı bulunamadı veya şifresi geçersiz');
     }
