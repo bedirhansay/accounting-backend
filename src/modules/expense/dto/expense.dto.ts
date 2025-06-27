@@ -13,8 +13,12 @@ export enum RelatedModelEnum {
 @Exclude()
 export class ExpenseDto extends BaseDto {
   @Expose()
-  @ApiProperty({ example: 1500.75, description: 'Gider miktarı' })
+  @ApiProperty({ example: '2025-06-27T00:00:00.000Z', description: 'İşlem tarihi' })
+  @Transform(({ value }) => new Date(value), { toClassOnly: true })
+  operationDate: Date;
+
   @Expose()
+  @ApiProperty({ example: 1500.75, description: 'Gider miktarı' })
   amount: number;
 
   @ApiProperty({ example: 'Fatura ödemesi', description: 'Açıklama' })
