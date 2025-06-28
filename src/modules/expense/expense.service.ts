@@ -66,24 +66,20 @@ export class ExpenseService {
     } = params;
 
     const { beginDate: defaultBegin, endDate: defaultEnd } = getMonthRange();
-
     const finalBeginDate = beginDate ? dayjs(beginDate).startOf('day').toDate() : defaultBegin;
     const finalEndDate = endDate ? dayjs(endDate).endOf('day').toDate() : defaultEnd;
 
     const filter: any = {
       companyId: new Types.ObjectId(companyId),
+      operationDate: {
+        $gte: new Date(finalBeginDate),
+        $lte: new Date(finalEndDate),
+      },
     };
 
     if (search) {
-      filter.$or = [{ description: { $regex: search, $options: 'i' } }];
+      filter.description = { $regex: search, $options: 'i' }; // sadece açıklama filtrelenebilir
     }
-
-    filter.operationDate = {
-      $gte: new Date(finalBeginDate),
-      $lte: new Date(finalEndDate),
-    };
-
-    const totalCount = await this.expenseModel.countDocuments(filter);
 
     const rawExpenses = await this.expenseModel
       .find(filter)
@@ -93,7 +89,6 @@ export class ExpenseService {
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
       .lean()
-      .sort({ createdAt: -1 })
       .select('-__v')
       .exec();
 
@@ -133,7 +128,23 @@ export class ExpenseService {
       })
     );
 
-    const items = plainToInstance(ExpenseDto, populatedExpenses);
+    // 🔍 Gelişmiş arama (populate sonrası filtreleme)
+    const finalExpenses = search
+      ? populatedExpenses.filter((exp) => {
+          const searchLower = search.toLowerCase();
+          return (
+            exp.description?.toLowerCase().includes(searchLower) ||
+            (exp.relatedTo && !Array.isArray(exp.relatedTo) && exp.relatedTo.plateNumber?.toLowerCase().includes(searchLower)) ||
+            (exp.relatedTo && !Array.isArray(exp.relatedTo) && exp.relatedTo.fullName?.toLowerCase().includes(searchLower))
+          );
+        })
+      : populatedExpenses;
+
+    const totalCount = finalExpenses.length;
+
+    const paginated = finalExpenses.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
+
+    const items = plainToInstance(ExpenseDto, paginated);
 
     return {
       items,
