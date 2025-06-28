@@ -28,14 +28,6 @@ export class FuelDto extends BaseDto {
   @Expose()
   driverName: string;
 
-  // 🔽 EKLENEN: Araç ID'si doğrudan
-  @ApiProperty({
-    example: '685f885900a8e455d29ce422',
-    description: 'Araç ID bilgisi',
-  })
-  @Expose()
-  vehicleId: string;
-
   @ApiProperty({
     example: { id: '...', plateNumber: '34ABC123' },
     description: 'Araç bilgisi (populated)',

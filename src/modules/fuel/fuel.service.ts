@@ -185,10 +185,13 @@ export class FuelService {
 
     console.log(dto);
 
-    const updated = await this.fuelModel
-      .findOneAndUpdate({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) }, dto, { new: true })
-      .populate('vehicleId', 'id plateNumber')
-      .exec();
+    const updated = await this.fuelModel.findOneAndUpdate(
+      { _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) },
+      {
+        ...dto,
+        vehicleId: new Types.ObjectId(dto.vehicleId),
+      }
+    );
     if (!updated) {
       throw new NotFoundException('Güncellenecek yakıt kaydı bulunamadı');
     }
