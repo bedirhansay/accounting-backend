@@ -8,7 +8,7 @@ export class Fuel {
   @Prop({ type: Number, required: true, description: 'Toplam yakıt ücreti' })
   totalPrice: number;
 
-  @Prop({ type: String, required: true, description: 'Fatura numarası' })
+  @Prop({ type: String, required: true, description: 'Fatura numarası', index: true })
   invoiceNo: string;
 
   @Prop({ type: String, required: false, description: 'Açıklama' })
@@ -17,10 +17,10 @@ export class Fuel {
   @Prop({ type: Date, required: true, description: 'Yakıtın alındığı tarih' })
   operationDate: Date;
 
-  @Prop({ type: String, required: true, description: 'Fatura numarası' })
+  @Prop({ type: String, required: true, description: 'Fatura numarası', lowercase: true, index: true })
   driverName: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Vehicle', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'Vehicle', required: true, index: true })
   vehicleId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Company', required: true })

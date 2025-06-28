@@ -52,7 +52,6 @@ export class FuelService {
     } = params;
 
     const { beginDate: defaultBegin, endDate: defaultEnd } = getMonthRange();
-
     const finalBeginDate = beginDate ?? defaultBegin;
     const finalEndDate = endDate ?? defaultEnd;
 
@@ -60,26 +59,96 @@ export class FuelService {
       companyId: new Types.ObjectId(companyId),
     };
 
+    // 🔍 Arama koşulları
     if (search) {
-      filter.$or = [{ description: { $regex: search, $options: 'i' } }];
+      filter.$or = [
+        { description: { $regex: search, $options: 'i' } },
+        { invoiceNo: { $regex: search, $options: 'i' } },
+        { driverName: { $regex: search, $options: 'i' } },
+        // Araç plakası için lookup kullanıldığından burada eşleşemez, aggregate'e taşımak gerekir
+      ];
     }
 
+    // 📅 Tarih filtresi
     if (beginDate || endDate) {
       filter.operationDate = {};
       if (finalBeginDate) filter.operationDate.$gte = new Date(finalBeginDate);
       if (finalEndDate) filter.operationDate.$lte = new Date(finalEndDate);
     }
-    const totalCount = await this.fuelModel.countDocuments(filter);
 
-    const data = await this.fuelModel
-      .find(filter)
-      .collation({ locale: 'tr', strength: 1 })
-      .populate({ path: 'vehicleId', select: 'plateNumber' })
-      .sort({ operationDate: -1 })
-      .skip((pageNumber - 1) * pageSize)
-      .limit(pageSize)
-      .lean()
-      .exec();
+    // 🚘 Araç plakasıyla arama gerekiyorsa aggregate pipeline kullanılmalı
+    const pipeline: any[] = [
+      { $match: filter },
+      {
+        $lookup: {
+          from: 'vehicles',
+          localField: 'vehicleId',
+          foreignField: '_id',
+          as: 'vehicleId',
+        },
+      },
+      {
+        $unwind: {
+          path: '$vehicleId',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+    ];
+
+    if (search) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { description: { $regex: search, $options: 'i' } },
+            { invoiceNo: { $regex: search, $options: 'i' } },
+            { driverName: { $regex: search, $options: 'i' } },
+            { 'vehicleId.plateNumber': { $regex: search, $options: 'i' } },
+          ],
+        },
+      });
+    }
+
+    pipeline.push(
+      { $sort: { operationDate: -1 } },
+      { $skip: (pageNumber - 1) * pageSize },
+      { $limit: pageSize }
+    );
+
+    const [data, totalCountArr] = await Promise.all([
+      this.fuelModel.aggregate(pipeline).exec(),
+      this.fuelModel.aggregate([
+        { $match: filter },
+        {
+          $lookup: {
+            from: 'vehicles',
+            localField: 'vehicleId',
+            foreignField: '_id',
+            as: 'vehicleId',
+          },
+        },
+        {
+          $unwind: {
+            path: '$vehicleId',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $match: search
+            ? {
+                $or: [
+                  { description: { $regex: search, $options: 'i' } },
+                  { invoiceNo: { $regex: search, $options: 'i' } },
+                  { driverName: { $regex: search, $options: 'i' } },
+                  { 'vehicleId.plateNumber': { $regex: search, $options: 'i' } },
+                ],
+              }
+            : {},
+        },
+        { $count: 'count' },
+      ]),
+    ]);
+
+    const totalCount = totalCountArr[0]?.count || 0;
 
     const items = plainToInstance(FuelDto, data, {
       excludeExtraneousValues: true,

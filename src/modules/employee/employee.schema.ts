@@ -7,7 +7,7 @@ export class Employee {
   @Prop({ required: true, unique: true, lowercase: true, trim: true })
   fullName: string;
 
-  @Prop()
+  @Prop({ required: false })
   phone?: string;
 
   @Prop({ required: true })
@@ -19,13 +19,13 @@ export class Employee {
   @Prop({ type: Date })
   terminationDate?: Date;
 
-  @Prop()
+  @Prop({ required: false })
   salary?: number;
 
   @Prop({ default: false })
   isActive: boolean;
 
-  @Prop({ default: '' })
+  @Prop({ required: false })
   description?: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
