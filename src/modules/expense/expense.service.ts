@@ -69,28 +69,22 @@ export class ExpenseService {
     const finalBeginDate = beginDate ? dayjs(beginDate).startOf('day').toDate() : defaultBegin;
     const finalEndDate = endDate ? dayjs(endDate).endOf('day').toDate() : defaultEnd;
 
-    const filter: any = {
+    const baseFilter = {
       companyId: new Types.ObjectId(companyId),
       operationDate: {
-        $gte: new Date(finalBeginDate),
-        $lte: new Date(finalEndDate),
+        $gte: finalBeginDate,
+        $lte: finalEndDate,
       },
     };
 
-    if (search) {
-      filter.description = { $regex: search, $options: 'i' }; // sadece açıklama filtrelenebilir
-    }
-
+    // Önce tüm verileri çek
     const rawExpenses = await this.expenseModel
-      .find(filter)
+      .find(baseFilter)
       .collation({ locale: 'tr', strength: 1 })
       .sort({ operationDate: -1 })
       .populate('categoryId', 'name')
-      .skip((pageNumber - 1) * pageSize)
-      .limit(pageSize)
       .lean()
-      .select('-__v')
-      .exec();
+      .select('-__v');
 
     // Polymorphic populate işlemi
     const populatedExpenses = await Promise.all(
@@ -113,36 +107,33 @@ export class ExpenseService {
 
           if (relatedConfig) {
             const related = await relatedConfig.model.findById(relatedToId).select(relatedConfig.select).lean();
-
-            return {
-              ...expense,
-              relatedTo: related || null,
-            };
+            return { ...expense, relatedTo: related || null };
           }
         }
 
-        return {
-          ...expense,
-          relatedTo: null,
-        };
+        return { ...expense, relatedTo: null };
       })
     );
 
-    // 🔍 Gelişmiş arama (populate sonrası filtreleme)
-    const finalExpenses = search
+    // Gelişmiş arama
+    const filteredExpenses = search
       ? populatedExpenses.filter((exp) => {
-          const searchLower = search.toLowerCase();
+          const lower = search.toLowerCase();
+
+          const relatedTo = exp.relatedTo as { plateNumber?: string; fullName?: string } | null;
+
           return (
-            exp.description?.toLowerCase().includes(searchLower) ||
-            (exp.relatedTo && !Array.isArray(exp.relatedTo) && exp.relatedTo.plateNumber?.toLowerCase().includes(searchLower)) ||
-            (exp.relatedTo && !Array.isArray(exp.relatedTo) && exp.relatedTo.fullName?.toLowerCase().includes(searchLower))
+            exp.description?.toLowerCase().includes(lower) ||
+            relatedTo?.plateNumber?.toLowerCase().includes(lower) ||
+            relatedTo?.fullName?.toLowerCase().includes(lower)
           );
         })
       : populatedExpenses;
 
-    const totalCount = finalExpenses.length;
+    const totalCount = filteredExpenses.length;
 
-    const paginated = finalExpenses.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
+    // Doğru pagination
+    const paginated = filteredExpenses.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
 
     const items = plainToInstance(ExpenseDto, paginated);
 

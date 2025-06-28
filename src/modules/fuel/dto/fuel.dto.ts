@@ -22,15 +22,23 @@ export class FuelDto extends BaseDto {
   operationDate: string;
 
   @ApiProperty({
-    example: { fullName: 'Ali Yılmaz' },
+    example: 'Ali Yılmaz',
     description: 'Sürücü bilgisi (yalnızca adı)',
   })
   @Expose()
   driverName: string;
 
+  // 🔽 EKLENEN: Araç ID'si doğrudan
   @ApiProperty({
-    example: { plateNumber: '34ABC123' },
-    description: 'Araç bilgisi (yalnızca plaka)',
+    example: '685f885900a8e455d29ce422',
+    description: 'Araç ID bilgisi',
+  })
+  @Expose()
+  vehicleId: string;
+
+  @ApiProperty({
+    example: { id: '...', plateNumber: '34ABC123' },
+    description: 'Araç bilgisi (populated)',
     type: () => VehicleDto,
   })
   @Expose()
@@ -38,8 +46,4 @@ export class FuelDto extends BaseDto {
     toClassOnly: true,
   })
   vehicleInfo: Pick<VehicleDto, 'id' | 'plateNumber'>;
-  // @Expose()
-  // get vehicleFull(): string | undefined {
-  //   return this.vehicleId?.plateNumber;
-  // }
 }

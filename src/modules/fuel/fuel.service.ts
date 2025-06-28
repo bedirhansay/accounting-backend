@@ -32,7 +32,7 @@ export class FuelService {
     const created = await new this.fuelModel({
       ...dto,
       companyId: new Types.ObjectId(dto.companyId),
-      vehicleId: dto.vehicleId ? new Types.ObjectId(dto.vehicleId) : undefined,
+      vehicleId: new Types.ObjectId(dto.vehicleId),
     }).save();
 
     return {
@@ -108,11 +108,7 @@ export class FuelService {
       });
     }
 
-    pipeline.push(
-      { $sort: { operationDate: -1 } },
-      { $skip: (pageNumber - 1) * pageSize },
-      { $limit: pageSize }
-    );
+    pipeline.push({ $sort: { operationDate: -1 } }, { $skip: (pageNumber - 1) * pageSize }, { $limit: pageSize });
 
     const [data, totalCountArr] = await Promise.all([
       this.fuelModel.aggregate(pipeline).exec(),
@@ -187,12 +183,12 @@ export class FuelService {
     ensureValidObjectId(id, 'Geçersiz yakıt ID');
     ensureValidObjectId(companyId, 'Geçersiz firma ID');
 
-    const updated = await this.fuelModel
-      .findOneAndUpdate({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) }, dto, {
-        new: true,
-      })
-      .exec();
+    console.log(dto);
 
+    const updated = await this.fuelModel
+      .findOneAndUpdate({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) }, dto, { new: true })
+      .populate('vehicleId', 'id plateNumber')
+      .exec();
     if (!updated) {
       throw new NotFoundException('Güncellenecek yakıt kaydı bulunamadı');
     }
