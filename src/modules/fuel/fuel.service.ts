@@ -301,34 +301,31 @@ export class FuelService {
       .lean()
       .exec();
 
-    const grouped = fuels.reduce<
-      Record<string, { driverName: string; plateNumber: string; totalRecords: number; totalAmount: number }>
-    >((acc, fuel) => {
-      const plateNumber = (fuel.vehicleId as any)?.plateNumber || 'Bilinmeyen Araç';
-      const driverName = fuel.driverName || 'Bilinmeyen Şoför';
+    const grouped = fuels.reduce<Record<string, { plateNumber: string; totalRecords: number; totalAmount: number }>>(
+      (acc, fuel) => {
+        const plateNumber = (fuel.vehicleId as any)?.plateNumber || 'Bilinmeyen Araç';
 
-      const key = `${plateNumber}-${driverName}`;
+        if (!acc[plateNumber]) {
+          acc[plateNumber] = {
+            plateNumber,
+            totalRecords: 0,
+            totalAmount: 0,
+          };
+        }
 
-      if (!acc[key]) {
-        acc[key] = {
-          plateNumber,
-          driverName,
-          totalRecords: 0,
-          totalAmount: 0,
-        };
-      }
+        acc[plateNumber].totalRecords += 1;
+        acc[plateNumber].totalAmount += Number(fuel.totalPrice || 0);
 
-      acc[key].totalRecords += 1;
-      acc[key].totalAmount += Number(fuel.totalPrice || 0);
-
-      return acc;
-    }, {});
+        return acc;
+      },
+      {}
+    );
 
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet('Yakıt Özeti');
 
-    // Başlık satırı
-    sheet.mergeCells('A1:D1');
+    // Başlık
+    sheet.mergeCells('A1:C1');
     const titleRow = sheet.getRow(1);
     titleRow.getCell(1).value =
       `Araç Yakıt Özeti: ${beginDate.toLocaleDateString('tr-TR')} - ${endDate.toLocaleDateString('tr-TR')}`;
@@ -337,22 +334,34 @@ export class FuelService {
     titleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF00' } };
     titleRow.getCell(1).border = { bottom: { style: 'thin' } };
 
-    // Kolon başlıkları
-    sheet.getRow(2).values = ['Plaka', 'Şoför', 'Yakıt Fişi Sayısı', 'Toplam Tutar (₺)'];
+    // Kolonlar
+    sheet.getRow(2).values = ['Plaka', 'Yakıt Fişi Sayısı', 'Toplam Tutar (₺)'];
     sheet.getRow(2).font = { bold: true };
 
     sheet.columns = [
       { key: 'plateNumber', width: 20 },
-      { key: 'driverName', width: 25 },
       { key: 'totalRecords', width: 20 },
       { key: 'totalAmount', width: 20 },
     ];
 
-    // Veri satırları
+    // Veri
     let rowIndex = 3;
+    let grandTotal = 0;
+    let grandCount = 0;
+
     Object.values(grouped).forEach((data) => {
+      grandTotal += data.totalAmount;
+      grandCount += data.totalRecords;
       sheet.insertRow(rowIndex++, data);
     });
+
+    // Toplam Satırı
+    const totalRow = sheet.getRow(rowIndex++);
+    totalRow.getCell(1).value = 'TOPLAM';
+    totalRow.getCell(2).value = grandCount;
+    totalRow.getCell(3).value = grandTotal;
+    totalRow.font = { bold: true };
+    totalRow.getCell(1).alignment = { horizontal: 'right' };
 
     sheet.getColumn('totalAmount').numFmt = '#,##0.00 ₺';
 

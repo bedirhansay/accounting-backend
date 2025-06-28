@@ -190,7 +190,6 @@ export class IncomeService {
           totalAmount: number;
           paidAmount: number;
           unpaidAmount: number;
-          remainingAmount: number;
         }
       >
     >((acc, income) => {
@@ -203,7 +202,6 @@ export class IncomeService {
           totalAmount: 0,
           paidAmount: 0,
           unpaidAmount: 0,
-          remainingAmount: 0,
         };
       }
 
@@ -211,11 +209,10 @@ export class IncomeService {
       const isPaid = income.isPaid === true;
 
       acc[name].totalDocuments += 1;
-      acc[name].totalUnitCount += Number(income.unitCount);
+      acc[name].totalUnitCount += Number(income.unitCount || 0);
       acc[name].totalAmount += total;
       acc[name].paidAmount += isPaid ? total : 0;
       acc[name].unpaidAmount += !isPaid ? total : 0;
-      acc[name].remainingAmount = acc[name].unpaidAmount;
 
       return acc;
     }, {});
@@ -235,7 +232,6 @@ export class IncomeService {
       pattern: 'solid',
       fgColor: { argb: 'FFFF00' },
     };
-    titleRow.getCell(1).border = { bottom: { style: 'thin' } };
 
     // Kolon başlıkları
     sheet.getRow(2).values = [
@@ -269,14 +265,18 @@ export class IncomeService {
     };
 
     Object.entries(grouped).forEach(([customerName, data]) => {
+      const remainingAmount = data.unpaidAmount; // Doğru hesaplama
+
       const row = sheet.addRow({
         customerName: customerName.toUpperCase(),
         ...data,
+        remainingAmount,
       });
+
       row.font = { name: 'Arial', size: 11 };
       row.alignment = { vertical: 'middle' };
 
-      if (data.remainingAmount === 0) {
+      if (remainingAmount === 0) {
         for (let i = 1; i <= 7; i++) {
           row.getCell(i).fill = {
             type: 'pattern',
@@ -292,7 +292,7 @@ export class IncomeService {
       totals.totalAmount += data.totalAmount;
       totals.paidAmount += data.paidAmount;
       totals.unpaidAmount += data.unpaidAmount;
-      totals.remainingAmount += data.remainingAmount;
+      totals.remainingAmount += remainingAmount;
     });
 
     // Toplam satırı
@@ -304,6 +304,18 @@ export class IncomeService {
     totalRow.alignment = { vertical: 'middle', horizontal: 'right' };
     totalRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE0' } };
 
+    // Firma sayısı satırı
+    const lastRow = sheet.addRow([]);
+    lastRow.getCell(1).value = `Toplam Firma Sayısı: ${Object.keys(grouped).length}`;
+    lastRow.getCell(1).font = { italic: true };
+    lastRow.getCell(1).alignment = { horizontal: 'left' };
+    lastRow.getCell(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'E0FFFF' },
+    };
+
+    // Sayısal biçimlendirme
     sheet.getColumn('totalAmount').numFmt = '#,##0.00 ₺';
     sheet.getColumn('paidAmount').numFmt = '#,##0.00 ₺';
     sheet.getColumn('unpaidAmount').numFmt = '#,##0.00 ₺';
@@ -365,5 +377,89 @@ export class IncomeService {
       hasPreviousPage: pageNumber > 1,
       hasNextPage: pageNumber * pageSize < totalCount,
     };
+  }
+
+  async exportAllIncomes(companyId: string, res: Response): Promise<void> {
+    const incomes = await this.incomeModel
+      .find({ companyId: new Types.ObjectId(companyId) })
+      .populate('customerId', 'name')
+      .populate('categoryId', 'name')
+      .sort({ operationDate: -1 })
+      .lean()
+      .exec();
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Tüm Gelirler');
+
+    // Başlık
+    sheet.mergeCells('A1:H1');
+    const titleRow = sheet.getRow(1);
+    titleRow.getCell(1).value = `Tüm Gelir Kayıtları (${new Date().toLocaleDateString('tr-TR')})`;
+    titleRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+    titleRow.getCell(1).font = { bold: true };
+    titleRow.getCell(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFFF00' },
+    };
+
+    // Kolon Başlıkları
+    sheet.getRow(2).values = [
+      'Müşteri Adı',
+      'Kategori',
+      'Açıklama',
+      'Tutar (₺)',
+      'Kamyon Sayısı',
+      'Ödeme Durumu',
+      'İşlem Tarihi',
+      'Kayıt Tarihi',
+    ];
+    sheet.getRow(2).font = { bold: true };
+
+    sheet.columns = [
+      { key: 'customerName', width: 30 },
+      { key: 'categoryName', width: 25 },
+      { key: 'description', width: 40 },
+      { key: 'totalAmount', width: 20 },
+      { key: 'unitCount', width: 15 },
+      { key: 'isPaid', width: 15 },
+      { key: 'operationDate', width: 20 },
+      { key: 'createdAt', width: 20 },
+    ];
+
+    incomes.forEach((income) => {
+      const customer = income.customerId as { name?: string } | null;
+      const category = income.categoryId as { name?: string } | null;
+      const row = sheet.addRow({
+        customerName: customer?.name || 'Bilinmeyen Müşteri',
+        categoryName: category?.name || '-',
+        description: income.description || '-',
+        totalAmount: Number(income.totalAmount || 0),
+        unitCount: Number(income.unitCount || 0),
+        isPaid: income.isPaid ? 'Ödendi' : 'Ödenmedi',
+        operationDate: dayjs(income.operationDate).format('DD.MM.YYYY'),
+      });
+
+      row.alignment = { vertical: 'middle' };
+
+      if (income.isPaid) {
+        for (let i = 1; i <= 8; i++) {
+          row.getCell(i).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'CCFFCC' },
+          };
+        }
+      }
+    });
+
+    // Format para sütunu
+    sheet.getColumn('totalAmount').numFmt = '#,##0.00 ₺';
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=all-incomes.xlsx');
+    res.end(buffer);
   }
 }

@@ -66,6 +66,29 @@ export class IncomeController {
     return this.incomeService.findAll({ ...query }, companyId);
   }
 
+  @Get('export-incomes-excel')
+  @ApiOperation({
+    summary: 'Gelirleri .zip dosyası olarak dışa aktarır',
+    operationId: 'exporIncomesExcel',
+  })
+  @ApiQuery({
+    name: 'beginDate',
+    required: false,
+    description: 'Başlangıç tarihi (ISO formatında)',
+    type: String,
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    description: 'Bitiş tarihi (ISO formatında)',
+    type: String,
+  })
+  @Header('Content-Type', 'application/zip')
+  @Header('Content-Disposition', 'attachment; filename=incomes.zip')
+  exportExcel(@Query() query: DateRangeDto, @CurrentCompany() companyId: string, @Res() res: Response) {
+    return this.incomeService.exportAllIncomes(companyId, res);
+  }
+
   @Get('export-customer-excel')
   @ApiOperation({
     summary: 'Gelirleri .zip dosyası olarak dışa aktarır',
