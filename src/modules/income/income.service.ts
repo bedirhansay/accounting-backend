@@ -182,7 +182,17 @@ export class IncomeService {
       .exec()) as unknown as PopulatedIncome[];
 
     const grouped = incomes.reduce<
-      Record<string, { totalDocuments: number; totalUnitCount: number; totalAmount: number }>
+      Record<
+        string,
+        {
+          totalDocuments: number;
+          totalUnitCount: number;
+          totalAmount: number;
+          paidAmount: number;
+          unpaidAmount: number;
+          remainingAmount: number;
+        }
+      >
     >((acc, income) => {
       const name = income.customerId?.name || 'Bilinmeyen Müşteri';
 
@@ -191,12 +201,21 @@ export class IncomeService {
           totalDocuments: 0,
           totalUnitCount: 0,
           totalAmount: 0,
+          paidAmount: 0,
+          unpaidAmount: 0,
+          remainingAmount: 0,
         };
       }
 
+      const total = Number(income.totalAmount || 0);
+      const isPaid = income.isPaid === true;
+
       acc[name].totalDocuments += 1;
       acc[name].totalUnitCount += Number(income.unitCount);
-      acc[name].totalAmount += Number(income.totalAmount);
+      acc[name].totalAmount += total;
+      acc[name].paidAmount += isPaid ? total : 0;
+      acc[name].unpaidAmount += !isPaid ? total : 0;
+      acc[name].remainingAmount = acc[name].unpaidAmount;
 
       return acc;
     }, {});
@@ -204,8 +223,8 @@ export class IncomeService {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet('Gelir Özeti');
 
-    // 🔸 Başlık: 1. Satıra
-    sheet.mergeCells('A1:D1');
+    // Başlık satırı
+    sheet.mergeCells('A1:G1');
     const titleRow = sheet.getRow(1);
     titleRow.getCell(1).value =
       `Yükleme Özeti: ${beginDate.toLocaleDateString('tr-TR')} - ${endDate.toLocaleDateString('tr-TR')}`;
@@ -216,11 +235,18 @@ export class IncomeService {
       pattern: 'solid',
       fgColor: { argb: 'FFFF00' },
     };
-    titleRow.getCell(1).border = {
-      bottom: { style: 'thin' },
-    };
+    titleRow.getCell(1).border = { bottom: { style: 'thin' } };
 
-    sheet.getRow(2).values = ['Müşteri Adı', 'Yükleme Seferi', 'Toplam Kamyon Sayısı', 'Toplam Tutar (₺)'];
+    // Kolon başlıkları
+    sheet.getRow(2).values = [
+      'Müşteri Adı',
+      'Yükleme Seferi',
+      'Toplam Kamyon Sayısı',
+      'Toplam Tutar (₺)',
+      'Ödenmiş Tutar (₺)',
+      'Ödenmemiş Tutar (₺)',
+      'Kalan Ödeme (₺)',
+    ];
     sheet.getRow(2).font = { bold: true };
 
     sheet.columns = [
@@ -228,7 +254,19 @@ export class IncomeService {
       { key: 'totalDocuments', width: 15 },
       { key: 'totalUnitCount', width: 20 },
       { key: 'totalAmount', width: 20 },
+      { key: 'paidAmount', width: 20 },
+      { key: 'unpaidAmount', width: 20 },
+      { key: 'remainingAmount', width: 20 },
     ];
+
+    let totals = {
+      totalDocuments: 0,
+      totalUnitCount: 0,
+      totalAmount: 0,
+      paidAmount: 0,
+      unpaidAmount: 0,
+      remainingAmount: 0,
+    };
 
     Object.entries(grouped).forEach(([customerName, data]) => {
       const row = sheet.addRow({
@@ -237,9 +275,39 @@ export class IncomeService {
       });
       row.font = { name: 'Arial', size: 11 };
       row.alignment = { vertical: 'middle' };
+
+      if (data.remainingAmount === 0) {
+        for (let i = 1; i <= 7; i++) {
+          row.getCell(i).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'CCFFCC' },
+          };
+        }
+      }
+
+      // Toplamları güncelle
+      totals.totalDocuments += data.totalDocuments;
+      totals.totalUnitCount += data.totalUnitCount;
+      totals.totalAmount += data.totalAmount;
+      totals.paidAmount += data.paidAmount;
+      totals.unpaidAmount += data.unpaidAmount;
+      totals.remainingAmount += data.remainingAmount;
     });
 
-    sheet.getColumn(4).numFmt = '#,##0.00 ₺';
+    // Toplam satırı
+    const totalRow = sheet.addRow({
+      customerName: 'TOPLAM',
+      ...totals,
+    });
+    totalRow.font = { bold: true };
+    totalRow.alignment = { vertical: 'middle', horizontal: 'right' };
+    totalRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE0' } };
+
+    sheet.getColumn('totalAmount').numFmt = '#,##0.00 ₺';
+    sheet.getColumn('paidAmount').numFmt = '#,##0.00 ₺';
+    sheet.getColumn('unpaidAmount').numFmt = '#,##0.00 ₺';
+    sheet.getColumn('remainingAmount').numFmt = '#,##0.00 ₺';
 
     const buffer = await workbook.xlsx.writeBuffer();
 
