@@ -33,7 +33,7 @@ export class CategoriesService {
       throw new ConflictException('Bu isimde bir kategori zaten mevcut');
     }
 
-    const created = await new this.categoryModel({ ...dto, companyId }).save();
+    const created = await new this.categoryModel({ ...dto, companyId: new Types.ObjectId(companyId) }).save();
 
     return {
       statusCode: 201,
@@ -82,7 +82,7 @@ export class CategoriesService {
     ensureValidObjectId(id, 'Geçersiz kategori ID');
 
     const category = await this.categoryModel
-      .findOne({ _id: id, companyId: new Types.ObjectId(companyId) })
+      .findOne({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) })
       .lean()
       .select('-__v')
       .exec();
@@ -102,7 +102,9 @@ export class CategoriesService {
     ensureValidObjectId(id, 'Geçersiz kategori ID');
 
     const updated = await this.categoryModel
-      .findOneAndUpdate({ _id: id, companyId: new Types.ObjectId(companyId) }, dto, { new: true })
+      .findOneAndUpdate({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) }, dto, {
+        new: true,
+      })
       .exec();
 
     if (!updated) {
@@ -119,7 +121,7 @@ export class CategoriesService {
     ensureValidObjectId(id, 'Geçersiz kategori ID');
 
     const deleted = await this.categoryModel
-      .findOneAndDelete({ _id: id, companyId: new Types.ObjectId(companyId) })
+      .findOneAndDelete({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) })
       .exec();
 
     if (!deleted) {
