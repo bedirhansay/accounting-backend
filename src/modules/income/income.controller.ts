@@ -92,7 +92,7 @@ export class IncomeController {
   @Get('export-customer-excel')
   @ApiOperation({
     summary: 'Gelirleri .zip dosyası olarak dışa aktarır',
-    operationId: 'exportGroupedIncomes',
+    operationId: 'exportMontlyIncomeSummary',
   })
   @ApiQuery({
     name: 'beginDate',
