@@ -109,7 +109,7 @@ export class IncomeController {
   @Header('Content-Type', 'application/zip')
   @Header('Content-Disposition', 'attachment; filename=incomes.zip')
   exportIncomes(@Query() query: DateRangeDto, @CurrentCompany() companyId: string, @Res() res: Response) {
-    return this.incomeService.exportGroupedIncomes(query, companyId, res);
+    return this.incomeService.exportMontlyIncomeSummary(query, companyId, res);
   }
 
   @Get(':id')

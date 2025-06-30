@@ -266,7 +266,6 @@ export class FuelService {
     const { beginDate, endDate } = query;
     const { beginDate: finalBeginDate, endDate: finalEndDate } = getFinalDateRange(beginDate, endDate);
 
-    console.log('Exporting monthly fuel summary for company:', finalBeginDate, finalEndDate, companyId);
 
     const fuels = await this.fuelModel
       .find({

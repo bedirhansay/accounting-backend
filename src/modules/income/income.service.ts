@@ -6,7 +6,6 @@ import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
 import { Model, Types } from 'mongoose';
 
-import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../common/constant/pagination.param';
 import { DateRangeDTO } from '../../common/DTO/request/date.range.request.dto';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
@@ -20,7 +19,7 @@ import { UpdateIncomeDto } from './dto/update-income.dto';
 import { Income, IncomeDocument } from './income.schema';
 
 import dayjs from 'dayjs';
-import { getMonthRange } from '../../common/helper/date';
+import { getFinalDateRange } from '../../common/helper/get-date-params';
 
 @Injectable()
 export class IncomeService {
@@ -48,22 +47,16 @@ export class IncomeService {
   }
 
   async findAll(params: IncomeQueryDto, companyId: string): Promise<PaginatedResponseDto<IncomeDto>> {
-    const {
-      pageNumber = PAGINATION_DEFAULT_PAGE,
-      pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
-      search,
-      beginDate,
-      endDate,
-      isPaid,
-    } = params;
-
-    const { beginDate: defaultBegin, endDate: defaultEnd } = getMonthRange();
-
-    const finalBeginDate = beginDate ?? defaultBegin;
-    const finalEndDate = endDate ?? defaultEnd;
+    const { pageNumber, pageSize, search, beginDate, endDate, isPaid } = params;
+    const { beginDate: finalBeginDate, endDate: finalEndDate } = getFinalDateRange(beginDate, endDate);
 
     const filter: any = {
       companyId: new Types.ObjectId(companyId),
+    };
+
+    filter.operationDate = {
+      $gte: new Date(finalBeginDate),
+      $lte: new Date(finalEndDate),
     };
 
     if (search) {
@@ -159,14 +152,9 @@ export class IncomeService {
     };
   }
 
-  async exportGroupedIncomes(query: DateRangeDTO, companyId: string, res: Response): Promise<void> {
-    const { beginDate, endDate } =
-      query.beginDate && query.endDate
-        ? {
-            beginDate: new Date(query.beginDate),
-            endDate: new Date(query.endDate),
-          }
-        : getMonthRange();
+  async exportMontlyIncomeSummary(query: DateRangeDTO, companyId: string, res: Response): Promise<void> {
+    const { beginDate, endDate } = query;
+    const { beginDate: finalBeginDate, endDate: finalEndDate } = getFinalDateRange(beginDate, endDate);
 
     type PopulatedIncome = Omit<Income, 'customerId'> & {
       customerId: { name: string } | null;
@@ -175,7 +163,7 @@ export class IncomeService {
     const incomes = (await this.incomeModel
       .find({
         companyId: new Types.ObjectId(companyId),
-        operationDate: { $gte: beginDate, $lte: endDate },
+        operationDate: { $gte: finalBeginDate, $lte: finalEndDate },
       })
       .populate('customerId', 'name')
       .lean()
@@ -224,7 +212,7 @@ export class IncomeService {
     sheet.mergeCells('A1:G1');
     const titleRow = sheet.getRow(1);
     titleRow.getCell(1).value =
-      `Yükleme Özeti: ${beginDate.toLocaleDateString('tr-TR')} - ${endDate.toLocaleDateString('tr-TR')}`;
+      `Yükleme Özeti: ${dayjs(finalBeginDate).format('DD.MM.YYYY')} - ${dayjs(finalEndDate).format('DD.MM.YYYY')}`;
     titleRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
     titleRow.getCell(1).font = { bold: true };
     titleRow.getCell(1).fill = {
