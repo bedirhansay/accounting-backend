@@ -4,6 +4,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { AppModule } from './app.module';
+import { getFinalDateRange } from './common/helper/get-date-params';
 import { GlobalExceptionFilter } from './common/interceptor/global.exception';
 import { ErrorLoggerService } from './modules/logger/logger.service';
 
@@ -61,7 +62,7 @@ async function bootstrap() {
 
   const errorLogger = app.get(ErrorLoggerService);
   app.useGlobalFilters(new GlobalExceptionFilter(errorLogger));
-
+  const paginated = getFinalDateRange();
 
   app
     .getHttpAdapter()

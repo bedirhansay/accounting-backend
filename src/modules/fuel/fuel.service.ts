@@ -1,19 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
+import dayjs from 'dayjs';
 import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
 import { Model, Types } from 'mongoose';
-import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../common/constant/pagination.param';
-import { CompanyListQueryDto } from '../../common/DTO/request/company.list.request.dto';
+import { DateRangeDTO } from '../../common/DTO/request';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
+import { getFinalDateRange } from '../../common/helper/get-date-params';
 import { ensureValidObjectId } from '../../common/helper/object.id';
-
-import { monthEnd, monthStart } from '../../common/constant/date';
-import { DateRangeDTO } from '../../common/DTO/request';
-import { getMonthRange } from '../../common/helper/date';
 import { CreateFuelDto } from './dto/create-fuel.dto';
 import { FuelDto } from './dto/fuel.dto';
 import { UpdateFuelDto } from './dto/update-fuel.dto';
@@ -26,12 +23,12 @@ export class FuelService {
     private readonly fuelModel: Model<FuelDocument>
   ) {}
 
-  async create(dto: CreateFuelDto & { companyId: string }): Promise<CommandResponseDto> {
-    ensureValidObjectId(dto.companyId, 'Geçersiz firma ID');
+  async create(dto: CreateFuelDto, companyId: string): Promise<CommandResponseDto> {
+    ensureValidObjectId(companyId, 'Geçersiz firma ID');
 
     const created = await new this.fuelModel({
       ...dto,
-      companyId: new Types.ObjectId(dto.companyId),
+      companyId: new Types.ObjectId(companyId),
       vehicleId: new Types.ObjectId(dto.vehicleId),
     }).save();
 
@@ -41,25 +38,16 @@ export class FuelService {
     };
   }
 
-  async findAll(params: CompanyListQueryDto): Promise<PaginatedResponseDto<FuelDto>> {
-    const {
-      pageNumber = PAGINATION_DEFAULT_PAGE,
-      pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
-      search,
-      beginDate = monthStart,
-      endDate = monthEnd,
-      companyId,
-    } = params;
+  async findAll(params: PaginatedDateSearchDTO, companyId: string): Promise<PaginatedResponseDto<FuelDto>> {
+    ensureValidObjectId(companyId, 'Geçersiz firma ID');
 
-    const { beginDate: defaultBegin, endDate: defaultEnd } = getMonthRange();
-    const finalBeginDate = beginDate ?? defaultBegin;
-    const finalEndDate = endDate ?? defaultEnd;
+    const { pageNumber, pageSize, search, beginDate, endDate } = params;
+    const { beginDate: finalBeginDate, endDate: finalEndDate } = getFinalDateRange(beginDate, endDate);
 
     const filter: any = {
       companyId: new Types.ObjectId(companyId),
     };
 
-    // 🔍 Arama koşulları
     if (search) {
       filter.$or = [
         { description: { $regex: search, $options: 'i' } },
@@ -69,14 +57,12 @@ export class FuelService {
       ];
     }
 
-    // 📅 Tarih filtresi
     if (beginDate || endDate) {
       filter.operationDate = {};
       if (finalBeginDate) filter.operationDate.$gte = new Date(finalBeginDate);
       if (finalEndDate) filter.operationDate.$lte = new Date(finalEndDate);
     }
 
-    // 🚘 Araç plakasıyla arama gerekiyorsa aggregate pipeline kullanılmalı
     const pipeline: any[] = [
       { $match: filter },
       {
@@ -183,8 +169,6 @@ export class FuelService {
     ensureValidObjectId(id, 'Geçersiz yakıt ID');
     ensureValidObjectId(companyId, 'Geçersiz firma ID');
 
-    console.log(dto);
-
     const updated = await this.fuelModel.findOneAndUpdate(
       { _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) },
       {
@@ -223,7 +207,7 @@ export class FuelService {
     };
   }
 
-  async getFuels(
+  async getFuelsByVehicleId(
     vehicleId: string,
     companyId: string,
     query: PaginatedDateSearchDTO
@@ -231,13 +215,8 @@ export class FuelService {
     ensureValidObjectId(vehicleId, 'Geçersiz araç ID');
     ensureValidObjectId(companyId, 'Geçersiz firma ID');
 
-    const {
-      pageNumber = PAGINATION_DEFAULT_PAGE,
-      pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
-      search,
-      beginDate,
-      endDate,
-    } = query;
+    const { pageNumber, pageSize, search, beginDate, endDate } = query;
+    const { beginDate: finalBeginDate, endDate: finalEndDate } = getFinalDateRange(beginDate, endDate);
 
     const filter: any = {
       vehicleId: new Types.ObjectId(vehicleId),
@@ -254,8 +233,8 @@ export class FuelService {
 
     if (beginDate || endDate) {
       filter.operationDate = {};
-      if (beginDate) filter.operationDate.$gte = new Date(beginDate);
-      if (endDate) filter.operationDate.$lte = new Date(endDate);
+      if (finalBeginDate) filter.operationDate.$gte = new Date(finalBeginDate);
+      if (finalEndDate) filter.operationDate.$lte = new Date(finalEndDate);
     }
 
     const totalCount = await this.fuelModel.countDocuments(filter);
@@ -283,19 +262,16 @@ export class FuelService {
     };
   }
 
-  async exportGroupedFuels(query: DateRangeDTO, companyId: string, res: Response): Promise<void> {
-    const { beginDate, endDate } =
-      query.beginDate && query.endDate
-        ? {
-            beginDate: new Date(query.beginDate),
-            endDate: new Date(query.endDate),
-          }
-        : getMonthRange();
+  async exportMontlyFuelSummary(query: DateRangeDTO, companyId: string, res: Response): Promise<void> {
+    const { beginDate, endDate } = query;
+    const { beginDate: finalBeginDate, endDate: finalEndDate } = getFinalDateRange(beginDate, endDate);
+
+    console.log('Exporting monthly fuel summary for company:', finalBeginDate, finalEndDate, companyId);
 
     const fuels = await this.fuelModel
       .find({
         companyId: new Types.ObjectId(companyId),
-        operationDate: { $gte: beginDate, $lte: endDate },
+        operationDate: { $gte: finalBeginDate, $lte: finalEndDate },
       })
       .populate('vehicleId', 'plateNumber')
       .lean()
@@ -303,7 +279,7 @@ export class FuelService {
 
     const grouped = fuels.reduce<Record<string, { plateNumber: string; totalRecords: number; totalAmount: number }>>(
       (acc, fuel) => {
-        const plateNumber = (fuel.vehicleId as any)?.plateNumber || 'Bilinmeyen Araç';
+        const plateNumber = ((fuel.vehicleId as any)?.plateNumber || 'Bilinmeyen Araç').toUpperCase();
 
         if (!acc[plateNumber]) {
           acc[plateNumber] = {
@@ -324,11 +300,10 @@ export class FuelService {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet('Yakıt Özeti');
 
-    // Başlık
     sheet.mergeCells('A1:C1');
     const titleRow = sheet.getRow(1);
     titleRow.getCell(1).value =
-      `Araç Yakıt Özeti: ${beginDate.toLocaleDateString('tr-TR')} - ${endDate.toLocaleDateString('tr-TR')}`;
+      `Araç Yakıt Özeti: ${dayjs(finalBeginDate).format('DD.MM.YYYY')} - ${dayjs(finalEndDate).format('DD.MM.YYYY')}`;
     titleRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
     titleRow.getCell(1).font = { bold: true };
     titleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF00' } };

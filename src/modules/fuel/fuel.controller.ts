@@ -59,7 +59,7 @@ export class FuelController {
   @ApiOperation({ summary: 'Yeni yakıt kaydı oluştur', operationId: 'createFuel' })
   @ApiResponse({ status: 201, description: 'Yakıt kaydı başarıyla oluşturuldu', type: CommandResponseDto })
   create(@Body() createFuelDto: CreateFuelDto, @CurrentCompany() companyId: string) {
-    return this.fuelService.create({ ...createFuelDto, companyId });
+    return this.fuelService.create(createFuelDto, companyId);
   }
 
   @Get()
@@ -67,27 +67,17 @@ export class FuelController {
   @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(FuelDto)
   findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
-    return this.fuelService.findAll({ ...query, companyId });
+    return this.fuelService.findAll(query, companyId);
   }
 
-  @Get('export-grouped-fuel-excel')
+  @Get('export-monthly-fuel-summary-excel')
   @ApiOperation({
     summary: 'Araç yakıt verilerini Excel olarak dışa aktarır',
-    operationId: 'exportGroupedFuel',
+    operationId: 'exportMonthlyFuelSummaryExcel',
   })
   @Header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
   exportIncomes(@Query() query: DateRangeDTO, @CurrentCompany() companyId: string, @Res() res: Response) {
-    return this.fuelService.exportGroupedFuels(query, companyId, res);
-  }
-
-  @Get('export-fuel-excel')
-  @ApiOperation({
-    summary: 'Araç yakıt verilerini Excel olarak dışa aktarır',
-    operationId: 'exportFuel',
-  })
-  @Header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-  export(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string, @Res() res: Response) {
-    return this.fuelService.exportGroupedFuels(query, companyId, res);
+    return this.fuelService.exportMontlyFuelSummary(query, companyId, res);
   }
 
   @Get(':id')
@@ -127,6 +117,6 @@ export class FuelController {
     @Query() query: PaginatedDateSearchDTO,
     @CurrentCompany() companyId: string
   ) {
-    return this.fuelService.getFuels(id, companyId, query);
+    return this.fuelService.getFuelsByVehicleId(id, companyId, query);
   }
 }

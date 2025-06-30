@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import dayjs from 'dayjs';
 import { Model, Types } from 'mongoose';
-
 import { getMonthRange } from '../../common/helper/date';
 import { Expense } from '../expense/expense.schema';
 import { Fuel } from '../fuel/fuel.schema';
@@ -35,21 +35,70 @@ export class ReportsService {
   async getMonthlySummary(query: { year?: number }, companyId: string): Promise<MonthlyReportItemDto[]> {
     const year = query.year || new Date().getFullYear();
     const companyObjectId = new Types.ObjectId(companyId);
-    const start = new Date(`${year}-01-01T00:00:00.000Z`);
-    const end = new Date(`${year + 1}-01-01T00:00:00.000Z`);
+
+    const start = dayjs().year(year).startOf('year').toDate();
+    const end = dayjs().year(year).endOf('year').toDate();
 
     const [expenseAgg, incomeAgg, fuelAgg] = await Promise.all([
       this.expenseModel.aggregate([
-        { $match: { companyId: companyObjectId, operationDate: { $gte: start, $lt: end } } },
-        { $group: { _id: { $month: '$operationDate' }, totalExpense: { $sum: '$amount' } } },
+        {
+          $match: {
+            companyId: companyObjectId,
+            operationDate: { $gte: start, $lte: end },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: '%m',
+                date: '$operationDate',
+                timezone: 'Europe/Istanbul',
+              },
+            },
+            totalExpense: { $sum: '$amount' },
+          },
+        },
       ]),
       this.incomeModel.aggregate([
-        { $match: { companyId: companyObjectId, operationDate: { $gte: start, $lt: end } } },
-        { $group: { _id: { $month: '$operationDate' }, totalIncome: { $sum: '$totalAmount' } } },
+        {
+          $match: {
+            companyId: companyObjectId,
+            operationDate: { $gte: start, $lte: end },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: '%m',
+                date: '$operationDate',
+                timezone: 'Europe/Istanbul',
+              },
+            },
+            totalIncome: { $sum: '$totalAmount' },
+          },
+        },
       ]),
       this.fuelModel.aggregate([
-        { $match: { companyId: companyObjectId, operationDate: { $gte: start, $lt: end } } },
-        { $group: { _id: { $month: '$operationDate' }, totalFuel: { $sum: { $toDouble: '$totalPrice' } } } },
+        {
+          $match: {
+            companyId: companyObjectId,
+            operationDate: { $gte: start, $lte: end },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: '%m',
+                date: '$operationDate',
+                timezone: 'Europe/Istanbul',
+              },
+            },
+            totalFuel: { $sum: { $toDouble: '$totalPrice' } },
+          },
+        },
       ]),
     ]);
 
@@ -61,20 +110,23 @@ export class ReportsService {
     }));
 
     incomeAgg.forEach((item) => {
-      if (monthlyData[item._id - 1]) {
-        monthlyData[item._id - 1].totalIncome = item.totalIncome;
+      const index = parseInt(item._id, 10) - 1;
+      if (monthlyData[index]) {
+        monthlyData[index].totalIncome = item.totalIncome;
       }
     });
 
     expenseAgg.forEach((item) => {
-      if (monthlyData[item._id - 1]) {
-        monthlyData[item._id - 1].totalExpense = item.totalExpense;
+      const index = parseInt(item._id, 10) - 1;
+      if (monthlyData[index]) {
+        monthlyData[index].totalExpense = item.totalExpense;
       }
     });
 
     fuelAgg.forEach((item) => {
-      if (monthlyData[item._id - 1]) {
-        monthlyData[item._id - 1].totalFuel = item.totalFuel;
+      const index = parseInt(item._id, 10) - 1;
+      if (monthlyData[index]) {
+        monthlyData[index].totalFuel = item.totalFuel;
       }
     });
 
