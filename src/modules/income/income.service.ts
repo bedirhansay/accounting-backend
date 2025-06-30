@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
-
-import * as ExcelJS from 'exceljs';
+import dayjs from 'dayjs';
 import { Response } from 'express';
 import { Model, Types } from 'mongoose';
 
@@ -10,6 +9,9 @@ import { DateRangeDTO } from '../../common/DTO/request/date.range.request.dto';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
+import { ExcelColumnConfig, ExcelHelper } from '../../common/helper/excel.helper';
+import { FilterBuilder } from '../../common/helper/filter.builder';
+import { getFinalDateRange } from '../../common/helper/get-date-params';
 import { ensureValidObjectId } from '../../common/helper/object.id';
 import { Customer, CustomerDocument } from '../customers/customer.schema';
 import { CreateIncomeDto } from './dto/create-income.dto';
@@ -17,9 +19,6 @@ import { IncomeDto } from './dto/income.dto';
 import { IncomeQueryDto } from './dto/query-dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
 import { Income, IncomeDocument } from './income.schema';
-
-import dayjs from 'dayjs';
-import { getFinalDateRange } from '../../common/helper/get-date-params';
 
 @Injectable()
 export class IncomeService {
@@ -31,12 +30,27 @@ export class IncomeService {
     private readonly customerModel: Model<CustomerDocument>
   ) {}
 
+  private static readonly DEFAULT_PAGE_SIZE = 10;
+  private static readonly MAX_PAGE_SIZE = 100;
+  private static readonly POPULATE_FIELDS = [
+    { path: 'customerId', select: 'name' },
+    { path: 'categoryId', select: 'name' },
+  ];
+
+  private static readonly ERROR_MESSAGES = {
+    INVALID_INCOME_ID: 'Geçersiz gelir ID',
+    INCOME_NOT_FOUND: 'Gelir kaydı bulunamadı',
+    INCOME_UPDATE_FAILED: 'Güncellenecek gelir kaydı bulunamadı',
+    INCOME_DELETE_FAILED: 'Silinecek gelir kaydı bulunamadı',
+    INVALID_CUSTOMER_ID: 'Geçersiz müşteri ID',
+  };
+
   async create(dto: CreateIncomeDto & { companyId: string }): Promise<CommandResponseDto> {
     const created = new this.incomeModel({
       ...dto,
       companyId: new Types.ObjectId(dto.companyId),
       customerId: new Types.ObjectId(dto.customerId),
-      categoryId: dto.categoryId ? new Types.ObjectId(dto.categoryId) : undefined,
+      categoryId: new Types.ObjectId(dto.categoryId),
     });
     await created.save();
 
@@ -47,54 +61,33 @@ export class IncomeService {
   }
 
   async findAll(params: IncomeQueryDto, companyId: string): Promise<PaginatedResponseDto<IncomeDto>> {
-    const { pageNumber, pageSize, search, beginDate, endDate, isPaid } = params;
-    const { beginDate: finalBeginDate, endDate: finalEndDate } = getFinalDateRange(beginDate, endDate);
+    const { pageNumber, pageSize, search } = params;
 
-    const filter: any = {
-      companyId: new Types.ObjectId(companyId),
-    };
-
-    filter.operationDate = {
-      $gte: new Date(finalBeginDate),
-      $lte: new Date(finalEndDate),
-    };
+    const filter = FilterBuilder.buildIncomeFilter({
+      companyId,
+      search,
+      beginDate: params?.beginDate,
+      endDate: params?.endDate,
+      isPaid: params?.isPaid,
+    });
 
     if (search) {
-      filter.$or = [{ description: { $regex: search, $options: 'i' } }];
+      const matchedCustomers = await this.findCustomersBySearch(search);
+      const customerIds = matchedCustomers.map((c) => new Types.ObjectId(c._id as string));
+      FilterBuilder.addCustomerSearchFilter(filter, search, customerIds);
     }
 
-    if (beginDate || endDate) {
-      filter.operationDate = {};
-      if (finalBeginDate) filter.operationDate.$gte = new Date(finalBeginDate);
-      if (finalEndDate) filter.operationDate.$lte = new Date(finalEndDate);
-    }
-
-    if (typeof isPaid == 'boolean') {
-      filter.isPaid = isPaid;
-    }
-
-    if (search) {
-      const matchedCustomers = await this.customerModel
-        .find({ name: new RegExp(search, 'i') }, '_id')
+    const [totalCount, data] = await Promise.all([
+      this.incomeModel.countDocuments(filter),
+      this.incomeModel
+        .find(filter)
+        .populate(IncomeService.POPULATE_FIELDS)
+        .sort({ operationDate: -1 })
+        .skip((pageNumber - 1) * pageSize)
+        .limit(pageSize)
         .lean()
-        .exec();
-
-      const customerIds: Types.ObjectId[] = matchedCustomers.map((c) => new Types.ObjectId(c._id as string));
-
-      filter.$or = [{ description: new RegExp(search, 'i') }, { customerId: { $in: customerIds } }];
-    }
-
-    const totalCount = await this.incomeModel.countDocuments(filter);
-
-    const data = await this.incomeModel
-      .find(filter)
-      .populate('customerId', 'name')
-      .populate('categoryId', 'name')
-      .sort({ operationDate: -1 })
-      .skip((pageNumber - 1) * pageSize)
-      .limit(pageSize)
-      .lean()
-      .exec();
+        .exec(),
+    ]);
 
     const items = plainToInstance(IncomeDto, data);
 
@@ -108,28 +101,39 @@ export class IncomeService {
     };
   }
 
+  private async findCustomersBySearch(search: string): Promise<Array<{ _id: string }>> {
+    const customers = await this.customerModel
+      .find({ name: new RegExp(search, 'i') }, '_id')
+      .lean()
+      .exec();
+
+    return customers.map((customer) => ({ _id: customer._id.toString() }));
+  }
+
   async findOne(id: string, companyId: string): Promise<IncomeDto> {
-    ensureValidObjectId(id, 'Geçersiz gelir ID');
+    ensureValidObjectId(id, IncomeService.ERROR_MESSAGES.INVALID_INCOME_ID);
 
     const income = await this.incomeModel
       .findOne({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) })
-      .populate('customerId', 'name')
-      .populate('categoryId', 'name')
+      .populate(IncomeService.POPULATE_FIELDS)
       .lean()
       .exec();
-    if (!income) throw new NotFoundException('Gelir kaydı bulunamadı');
+
+    if (!income) {
+      throw new NotFoundException(IncomeService.ERROR_MESSAGES.INCOME_NOT_FOUND);
+    }
 
     return plainToInstance(IncomeDto, income);
   }
 
   async update(id: string, dto: UpdateIncomeDto, companyId: string): Promise<CommandResponseDto> {
-    ensureValidObjectId(id, 'Geçersiz gelir ID');
+    ensureValidObjectId(id, IncomeService.ERROR_MESSAGES.INVALID_INCOME_ID);
 
     const updated = await this.incomeModel
       .findOneAndUpdate({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) }, dto, { new: true })
       .exec();
 
-    if (!updated) throw new NotFoundException('Güncellenecek gelir kaydı bulunamadı');
+    if (!updated) throw new NotFoundException(IncomeService.ERROR_MESSAGES.INCOME_UPDATE_FAILED);
 
     return {
       statusCode: 200,
@@ -138,13 +142,13 @@ export class IncomeService {
   }
 
   async remove(id: string, companyId: string): Promise<CommandResponseDto> {
-    ensureValidObjectId(id, 'Geçersiz gelir ID');
+    ensureValidObjectId(id, IncomeService.ERROR_MESSAGES.INVALID_INCOME_ID);
 
     const deleted = await this.incomeModel
       .findOneAndDelete({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) })
       .exec();
 
-    if (!deleted) throw new NotFoundException('Silinecek gelir kaydı bulunamadı');
+    if (!deleted) throw new NotFoundException(IncomeService.ERROR_MESSAGES.INCOME_DELETE_FAILED);
 
     return {
       statusCode: 204,
@@ -169,7 +173,58 @@ export class IncomeService {
       .lean()
       .exec()) as unknown as PopulatedIncome[];
 
-    const grouped = incomes.reduce<
+    const grouped = this.groupIncomesByCustomer(incomes);
+
+    const columns: ExcelColumnConfig[] = [
+      { key: 'customerName', width: 30, header: 'Müşteri Adı' },
+      { key: 'totalDocuments', width: 15, header: 'Yükleme Seferi' },
+      { key: 'totalUnitCount', width: 20, header: 'Toplam Kamyon Sayısı' },
+      { key: 'totalAmount', width: 20, header: 'Toplam Tutar (₺)', numFmt: '#,##0.00 ₺' },
+      { key: 'paidAmount', width: 20, header: 'Ödenmiş Tutar (₺)', numFmt: '#,##0.00 ₺' },
+      { key: 'unpaidAmount', width: 20, header: 'Ödenmemiş Tutar (₺)', numFmt: '#,##0.00 ₺' },
+      { key: 'remainingAmount', width: 20, header: 'Kalan Ödeme (₺)', numFmt: '#,##0.00 ₺' },
+    ];
+
+    const { workbook, sheet } = ExcelHelper.createWorkbook('Gelir Özeti');
+
+    const title = `Yükleme Özeti: ${ExcelHelper.formatDate(finalBeginDate)} - ${ExcelHelper.formatDate(finalEndDate)}`;
+    ExcelHelper.addTitle(sheet, title, columns.length);
+
+    ExcelHelper.addHeaders(sheet, columns);
+
+    const { data, totals } = this.prepareIncomesSummaryData(grouped);
+
+    ExcelHelper.addDataRows(sheet, data, (row, item) => {
+      if (item.remainingAmount === 0) {
+        for (let i = 1; i <= columns.length; i++) {
+          row.getCell(i).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'CCFFCC' },
+          };
+        }
+      }
+    });
+
+    ExcelHelper.addTotalRow(sheet, { customerName: 'TOPLAM', ...totals });
+
+    const lastRow = sheet.addRow([]);
+    lastRow.getCell(1).value = `Toplam Firma Sayısı: ${Object.keys(grouped).length}`;
+    lastRow.getCell(1).font = { italic: true };
+    lastRow.getCell(1).alignment = { horizontal: 'left' };
+    lastRow.getCell(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'E0FFFF' },
+    };
+
+    await ExcelHelper.sendAsResponse(workbook, res, 'incomes-summary.xlsx');
+  }
+
+  private groupIncomesByCustomer(
+    incomes: Array<{ customerId: { name: string } | null; totalAmount: number; unitCount: number; isPaid: boolean }>
+  ) {
+    return incomes.reduce<
       Record<
         string,
         {
@@ -204,46 +259,10 @@ export class IncomeService {
 
       return acc;
     }, {});
+  }
 
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet('Gelir Özeti');
-
-    // Başlık satırı
-    sheet.mergeCells('A1:G1');
-    const titleRow = sheet.getRow(1);
-    titleRow.getCell(1).value =
-      `Yükleme Özeti: ${dayjs(finalBeginDate).format('DD.MM.YYYY')} - ${dayjs(finalEndDate).format('DD.MM.YYYY')}`;
-    titleRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
-    titleRow.getCell(1).font = { bold: true };
-    titleRow.getCell(1).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFFF00' },
-    };
-
-    // Kolon başlıkları
-    sheet.getRow(2).values = [
-      'Müşteri Adı',
-      'Yükleme Seferi',
-      'Toplam Kamyon Sayısı',
-      'Toplam Tutar (₺)',
-      'Ödenmiş Tutar (₺)',
-      'Ödenmemiş Tutar (₺)',
-      'Kalan Ödeme (₺)',
-    ];
-    sheet.getRow(2).font = { bold: true };
-
-    sheet.columns = [
-      { key: 'customerName', width: 30 },
-      { key: 'totalDocuments', width: 15 },
-      { key: 'totalUnitCount', width: 20 },
-      { key: 'totalAmount', width: 20 },
-      { key: 'paidAmount', width: 20 },
-      { key: 'unpaidAmount', width: 20 },
-      { key: 'remainingAmount', width: 20 },
-    ];
-
-    let totals = {
+  private prepareIncomesSummaryData(grouped: Record<string, any>) {
+    const totals = {
       totalDocuments: 0,
       totalUnitCount: 0,
       totalAmount: 0,
@@ -252,68 +271,24 @@ export class IncomeService {
       remainingAmount: 0,
     };
 
-    Object.entries(grouped).forEach(([customerName, data]) => {
-      const remainingAmount = data.unpaidAmount; // Doğru hesaplama
+    const data = Object.entries(grouped).map(([customerName, data]) => {
+      const remainingAmount = data.unpaidAmount;
 
-      const row = sheet.addRow({
-        customerName: customerName.toUpperCase(),
-        ...data,
-        remainingAmount,
-      });
-
-      row.font = { name: 'Arial', size: 11 };
-      row.alignment = { vertical: 'middle' };
-
-      if (remainingAmount === 0) {
-        for (let i = 1; i <= 7; i++) {
-          row.getCell(i).fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'CCFFCC' },
-          };
-        }
-      }
-
-      // Toplamları güncelle
       totals.totalDocuments += data.totalDocuments;
       totals.totalUnitCount += data.totalUnitCount;
       totals.totalAmount += data.totalAmount;
       totals.paidAmount += data.paidAmount;
       totals.unpaidAmount += data.unpaidAmount;
       totals.remainingAmount += remainingAmount;
+
+      return {
+        customerName: customerName.toUpperCase(),
+        ...data,
+        remainingAmount,
+      };
     });
 
-    // Toplam satırı
-    const totalRow = sheet.addRow({
-      customerName: 'TOPLAM',
-      ...totals,
-    });
-    totalRow.font = { bold: true };
-    totalRow.alignment = { vertical: 'middle', horizontal: 'right' };
-    totalRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE0' } };
-
-    // Firma sayısı satırı
-    const lastRow = sheet.addRow([]);
-    lastRow.getCell(1).value = `Toplam Firma Sayısı: ${Object.keys(grouped).length}`;
-    lastRow.getCell(1).font = { italic: true };
-    lastRow.getCell(1).alignment = { horizontal: 'left' };
-    lastRow.getCell(1).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'E0FFFF' },
-    };
-
-    // Sayısal biçimlendirme
-    sheet.getColumn('totalAmount').numFmt = '#,##0.00 ₺';
-    sheet.getColumn('paidAmount').numFmt = '#,##0.00 ₺';
-    sheet.getColumn('unpaidAmount').numFmt = '#,##0.00 ₺';
-    sheet.getColumn('remainingAmount').numFmt = '#,##0.00 ₺';
-
-    const buffer = await workbook.xlsx.writeBuffer();
-
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=incomes-summary.xlsx');
-    res.end(buffer);
+    return { data, totals };
   }
 
   async getIncomesByCustomer(
@@ -321,39 +296,30 @@ export class IncomeService {
     query: PaginatedDateSearchDTO,
     companyId: string
   ): Promise<PaginatedResponseDto<IncomeDto>> {
-    ensureValidObjectId(customerId, 'Geçersiz müşteri ID');
+    ensureValidObjectId(customerId, IncomeService.ERROR_MESSAGES.INVALID_CUSTOMER_ID);
 
     const { pageNumber, pageSize, search, beginDate, endDate } = query;
 
-    const filter: any = {
-      companyId: new Types.ObjectId(companyId),
-      customerId: new Types.ObjectId(customerId),
-    };
-    if (search) {
-      filter.description = { $regex: search, $options: 'i' };
-    }
+    const filter = FilterBuilder.buildIncomeFilter({
+      companyId,
+      search,
+      beginDate,
+      endDate,
+      customerId,
+    });
 
-    if (beginDate || endDate) {
-      const start = beginDate ? dayjs(beginDate).startOf('day').toDate() : undefined;
-      const end = endDate ? dayjs(endDate).endOf('day').toDate() : undefined;
-
-      filter.operationDate = {
-        ...(start && { $gte: start }),
-        ...(end && { $lte: end }),
-      };
-    }
-
-    const totalCount = await this.incomeModel.countDocuments(filter);
-
-    const incomes = await this.incomeModel
-      .find(filter)
-      .sort({ operationDate: -1 })
-      .skip((pageNumber - 1) * pageSize)
-      .populate('customerId', 'name')
-      .populate('categoryId', 'name')
-      .lean()
-      .limit(pageSize)
-      .exec();
+    const [totalCount, incomes] = await Promise.all([
+      this.incomeModel.countDocuments(filter),
+      this.incomeModel
+        .find(filter)
+        .populate('customerId', 'name')
+        .populate('categoryId', 'name')
+        .sort({ operationDate: -1 })
+        .skip((pageNumber - 1) * pageSize)
+        .limit(pageSize)
+        .lean()
+        .exec(),
+    ]);
 
     const items = plainToInstance(IncomeDto, incomes);
 
@@ -376,62 +342,29 @@ export class IncomeService {
       .lean()
       .exec();
 
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet('Tüm Gelirler');
-
-    // Başlık
-    sheet.mergeCells('A1:H1');
-    const titleRow = sheet.getRow(1);
-    titleRow.getCell(1).value = `Tüm Gelir Kayıtları (${new Date().toLocaleDateString('tr-TR')})`;
-    titleRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
-    titleRow.getCell(1).font = { bold: true };
-    titleRow.getCell(1).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFFF00' },
-    };
-
-    // Kolon Başlıkları
-    sheet.getRow(2).values = [
-      'Müşteri Adı',
-      'Kategori',
-      'Açıklama',
-      'Tutar (₺)',
-      'Kamyon Sayısı',
-      'Ödeme Durumu',
-      'İşlem Tarihi',
-      'Kayıt Tarihi',
-    ];
-    sheet.getRow(2).font = { bold: true };
-
-    sheet.columns = [
-      { key: 'customerName', width: 30 },
-      { key: 'categoryName', width: 25 },
-      { key: 'description', width: 40 },
-      { key: 'totalAmount', width: 20 },
-      { key: 'unitCount', width: 15 },
-      { key: 'isPaid', width: 15 },
-      { key: 'operationDate', width: 20 },
-      { key: 'createdAt', width: 20 },
+    const columns: ExcelColumnConfig[] = [
+      { key: 'customerName', width: 30, header: 'Müşteri Adı' },
+      { key: 'categoryName', width: 25, header: 'Kategori' },
+      { key: 'description', width: 40, header: 'Açıklama' },
+      { key: 'totalAmount', width: 20, header: 'Tutar (₺)', numFmt: '#,##0.00 ₺' },
+      { key: 'unitCount', width: 15, header: 'Kamyon Sayısı' },
+      { key: 'isPaid', width: 15, header: 'Ödeme Durumu' },
+      { key: 'operationDate', width: 20, header: 'İşlem Tarihi' },
+      { key: 'createdAt', width: 20, header: 'Kayıt Tarihi' },
     ];
 
-    incomes.forEach((income) => {
-      const customer = income.customerId as { name?: string } | null;
-      const category = income.categoryId as { name?: string } | null;
-      const row = sheet.addRow({
-        customerName: customer?.name || 'Bilinmeyen Müşteri',
-        categoryName: category?.name || '-',
-        description: income.description || '-',
-        totalAmount: Number(income.totalAmount || 0),
-        unitCount: Number(income.unitCount || 0),
-        isPaid: income.isPaid ? 'Ödendi' : 'Ödenmedi',
-        operationDate: dayjs(income.operationDate).format('DD.MM.YYYY'),
-      });
+    const { workbook, sheet } = ExcelHelper.createWorkbook('Tüm Gelirler');
 
-      row.alignment = { vertical: 'middle' };
+    const title = `Tüm Gelir Kayıtları (${ExcelHelper.formatDate(new Date(), 'DD.MM.YYYY')})`;
+    ExcelHelper.addTitle(sheet, title, columns.length);
 
-      if (income.isPaid) {
-        for (let i = 1; i <= 8; i++) {
+    ExcelHelper.addHeaders(sheet, columns);
+
+    const data = this.prepareAllIncomesData(incomes);
+
+    ExcelHelper.addDataRows(sheet, data, (row, item) => {
+      if (item.isPaidStatus === true) {
+        for (let i = 1; i <= columns.length; i++) {
           row.getCell(i).fill = {
             type: 'pattern',
             pattern: 'solid',
@@ -441,13 +374,67 @@ export class IncomeService {
       }
     });
 
-    // Format para sütunu
-    sheet.getColumn('totalAmount').numFmt = '#,##0.00 ₺';
+    await ExcelHelper.sendAsResponse(workbook, res, 'all-incomes.xlsx');
+  }
 
-    const buffer = await workbook.xlsx.writeBuffer();
+  private prepareAllIncomesData(incomes: any[]) {
+    return incomes.map((income) => {
+      const customer = income.customerId as { name?: string } | null;
+      const category = income.categoryId as { name?: string } | null;
 
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=all-incomes.xlsx');
-    res.end(buffer);
+      return {
+        customerName: customer?.name?.toUpperCase() || 'Bilinmeyen Müşteri',
+        categoryName: category?.name?.toUpperCase() || '-',
+        description: income.description || '-',
+        totalAmount: Number(income.totalAmount || 0),
+        unitCount: Number(income.unitCount || 0),
+        isPaid: income.isPaid ? 'Ödendi' : 'Ödenmedi',
+        isPaidStatus: income.isPaid,
+        operationDate: ExcelHelper.formatDate(income.operationDate),
+        createdAt: ExcelHelper.formatDate(income.createdAt),
+      };
+    });
+  }
+
+  async getIncomeStats(companyId: string): Promise<{
+    totalIncomes: number;
+    totalAmount: number;
+    paidAmount: number;
+    unpaidAmount: number;
+    thisMonthIncomes: number;
+  }> {
+    const startOfMonth = dayjs().startOf('month').toDate();
+    const endOfMonth = dayjs().endOf('month').toDate();
+
+    const [totalStats, monthlyStats] = await Promise.all([
+      this.incomeModel.aggregate([
+        { $match: { companyId: new Types.ObjectId(companyId) } },
+        {
+          $group: {
+            _id: null,
+            totalIncomes: { $sum: 1 },
+            totalAmount: { $sum: '$totalAmount' },
+            paidAmount: { $sum: { $cond: ['$isPaid', '$totalAmount', 0] } },
+            unpaidAmount: { $sum: { $cond: ['$isPaid', 0, '$totalAmount'] } },
+          },
+        },
+      ]),
+      this.incomeModel.countDocuments({
+        companyId: new Types.ObjectId(companyId),
+        operationDate: { $gte: startOfMonth, $lte: endOfMonth },
+      }),
+    ]);
+
+    const stats = totalStats[0] || {
+      totalIncomes: 0,
+      totalAmount: 0,
+      paidAmount: 0,
+      unpaidAmount: 0,
+    };
+
+    return {
+      ...stats,
+      thisMonthIncomes: monthlyStats,
+    };
   }
 }

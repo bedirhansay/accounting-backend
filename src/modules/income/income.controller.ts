@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Header, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Header, Param, Patch, Post, Query, Res, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -50,6 +50,7 @@ import { IncomeService } from './income.service';
 export class IncomeController {
   constructor(private readonly incomeService: IncomeService) {}
 
+  // CRUD Operations
   @Post()
   @ApiOperation({ summary: 'Yeni gelir oluşturur', operationId: 'createIncome' })
   @ApiCommandResponse()
@@ -66,10 +67,11 @@ export class IncomeController {
     return this.incomeService.findAll({ ...query }, companyId);
   }
 
-  @Get('export-incomes-excel')
+  // Export Operations (Static routes before dynamic)
+  @Get('export/all')
   @ApiOperation({
-    summary: 'Gelirleri .zip dosyası olarak dışa aktarır',
-    operationId: 'exporIncomesExcel',
+    summary: 'Tüm gelirleri Excel dosyası olarak dışa aktarır',
+    operationId: 'exportAllIncomes',
   })
   @ApiQuery({
     name: 'beginDate',
@@ -83,16 +85,16 @@ export class IncomeController {
     description: 'Bitiş tarihi (ISO formatında)',
     type: String,
   })
-  @Header('Content-Type', 'application/zip')
-  @Header('Content-Disposition', 'attachment; filename=incomes.zip')
-  exportExcel(@Query() query: DateRangeDto, @CurrentCompany() companyId: string, @Res() res: Response) {
+  @Header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+  @Header('Content-Disposition', 'attachment; filename=all-incomes.xlsx')
+  exportAllIncomes(@Query() query: DateRangeDto, @CurrentCompany() companyId: string, @Res() res: Response) {
     return this.incomeService.exportAllIncomes(companyId, res);
   }
 
-  @Get('export-customer-excel')
+  @Get('export/summary')
   @ApiOperation({
-    summary: 'Gelirleri .zip dosyası olarak dışa aktarır',
-    operationId: 'exportMontlyIncomeSummary',
+    summary: 'Müşteri bazında gelir özetini Excel dosyası olarak dışa aktarır',
+    operationId: 'exportIncomeSummary',
   })
   @ApiQuery({
     name: 'beginDate',
@@ -106,10 +108,23 @@ export class IncomeController {
     description: 'Bitiş tarihi (ISO formatında)',
     type: String,
   })
-  @Header('Content-Type', 'application/zip')
-  @Header('Content-Disposition', 'attachment; filename=incomes.zip')
-  exportIncomes(@Query() query: DateRangeDto, @CurrentCompany() companyId: string, @Res() res: Response) {
+  @Header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+  @Header('Content-Disposition', 'attachment; filename=income-summary.xlsx')
+  exportIncomeSummary(@Query() query: DateRangeDto, @CurrentCompany() companyId: string, @Res() res: Response) {
     return this.incomeService.exportMontlyIncomeSummary(query, companyId, res);
+  }
+
+  @Get('customer/:customerId')
+  @ApiOperation({ summary: 'Belirli müşterinin gelirlerini listeler', operationId: 'getCustomerIncomes' })
+  @ApiParam({ name: 'customerId', description: 'Müşteri ID' })
+  @ApiSearchDatePaginatedQuery()
+  @ApiPaginatedResponse(IncomeDto)
+  getCustomerIncomes(
+    @Param('customerId') customerId: string,
+    @Query() query: PaginatedDateSearchDTO,
+    @CurrentCompany() companyId: string
+  ) {
+    return this.incomeService.getIncomesByCustomer(customerId, query, companyId);
   }
 
   @Get(':id')
@@ -135,19 +150,5 @@ export class IncomeController {
   @ApiCommandResponse()
   remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.incomeService.remove(id, companyId);
-  }
-
-  @Get(':id/incomes')
-  @ApiOperation({ summary: 'Belirli müşterinin gelirlerini listeler', operationId: 'getCustomerIncomes' })
-  @ApiParam({ name: 'id', description: 'Müşteri ID' })
-  @ApiSearchDatePaginatedQuery()
-  @ApiPaginatedResponse(IncomeDto)
-  getCustomerIncomes(
-    @Param('id') customerId: string,
-    @Query() query: PaginatedDateSearchDTO,
-    @CurrentCompany() companyId: string,
-    @Req() req: Request
-  ) {
-    return this.incomeService.getIncomesByCustomer(customerId, query, companyId);
   }
 }

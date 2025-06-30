@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -29,56 +29,150 @@ import { UpdateCompanyDto } from './dto/update-company.dto';
   CommandResponseDto,
   CompanyDto,
   CreateCompanyDto,
-  UpdateCompanyDto
+  UpdateCompanyDto,
+  PaginationDTO
 )
 @Controller('companies')
 export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}
 
-  @Post()
-  @ApiOperation({ summary: 'Yeni bir şirket oluştur', operationId: 'createCompany' })
-  @ApiBody({ type: CreateCompanyDto })
-  @ApiCreatedResponse({ type: CommandResponseDto, description: 'Şirket başarıyla oluşturuldu' })
-  @ApiResponse({ status: 409, description: 'Aynı isimde bir şirket zaten mevcut' })
-  create(@Body() createCompanyDto: CreateCompanyDto) {
-    return this.companiesService.create(createCompanyDto);
-  }
-
   @Get()
+  @ApiOperation({
+    summary: 'Tüm şirketleri getir',
+    description: 'Sistemdeki tüm şirketleri sayfalı olarak listeler.',
+    operationId: 'getAllCompanies',
+  })
   @ApiSearchDatePaginatedQuery()
-  @ApiOperation({ summary: 'Tüm şirketleri getir', operationId: 'getAllCompanies' })
   @ApiPaginatedResponse(CompanyDto)
-  @ApiOkResponse({ type: PaginatedResponseDto, description: 'Şirketler başarıyla listelendi' })
-  findAll(@Query() query: PaginationDTO) {
+  @ApiOkResponse({
+    type: PaginatedResponseDto,
+    description: 'Şirketler başarıyla listelendi',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz sorgu parametreleri',
+  })
+  async findAll(@Query() query: PaginationDTO): Promise<PaginatedResponseDto<CompanyDto>> {
     return this.companiesService.findAll(query);
   }
 
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Yeni bir şirket oluştur',
+    description: 'Sistemde yeni bir şirket kaydı oluşturur. Şirket adı benzersiz olmalıdır.',
+    operationId: 'createCompany',
+  })
+  @ApiBody({
+    type: CreateCompanyDto,
+    description: 'Oluşturulacak şirket bilgileri',
+  })
+  @ApiCreatedResponse({
+    type: CommandResponseDto,
+    description: 'Şirket başarıyla oluşturuldu',
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Aynı isimde bir şirket zaten mevcut',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz şirket bilgileri',
+  })
+  async create(@Body() createCompanyDto: CreateCompanyDto): Promise<CommandResponseDto> {
+    return this.companiesService.create(createCompanyDto);
+  }
+
   @Get(':id')
-  @ApiOperation({ summary: 'ID ile bir şirketi getir', operationId: 'getCompanyById' })
-  @ApiParam({ name: 'id', description: 'Şirket ID' })
-  @ApiOkResponse({ type: BaseResponseDto, description: 'Şirket bulundu' })
-  @ApiResponse({ status: 404, description: 'Şirket bulunamadı veya ID geçersiz' })
-  findOne(@Param('id') id: string) {
+  @ApiOperation({
+    summary: 'ID ile bir şirketi getir',
+    description: "Belirtilen ID'ye sahip şirketi getirir.",
+    operationId: 'getCompanyById',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Şirket ID (MongoDB ObjectId)',
+    type: String,
+    example: '507f1f77bcf86cd799439011',
+  })
+  @ApiOkResponse({
+    type: BaseResponseDto,
+    description: 'Şirket bulundu',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Şirket bulunamadı',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz şirket ID',
+  })
+  async findOne(@Param('id') id: string): Promise<CompanyDto> {
     return this.companiesService.findOne(id);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Şirket bilgilerini güncelle', operationId: 'updateCompany' })
-  @ApiParam({ name: 'id', description: 'Şirket ID' })
-  @ApiBody({ type: UpdateCompanyDto })
-  @ApiOkResponse({ type: CommandResponseDto, description: 'Şirket başarıyla güncellendi' })
-  @ApiResponse({ status: 404, description: 'Güncellenecek şirket bulunamadı' })
-  update(@Param('id') id: string, @Body() updateCompanyDto: UpdateCompanyDto) {
+  @ApiOperation({
+    summary: 'Şirket bilgilerini güncelle',
+    description: "Belirtilen ID'ye sahip şirketin bilgilerini günceller.",
+    operationId: 'updateCompany',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Güncellenecek şirket ID (MongoDB ObjectId)',
+    type: String,
+    example: '507f1f77bcf86cd799439011',
+  })
+  @ApiBody({
+    type: UpdateCompanyDto,
+    description: 'Güncellenecek şirket bilgileri (kısmi güncelleme)',
+  })
+  @ApiOkResponse({
+    type: CommandResponseDto,
+    description: 'Şirket başarıyla güncellendi',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Güncellenecek şirket bulunamadı',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz şirket ID veya güncelleme verisi',
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Aynı isimde başka bir şirket zaten mevcut',
+  })
+  async update(@Param('id') id: string, @Body() updateCompanyDto: UpdateCompanyDto): Promise<CommandResponseDto> {
     return this.companiesService.update(id, updateCompanyDto);
   }
 
   @Delete(':id')
-  @HttpCode(200)
-  @ApiOperation({ summary: 'Şirketi sil', operationId: 'deleteCompany' })
-  @ApiParam({ name: 'id', description: 'Şirket ID' })
-  @ApiOkResponse({ type: CommandResponseDto, description: 'Şirket başarıyla silindi' })
-  @ApiResponse({ status: 404, description: 'Silinecek şirket bulunamadı' })
-  remove(@Param('id') id: string) {
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Şirketi sil',
+    description: "Belirtilen ID'ye sahip şirketi siler. Bu işlem geri alınamaz.",
+    operationId: 'deleteCompany',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Silinecek şirket ID (MongoDB ObjectId)',
+    type: String,
+    example: '507f1f77bcf86cd799439011',
+  })
+  @ApiOkResponse({
+    type: CommandResponseDto,
+    description: 'Şirket başarıyla silindi',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Silinecek şirket bulunamadı',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz şirket ID',
+  })
+  async remove(@Param('id') id: string): Promise<CommandResponseDto> {
     return this.companiesService.remove(id);
   }
 }

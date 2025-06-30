@@ -1,11 +1,12 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
 import { Model, Types } from 'mongoose';
 
-import { CompanyListQueryDto } from '../../common/DTO/request/company.list.request.dto';
+import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
+import { FilterBuilder } from '../../common/helper/filter.builder';
 import { ensureValidObjectId } from '../../common/helper/object.id';
 
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
@@ -15,31 +16,45 @@ import { Vehicle, VehicleDocument } from './vehicle.schema';
 
 @Injectable()
 export class VehicleService {
+  private static readonly DEFAULT_PAGE_SIZE = 10;
+  private static readonly MAX_PAGE_SIZE = 100;
+
+  private static readonly ERROR_MESSAGES = {
+    INVALID_VEHICLE_ID: 'Geçersiz araç ID',
+    INVALID_COMPANY_ID: 'Geçersiz firma ID',
+    INVALID_DRIVER_ID: 'Geçersiz sürücü ID',
+    VEHICLE_NOT_FOUND: 'Araç bulunamadı',
+    VEHICLE_UPDATE_FAILED: 'Güncellenecek araç bulunamadı',
+    VEHICLE_DELETE_FAILED: 'Silinecek araç bulunamadı',
+    PLATE_ALREADY_EXISTS: 'Bu plaka ile kayıtlı bir araç zaten mevcut',
+  };
+
   constructor(
     @InjectModel(Vehicle.name)
     private readonly vehicleModel: Model<VehicleDocument>
   ) {}
 
   async create(dto: CreateVehicleDto & { companyId: string }): Promise<CommandResponseDto> {
-    ensureValidObjectId(dto.companyId, 'Geçersiz firma ID');
-    ensureValidObjectId(dto.driverId, 'Geçersiz sürücü ID');
+    ensureValidObjectId(dto.companyId, VehicleService.ERROR_MESSAGES.INVALID_COMPANY_ID);
+    ensureValidObjectId(dto.driverId, VehicleService.ERROR_MESSAGES.INVALID_DRIVER_ID);
 
-    const existing = await this.vehicleModel.findOne({
-      plateNumber: dto.plateNumber,
-      companyId: new Types.ObjectId(dto.companyId),
-    });
+    const existing = await this.vehicleModel
+      .findOne({
+        plateNumber: dto.plateNumber,
+        companyId: new Types.ObjectId(dto.companyId),
+      })
+      .lean()
+      .exec();
 
     if (existing) {
-      throw new BadRequestException('Bu plaka ile kayıtlı bir araç zaten var.');
+      throw new ConflictException(VehicleService.ERROR_MESSAGES.PLATE_ALREADY_EXISTS);
     }
 
-    const created = new this.vehicleModel({
+    const created = await new this.vehicleModel({
       ...dto,
       companyId: new Types.ObjectId(dto.companyId),
       driverId: new Types.ObjectId(dto.driverId),
-    });
-
-    await created.save();
+    }).save();
 
     return {
       statusCode: 201,
@@ -47,57 +62,47 @@ export class VehicleService {
     };
   }
 
-  async findAll(params: CompanyListQueryDto): Promise<PaginatedResponseDto<VehicleDto>> {
-    const { pageNumber, pageSize, search, beginDate, endDate, companyId } = params;
+  async findAll(companyId: string, query: PaginatedDateSearchDTO): Promise<PaginatedResponseDto<VehicleDto>> {
+    const { pageNumber, pageSize, search } = query;
 
-    ensureValidObjectId(companyId, 'Geçersiz firma ID');
+    const validPageNumber = FilterBuilder.validatePageNumber(pageNumber);
+    const validPageSize = FilterBuilder.validatePageSize(pageSize);
 
-    const filter: any = {
-      companyId: new Types.ObjectId(companyId),
-    };
+    const filter: any = { companyId: new Types.ObjectId(companyId) };
 
     if (search) {
-      filter.$or = [
-        { plateNumber: { $regex: search, $options: 'i' } },
-        { brand: { $regex: search, $options: 'i' } },
-        { model: { $regex: search, $options: 'i' } },
-      ];
+      FilterBuilder.addSearchFilter(filter, search, ['plateNumber', 'brand', 'model']);
     }
 
-    if (beginDate || endDate) {
-      filter.inspectionDate = {};
-      if (beginDate) filter.inspectionDate.$gte = new Date(beginDate);
-      if (endDate) filter.inspectionDate.$lte = new Date(endDate);
-    }
+    const [totalCount, vehicles] = await Promise.all([
+      this.vehicleModel.countDocuments(filter),
+      this.vehicleModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .populate('driverId', 'fullName')
+        .skip((validPageNumber - 1) * validPageSize)
+        .limit(validPageSize)
+        .lean()
+        .exec(),
+    ]);
 
-    const totalCount = await this.vehicleModel.countDocuments(filter);
-
-    const data = await this.vehicleModel
-      .find(filter)
-      .sort({ createdAt: -1 })
-      .populate('driverId', 'fullName')
-      .skip((pageNumber - 1) * pageSize)
-      .limit(pageSize)
-      .lean()
-      .exec();
-
-    const items = plainToInstance(VehicleDto, data, {
+    const items = plainToInstance(VehicleDto, vehicles, {
       excludeExtraneousValues: true,
     });
 
     return {
       items,
-      pageNumber,
+      pageNumber: validPageNumber,
+      totalPages: Math.ceil(totalCount / validPageSize),
       totalCount,
-      totalPages: Math.ceil(totalCount / pageSize),
-      hasPreviousPage: pageNumber > 1,
-      hasNextPage: pageNumber * pageSize < totalCount,
+      hasPreviousPage: validPageNumber > 1,
+      hasNextPage: validPageNumber * validPageSize < totalCount,
     };
   }
 
   async findOne(id: string, companyId: string): Promise<VehicleDto> {
-    ensureValidObjectId(id, 'Geçersiz araç ID');
-    ensureValidObjectId(companyId, 'Geçersiz firma ID');
+    ensureValidObjectId(id, VehicleService.ERROR_MESSAGES.INVALID_VEHICLE_ID);
+    ensureValidObjectId(companyId, VehicleService.ERROR_MESSAGES.INVALID_COMPANY_ID);
 
     const vehicle = await this.vehicleModel
       .findOne({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) })
@@ -106,7 +111,7 @@ export class VehicleService {
       .exec();
 
     if (!vehicle) {
-      throw new NotFoundException('Araç bulunamadı');
+      throw new NotFoundException(VehicleService.ERROR_MESSAGES.VEHICLE_NOT_FOUND);
     }
 
     return plainToInstance(VehicleDto, vehicle, {
@@ -115,19 +120,34 @@ export class VehicleService {
   }
 
   async update(id: string, dto: UpdateVehicleDto, companyId: string): Promise<CommandResponseDto> {
-    ensureValidObjectId(id, 'Geçersiz araç ID');
-    ensureValidObjectId(companyId, 'Geçersiz firma ID');
+    ensureValidObjectId(id, VehicleService.ERROR_MESSAGES.INVALID_VEHICLE_ID);
+    ensureValidObjectId(companyId, VehicleService.ERROR_MESSAGES.INVALID_COMPANY_ID);
 
-    if (dto.driverId) ensureValidObjectId(dto.driverId, 'Geçersiz sürücü ID');
+    if (dto.driverId) {
+      ensureValidObjectId(dto.driverId, VehicleService.ERROR_MESSAGES.INVALID_DRIVER_ID);
+    }
 
-    const updated = await this.vehicleModel.findOneAndUpdate(
-      { _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) },
-      dto,
-      { new: true }
-    );
+    if (dto.plateNumber) {
+      const existing = await this.vehicleModel
+        .findOne({
+          companyId: new Types.ObjectId(companyId),
+          plateNumber: dto.plateNumber,
+          _id: { $ne: new Types.ObjectId(id) },
+        })
+        .lean()
+        .exec();
+
+      if (existing) {
+        throw new ConflictException(VehicleService.ERROR_MESSAGES.PLATE_ALREADY_EXISTS);
+      }
+    }
+
+    const updated = await this.vehicleModel
+      .findOneAndUpdate({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) }, dto, { new: true })
+      .exec();
 
     if (!updated) {
-      throw new NotFoundException('Güncellenecek araç bulunamadı');
+      throw new NotFoundException(VehicleService.ERROR_MESSAGES.VEHICLE_UPDATE_FAILED);
     }
 
     return {
@@ -137,16 +157,18 @@ export class VehicleService {
   }
 
   async remove(id: string, companyId: string): Promise<CommandResponseDto> {
-    ensureValidObjectId(id, 'Geçersiz araç ID');
-    ensureValidObjectId(companyId, 'Geçersiz firma ID');
+    ensureValidObjectId(id, VehicleService.ERROR_MESSAGES.INVALID_VEHICLE_ID);
+    ensureValidObjectId(companyId, VehicleService.ERROR_MESSAGES.INVALID_COMPANY_ID);
 
-    const deleted = await this.vehicleModel.findOneAndDelete({
-      _id: new Types.ObjectId(id),
-      companyId: new Types.ObjectId(companyId),
-    });
+    const deleted = await this.vehicleModel
+      .findOneAndDelete({
+        _id: new Types.ObjectId(id),
+        companyId: new Types.ObjectId(companyId),
+      })
+      .exec();
 
     if (!deleted) {
-      throw new NotFoundException('Silinecek araç bulunamadı');
+      throw new NotFoundException(VehicleService.ERROR_MESSAGES.VEHICLE_DELETE_FAILED);
     }
 
     return {

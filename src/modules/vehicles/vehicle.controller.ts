@@ -18,19 +18,18 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiResponse,
   ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
 
 import { CurrentCompany } from '../../common/decorator/company.id';
-import { CompanyGuard } from '../../common/guards/company.id';
-
 import { ApiCommandResponse, ApiPaginatedResponse, ApiSearchDatePaginatedQuery } from '../../common/decorator/swagger';
-
-import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
+import { PaginatedSearchDTO } from '../../common/DTO/request/search.request.dto';
 import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
+import { CompanyGuard } from '../../common/guards/company.id';
 
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
@@ -44,7 +43,7 @@ import { VehicleService } from './vehicle.service';
   VehicleDto,
   CreateVehicleDto,
   UpdateVehicleDto,
-  PaginatedDateSearchDTO,
+  PaginatedSearchDTO,
   PaginatedResponseDto,
   CommandResponseDto,
   BaseResponseDto
@@ -54,49 +53,141 @@ import { VehicleService } from './vehicle.service';
 export class VehicleController {
   constructor(private readonly vehicleService: VehicleService) {}
 
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Yeni araç oluştur', operationId: 'createVehicle' })
-  @ApiCommandResponse()
-  @ApiBody({ type: CreateVehicleDto })
-  create(@Body() dto: CreateVehicleDto, @CurrentCompany() companyId: string) {
-    return this.vehicleService.create({ ...dto, companyId });
-  }
-
+  // Static routes first
   @Get()
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Araçları listele', operationId: 'getAllVehicles' })
+  @ApiOperation({
+    summary: 'Tüm araçları listele',
+    description: 'Şirkete ait tüm araçları sayfalı olarak listeler. İsteğe bağlı arama ve tarih filtreleme desteği.',
+    operationId: 'getAllVehicles',
+  })
   @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(VehicleDto)
-  findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
-    return this.vehicleService.findAll({ ...query, companyId });
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz sorgu parametreleri',
+  })
+  async findAll(
+    @Query() query: PaginatedSearchDTO,
+    @CurrentCompany() companyId: string
+  ): Promise<PaginatedResponseDto<VehicleDto>> {
+    return this.vehicleService.findAll(companyId, query);
+  }
+
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Yeni araç oluştur',
+    description: 'Şirkete ait yeni bir araç kaydı oluşturur. Plaka numarası şirket içinde benzersiz olmalıdır.',
+    operationId: 'createVehicle',
+  })
+  @ApiBody({
+    type: CreateVehicleDto,
+    description: 'Oluşturulacak araç bilgileri',
+  })
+  @ApiCommandResponse()
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Bu plaka ile kayıtlı bir araç zaten mevcut',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz araç bilgileri',
+  })
+  async create(
+    @Body() createVehicleDto: CreateVehicleDto,
+    @CurrentCompany() companyId: string
+  ): Promise<CommandResponseDto> {
+    return this.vehicleService.create({ ...createVehicleDto, companyId });
   }
 
   @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'ID ile araç getir', operationId: 'getVehicleById' })
-  @ApiParam({ name: 'id', description: 'Araç ID' })
-  @ApiOkResponse({ type: VehicleDto })
-  findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
+  @ApiOperation({
+    summary: 'Araç detayı getir',
+    description: "Belirtilen ID'ye sahip aracı getirir.",
+    operationId: 'getVehicleById',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Araç ID (MongoDB ObjectId)',
+    type: String,
+    example: '507f1f77bcf86cd799439011',
+  })
+  @ApiOkResponse({
+    type: VehicleDto,
+    description: 'Araç başarıyla getirildi',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Araç bulunamadı',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz araç ID',
+  })
+  async findOne(@Param('id') id: string, @CurrentCompany() companyId: string): Promise<VehicleDto> {
     return this.vehicleService.findOne(id, companyId);
   }
 
   @Patch(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'ID ile araç güncelle', operationId: 'updateVehicle' })
-  @ApiParam({ name: 'id', description: 'Araç ID' })
-  @ApiBody({ type: UpdateVehicleDto })
+  @ApiOperation({
+    summary: 'Araç bilgilerini güncelle',
+    description: "Belirtilen ID'ye sahip aracın bilgilerini günceller.",
+    operationId: 'updateVehicle',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Güncellenecek araç ID (MongoDB ObjectId)',
+    type: String,
+    example: '507f1f77bcf86cd799439011',
+  })
+  @ApiBody({
+    type: UpdateVehicleDto,
+    description: 'Güncellenecek araç bilgileri (kısmi güncelleme)',
+  })
   @ApiCommandResponse()
-  update(@Param('id') id: string, @Body() dto: UpdateVehicleDto, @CurrentCompany() companyId: string) {
-    return this.vehicleService.update(id, dto, companyId);
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Güncellenecek araç bulunamadı',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz araç ID veya güncelleme verisi',
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Aynı plaka ile başka bir araç zaten mevcut',
+  })
+  async update(
+    @Param('id') id: string,
+    @Body() updateVehicleDto: UpdateVehicleDto,
+    @CurrentCompany() companyId: string
+  ): Promise<CommandResponseDto> {
+    return this.vehicleService.update(id, updateVehicleDto, companyId);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Araç sil', operationId: 'deleteVehicle' })
-  @ApiParam({ name: 'id', description: 'Araç ID' })
+  @ApiOperation({
+    summary: 'Aracı sil',
+    description: "Belirtilen ID'ye sahip aracı siler. Bu işlem geri alınamaz.",
+    operationId: 'deleteVehicle',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Silinecek araç ID (MongoDB ObjectId)',
+    type: String,
+    example: '507f1f77bcf86cd799439011',
+  })
   @ApiCommandResponse()
-  remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Silinecek araç bulunamadı',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz araç ID',
+  })
+  async remove(@Param('id') id: string, @CurrentCompany() companyId: string): Promise<CommandResponseDto> {
     return this.vehicleService.remove(id, companyId);
   }
 }

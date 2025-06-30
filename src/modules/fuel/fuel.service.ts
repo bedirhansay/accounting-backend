@@ -1,14 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
-import dayjs from 'dayjs';
-import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
 import { Model, Types } from 'mongoose';
+
+import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../common/constant/pagination.param';
 import { DateRangeDTO } from '../../common/DTO/request';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
+import { ExcelColumnConfig, ExcelHelper } from '../../common/helper/excel.helper';
+import { FilterBuilder } from '../../common/helper/filter.builder';
 import { getFinalDateRange } from '../../common/helper/get-date-params';
 import { ensureValidObjectId } from '../../common/helper/object.id';
 import { CreateFuelDto } from './dto/create-fuel.dto';
@@ -18,13 +20,27 @@ import { Fuel, FuelDocument } from './fuel.schema';
 
 @Injectable()
 export class FuelService {
+  // Constants for better maintainability
+  private static readonly DEFAULT_PAGE_SIZE = 10;
+  private static readonly MAX_PAGE_SIZE = 100;
+
+  // Enhanced error messages
+  private static readonly ERROR_MESSAGES = {
+    INVALID_FUEL_ID: 'Geçersiz yakıt ID',
+    INVALID_COMPANY_ID: 'Geçersiz firma ID',
+    INVALID_VEHICLE_ID: 'Geçersiz araç ID',
+    FUEL_NOT_FOUND: 'Yakıt kaydı bulunamadı',
+    FUEL_UPDATE_FAILED: 'Güncellenecek yakıt kaydı bulunamadı',
+    FUEL_DELETE_FAILED: 'Silinecek yakıt kaydı bulunamadı',
+  };
+
   constructor(
     @InjectModel(Fuel.name)
     private readonly fuelModel: Model<FuelDocument>
   ) {}
 
   async create(dto: CreateFuelDto, companyId: string): Promise<CommandResponseDto> {
-    ensureValidObjectId(companyId, 'Geçersiz firma ID');
+    ensureValidObjectId(companyId, FuelService.ERROR_MESSAGES.INVALID_COMPANY_ID);
 
     const created = await new this.fuelModel({
       ...dto,
@@ -39,29 +55,19 @@ export class FuelService {
   }
 
   async findAll(params: PaginatedDateSearchDTO, companyId: string): Promise<PaginatedResponseDto<FuelDto>> {
-    ensureValidObjectId(companyId, 'Geçersiz firma ID');
+    ensureValidObjectId(companyId, FuelService.ERROR_MESSAGES.INVALID_COMPANY_ID);
 
     const { pageNumber, pageSize, search, beginDate, endDate } = params;
-    const { beginDate: finalBeginDate, endDate: finalEndDate } = getFinalDateRange(beginDate, endDate);
 
-    const filter: any = {
-      companyId: new Types.ObjectId(companyId),
-    };
+    const validPageNumber = FilterBuilder.validatePageNumber(pageNumber);
+    const validPageSize = FilterBuilder.validatePageSize(pageSize);
 
-    if (search) {
-      filter.$or = [
-        { description: { $regex: search, $options: 'i' } },
-        { invoiceNo: { $regex: search, $options: 'i' } },
-        { driverName: { $regex: search, $options: 'i' } },
-        // Araç plakası için lookup kullanıldığından burada eşleşemez, aggregate'e taşımak gerekir
-      ];
-    }
-
-    if (beginDate || endDate) {
-      filter.operationDate = {};
-      if (finalBeginDate) filter.operationDate.$gte = new Date(finalBeginDate);
-      if (finalEndDate) filter.operationDate.$lte = new Date(finalEndDate);
-    }
+    const filter = FilterBuilder.buildBaseFilter({
+      companyId,
+      search,
+      beginDate,
+      endDate,
+    });
 
     const pipeline: any[] = [
       { $match: filter },
@@ -94,43 +100,19 @@ export class FuelService {
       });
     }
 
-    pipeline.push({ $sort: { operationDate: -1 } }, { $skip: (pageNumber - 1) * pageSize }, { $limit: pageSize });
-
-    const [data, totalCountArr] = await Promise.all([
-      this.fuelModel.aggregate(pipeline).exec(),
-      this.fuelModel.aggregate([
-        { $match: filter },
-        {
-          $lookup: {
-            from: 'vehicles',
-            localField: 'vehicleId',
-            foreignField: '_id',
-            as: 'vehicleId',
-          },
-        },
-        {
-          $unwind: {
-            path: '$vehicleId',
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $match: search
-            ? {
-                $or: [
-                  { description: { $regex: search, $options: 'i' } },
-                  { invoiceNo: { $regex: search, $options: 'i' } },
-                  { driverName: { $regex: search, $options: 'i' } },
-                  { 'vehicleId.plateNumber': { $regex: search, $options: 'i' } },
-                ],
-              }
-            : {},
-        },
-        { $count: 'count' },
-      ]),
+    const [data, totalCountResult] = await Promise.all([
+      this.fuelModel
+        .aggregate([
+          ...pipeline,
+          { $sort: { operationDate: -1 } },
+          { $skip: (validPageNumber - 1) * validPageSize },
+          { $limit: validPageSize },
+        ])
+        .exec(),
+      this.fuelModel.aggregate([...pipeline, { $count: 'count' }]).exec(),
     ]);
 
-    const totalCount = totalCountArr[0]?.count || 0;
+    const totalCount = totalCountResult[0]?.count || 0;
 
     const items = plainToInstance(FuelDto, data, {
       excludeExtraneousValues: true,
@@ -138,17 +120,17 @@ export class FuelService {
 
     return {
       items,
-      pageNumber,
-      totalPages: Math.ceil(totalCount / pageSize),
+      pageNumber: validPageNumber,
+      totalPages: Math.ceil(totalCount / validPageSize),
       totalCount,
-      hasPreviousPage: pageNumber > 1,
-      hasNextPage: pageNumber * pageSize < totalCount,
+      hasPreviousPage: validPageNumber > 1,
+      hasNextPage: validPageNumber * validPageSize < totalCount,
     };
   }
 
   async findOne(id: string, companyId: string): Promise<FuelDto> {
-    ensureValidObjectId(id, 'Geçersiz yakıt ID');
-    ensureValidObjectId(companyId, 'Geçersiz firma ID');
+    ensureValidObjectId(id, FuelService.ERROR_MESSAGES.INVALID_FUEL_ID);
+    ensureValidObjectId(companyId, FuelService.ERROR_MESSAGES.INVALID_COMPANY_ID);
 
     const fuel = await this.fuelModel
       .findOne({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) })
@@ -157,7 +139,7 @@ export class FuelService {
       .exec();
 
     if (!fuel) {
-      throw new NotFoundException('Yakıt kaydı bulunamadı');
+      throw new NotFoundException(FuelService.ERROR_MESSAGES.FUEL_NOT_FOUND);
     }
 
     return plainToInstance(FuelDto, fuel, {
@@ -166,18 +148,20 @@ export class FuelService {
   }
 
   async update(id: string, dto: UpdateFuelDto, companyId: string): Promise<CommandResponseDto> {
-    ensureValidObjectId(id, 'Geçersiz yakıt ID');
-    ensureValidObjectId(companyId, 'Geçersiz firma ID');
+    ensureValidObjectId(id, FuelService.ERROR_MESSAGES.INVALID_FUEL_ID);
+    ensureValidObjectId(companyId, FuelService.ERROR_MESSAGES.INVALID_COMPANY_ID);
 
     const updated = await this.fuelModel.findOneAndUpdate(
       { _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) },
       {
         ...dto,
-        vehicleId: new Types.ObjectId(dto.vehicleId),
-      }
+        ...(dto.vehicleId && { vehicleId: new Types.ObjectId(dto.vehicleId) }),
+      },
+      { new: true }
     );
+
     if (!updated) {
-      throw new NotFoundException('Güncellenecek yakıt kaydı bulunamadı');
+      throw new NotFoundException(FuelService.ERROR_MESSAGES.FUEL_UPDATE_FAILED);
     }
 
     return {
@@ -187,18 +171,18 @@ export class FuelService {
   }
 
   async remove(id: string, companyId: string): Promise<CommandResponseDto> {
-    ensureValidObjectId(id, 'Geçersiz yakıt ID');
-    ensureValidObjectId(companyId, 'Geçersiz firma ID');
+    ensureValidObjectId(id, FuelService.ERROR_MESSAGES.INVALID_FUEL_ID);
+    ensureValidObjectId(companyId, FuelService.ERROR_MESSAGES.INVALID_COMPANY_ID);
 
     const deleted = await this.fuelModel
       .findOneAndDelete({
-        _id: id,
+        _id: new Types.ObjectId(id),
         companyId: new Types.ObjectId(companyId),
       })
       .exec();
 
     if (!deleted) {
-      throw new NotFoundException('Silinecek yakıt kaydı bulunamadı');
+      throw new NotFoundException(FuelService.ERROR_MESSAGES.FUEL_DELETE_FAILED);
     }
 
     return {
@@ -207,15 +191,127 @@ export class FuelService {
     };
   }
 
+  async exportToExcel(companyId: string, query: PaginatedDateSearchDTO, res: Response): Promise<void> {
+    const filter = FilterBuilder.buildBaseFilter({
+      companyId,
+      search: query.search,
+      beginDate: query.beginDate,
+      endDate: query.endDate,
+    });
+
+    if (query.beginDate || query.endDate) {
+      delete filter.operationDate;
+      filter.operationDate = {};
+      if (query.beginDate) filter.operationDate.$gte = new Date(query.beginDate);
+      if (query.endDate) filter.operationDate.$lte = new Date(query.endDate);
+    }
+
+    const pipeline: any[] = [
+      { $match: filter },
+      {
+        $lookup: {
+          from: 'vehicles',
+          localField: 'vehicleId',
+          foreignField: '_id',
+          as: 'vehicleId',
+        },
+      },
+      {
+        $unwind: {
+          path: '$vehicleId',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+    ];
+
+    if (query.search) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { description: { $regex: query.search, $options: 'i' } },
+            { invoiceNo: { $regex: query.search, $options: 'i' } },
+            { driverName: { $regex: query.search, $options: 'i' } },
+            { 'vehicleId.plateNumber': { $regex: query.search, $options: 'i' } },
+          ],
+        },
+      });
+    }
+
+    pipeline.push({ $sort: { operationDate: -1 } });
+
+    const fuels = await this.fuelModel.aggregate(pipeline).exec();
+
+    const fuelDtos = plainToInstance(FuelDto, fuels, {
+      excludeExtraneousValues: true,
+    });
+
+    // Create workbook using ExcelHelper
+    const { workbook, sheet } = ExcelHelper.createWorkbook('Yakıt Kayıtları');
+
+    const title = `Yakıt Kayıtları (${ExcelHelper.formatDate(new Date(), 'DD.MM.YYYY')})`;
+
+    // Define columns for Excel export
+    const columns: ExcelColumnConfig[] = [
+      { key: 'invoiceNo', header: 'Fatura No', width: 20 },
+      { key: 'plateNumber', header: 'Plaka', width: 15 },
+      { key: 'driverName', header: 'Sürücü', width: 20 },
+      { key: 'totalPrice', header: 'Tutar', width: 15 },
+      { key: 'description', header: 'Açıklama', width: 30 },
+      { key: 'operationDate', header: 'İşlem Tarihi', width: 20 },
+      { key: 'createdAt', header: 'Kayıt Tarihi', width: 20 },
+    ];
+
+    ExcelHelper.addTitle(sheet, title, columns.length);
+    ExcelHelper.addHeaders(sheet, columns);
+
+    // Transform data for Excel - access raw data instead of DTO
+    const data = fuels.map((fuel) => ({
+      invoiceNo: fuel.invoiceNo,
+      plateNumber: fuel.vehicleId?.plateNumber || 'Bilinmeyen',
+      driverName: fuel.driverName || 'Belirtilmemiş',
+      totalPrice: `${fuel.totalPrice.toLocaleString('tr-TR')} ₺`,
+      description: fuel.description || 'Açıklama yok',
+      operationDate: ExcelHelper.formatDate(fuel.operationDate),
+      createdAt: ExcelHelper.formatDate(fuel.createdAt),
+    }));
+
+    ExcelHelper.addDataRows(sheet, data, (row, item) => {
+      row.getCell('invoiceNo').value = item.invoiceNo;
+      row.getCell('plateNumber').value = item.plateNumber;
+      row.getCell('driverName').value = item.driverName;
+      row.getCell('totalPrice').value = item.totalPrice;
+      row.getCell('description').value = item.description;
+      row.getCell('operationDate').value = item.operationDate;
+      row.getCell('createdAt').value = item.createdAt;
+    });
+
+    const fileName = `yakit_kayitlari_${new Date().toISOString().split('T')[0]}.xlsx`;
+    await ExcelHelper.sendAsResponse(workbook, res, fileName);
+  }
+
   async getFuelsByVehicleId(
     vehicleId: string,
     companyId: string,
     query: PaginatedDateSearchDTO
   ): Promise<PaginatedResponseDto<FuelDto>> {
-    ensureValidObjectId(vehicleId, 'Geçersiz araç ID');
-    ensureValidObjectId(companyId, 'Geçersiz firma ID');
+    ensureValidObjectId(vehicleId, FuelService.ERROR_MESSAGES.INVALID_VEHICLE_ID);
+    ensureValidObjectId(companyId, FuelService.ERROR_MESSAGES.INVALID_COMPANY_ID);
 
-    const { pageNumber, pageSize, search, beginDate, endDate } = query;
+    const {
+      pageNumber = PAGINATION_DEFAULT_PAGE,
+      pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
+      search,
+      beginDate,
+      endDate,
+    } = query;
+
+    // Validate and sanitize pagination parameters
+    const validPageNumber = Math.max(1, Math.floor(pageNumber) || 1);
+    const validPageSize = Math.min(
+      FuelService.MAX_PAGE_SIZE,
+      Math.max(1, Math.floor(pageSize) || FuelService.DEFAULT_PAGE_SIZE)
+    );
+
     const { beginDate: finalBeginDate, endDate: finalEndDate } = getFinalDateRange(beginDate, endDate);
 
     const filter: any = {
@@ -225,47 +321,49 @@ export class FuelService {
 
     if (search) {
       filter.$or = [
-        { description: new RegExp(search, 'i') },
-        { invoiceNo: new RegExp(search, 'i') },
-        { fuelType: new RegExp(search, 'i') },
+        { description: { $regex: search, $options: 'i' } },
+        { invoiceNo: { $regex: search, $options: 'i' } },
+        { driverName: { $regex: search, $options: 'i' } },
       ];
     }
 
-    if (beginDate || endDate) {
+    if (finalBeginDate || finalEndDate) {
       filter.operationDate = {};
       if (finalBeginDate) filter.operationDate.$gte = new Date(finalBeginDate);
       if (finalEndDate) filter.operationDate.$lte = new Date(finalEndDate);
     }
 
-    const totalCount = await this.fuelModel.countDocuments(filter);
-
-    const fuels = await this.fuelModel
-      .find(filter)
-      .populate({ path: 'vehicleId', select: 'plateNumber' })
-      .sort({ operationDate: -1 })
-      .skip((pageNumber - 1) * pageSize)
-      .limit(pageSize)
-      .lean()
-      .exec();
+    // Execute queries in parallel for better performance
+    const [totalCount, fuels] = await Promise.all([
+      this.fuelModel.countDocuments(filter),
+      this.fuelModel
+        .find(filter)
+        .populate({ path: 'vehicleId', select: 'plateNumber' })
+        .collation({ locale: 'tr', strength: 1 })
+        .sort({ operationDate: -1 })
+        .skip((validPageNumber - 1) * validPageSize)
+        .limit(validPageSize)
+        .lean()
+        .exec(),
+    ]);
 
     const items = plainToInstance(FuelDto, fuels, {
       excludeExtraneousValues: true,
     });
 
     return {
-      pageNumber,
-      totalPages: Math.ceil(totalCount / pageSize),
-      totalCount,
-      hasPreviousPage: pageNumber > 1,
-      hasNextPage: pageNumber * pageSize < totalCount,
       items,
+      pageNumber: validPageNumber,
+      totalPages: Math.ceil(totalCount / validPageSize),
+      totalCount,
+      hasPreviousPage: validPageNumber > 1,
+      hasNextPage: validPageNumber * validPageSize < totalCount,
     };
   }
 
   async exportMontlyFuelSummary(query: DateRangeDTO, companyId: string, res: Response): Promise<void> {
     const { beginDate, endDate } = query;
     const { beginDate: finalBeginDate, endDate: finalEndDate } = getFinalDateRange(beginDate, endDate);
-
 
     const fuels = await this.fuelModel
       .find({
@@ -296,53 +394,45 @@ export class FuelService {
       {}
     );
 
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet('Yakıt Özeti');
+    // Create workbook using ExcelHelper
+    const { workbook, sheet } = ExcelHelper.createWorkbook('Yakıt Özeti');
 
-    sheet.mergeCells('A1:C1');
-    const titleRow = sheet.getRow(1);
-    titleRow.getCell(1).value =
-      `Araç Yakıt Özeti: ${dayjs(finalBeginDate).format('DD.MM.YYYY')} - ${dayjs(finalEndDate).format('DD.MM.YYYY')}`;
-    titleRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
-    titleRow.getCell(1).font = { bold: true };
-    titleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF00' } };
-    titleRow.getCell(1).border = { bottom: { style: 'thin' } };
+    const title = `Araç Yakıt Özeti: ${ExcelHelper.formatDate(finalBeginDate)} - ${ExcelHelper.formatDate(finalEndDate)}`;
 
-    // Kolonlar
-    sheet.getRow(2).values = ['Plaka', 'Yakıt Fişi Sayısı', 'Toplam Tutar (₺)'];
-    sheet.getRow(2).font = { bold: true };
-
-    sheet.columns = [
-      { key: 'plateNumber', width: 20 },
-      { key: 'totalRecords', width: 20 },
-      { key: 'totalAmount', width: 20 },
+    // Define columns for Excel export
+    const columns: ExcelColumnConfig[] = [
+      { key: 'plateNumber', header: 'Plaka', width: 20 },
+      { key: 'totalRecords', header: 'Yakıt Fişi Sayısı', width: 20 },
+      { key: 'totalAmount', header: 'Toplam Tutar (₺)', width: 20 },
     ];
 
-    // Veri
-    let rowIndex = 3;
+    ExcelHelper.addTitle(sheet, title, columns.length);
+    ExcelHelper.addHeaders(sheet, columns);
+
+    // Transform data for Excel
+    const data = Object.values(grouped);
     let grandTotal = 0;
     let grandCount = 0;
 
-    Object.values(grouped).forEach((data) => {
-      grandTotal += data.totalAmount;
-      grandCount += data.totalRecords;
-      sheet.insertRow(rowIndex++, data);
+    data.forEach((item) => {
+      grandTotal += item.totalAmount;
+      grandCount += item.totalRecords;
     });
 
-    // Toplam Satırı
-    const totalRow = sheet.getRow(rowIndex++);
-    totalRow.getCell(1).value = 'TOPLAM';
-    totalRow.getCell(2).value = grandCount;
-    totalRow.getCell(3).value = grandTotal;
-    totalRow.font = { bold: true };
-    totalRow.getCell(1).alignment = { horizontal: 'right' };
+    ExcelHelper.addDataRows(sheet, data, (row, item) => {
+      row.getCell('plateNumber').value = item.plateNumber;
+      row.getCell('totalRecords').value = item.totalRecords;
+      row.getCell('totalAmount').value = item.totalAmount;
+    });
 
-    sheet.getColumn('totalAmount').numFmt = '#,##0.00 ₺';
+    // Add total row
+    ExcelHelper.addTotalRow(sheet, {
+      plateNumber: 'TOPLAM',
+      totalRecords: grandCount,
+      totalAmount: grandTotal,
+    });
 
-    const buffer = await workbook.xlsx.writeBuffer();
-
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=vehicle-fuel-summary.xlsx');
-    res.end(buffer);
+    const fileName = `yakit_ozeti_${new Date().toISOString().split('T')[0]}.xlsx`;
+    await ExcelHelper.sendAsResponse(workbook, res, fileName);
   }
 }

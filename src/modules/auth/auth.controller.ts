@@ -1,5 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiExcludeEndpoint, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { AuthService } from './auth.service';
 import { LoginDto, LoginResponseDto } from './dto/login.dto';
@@ -11,6 +11,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @ApiExcludeEndpoint()
   @ApiOperation({ summary: 'Yeni kullanıcı kaydı oluşturur' })
   @ApiCreatedResponse({
     description: 'Kullanıcı başarıyla kaydedildi',
@@ -25,6 +26,9 @@ export class AuthController {
     },
   })
   async register(@Body() dto: RegisterDto) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Kayıt işlemi production ortamında kapalıdır');
+    }
     return this.authService.register(dto);
   }
 

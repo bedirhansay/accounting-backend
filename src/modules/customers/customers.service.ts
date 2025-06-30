@@ -3,10 +3,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
 import { Model, Types } from 'mongoose';
 
-import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../common/constant/pagination.param';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
+import { FilterBuilder } from '../../common/helper/filter.builder';
 import { ensureValidObjectId } from '../../common/helper/object.id';
 import { Customer, CustomerDocument } from './customer.schema';
 import { CreateCustomerDto } from './dto/create-customer.dto';
@@ -15,19 +15,33 @@ import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 @Injectable()
 export class CustomersService {
+  private static readonly DEFAULT_PAGE_SIZE = 10;
+  private static readonly MAX_PAGE_SIZE = 100;
+
+  private static readonly ERROR_MESSAGES = {
+    INVALID_CUSTOMER_ID: 'Geçersiz müşteri ID',
+    CUSTOMER_NOT_FOUND: 'Müşteri bulunamadı',
+    CUSTOMER_UPDATE_FAILED: 'Güncellenecek müşteri bulunamadı',
+    CUSTOMER_DELETE_FAILED: 'Silinecek müşteri bulunamadı',
+    CUSTOMER_ALREADY_EXISTS: 'Bu isimde bir müşteri zaten mevcut',
+  };
+
   constructor(
     @InjectModel(Customer.name)
     private readonly customerModel: Model<CustomerDocument>
   ) {}
 
   async create(dto: CreateCustomerDto & { companyId: string }): Promise<CommandResponseDto> {
-    const existing = await this.customerModel.findOne({
-      companyId: new Types.ObjectId(dto.companyId),
-      name: dto.name,
-    });
+    const existing = await this.customerModel
+      .findOne({
+        companyId: new Types.ObjectId(dto.companyId),
+        name: dto.name,
+      })
+      .lean()
+      .exec();
 
     if (existing) {
-      throw new ConflictException('Bu isimde bir müşteri zaten mevcut');
+      throw new ConflictException(CustomersService.ERROR_MESSAGES.CUSTOMER_ALREADY_EXISTS);
     }
 
     const created = await new this.customerModel({
@@ -42,37 +56,27 @@ export class CustomersService {
   }
 
   async findAll(companyId: string, query: PaginatedDateSearchDTO): Promise<PaginatedResponseDto<CustomerDto>> {
-    const {
-      pageNumber = PAGINATION_DEFAULT_PAGE,
-      pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
-      search,
-      beginDate,
-      endDate,
-    } = query;
+    const { pageNumber, pageSize, search, beginDate, endDate } = query;
 
-    const filter: any = {
-      companyId: new Types.ObjectId(companyId),
-    };
+    const validPageNumber = FilterBuilder.validatePageNumber(pageNumber);
+    const validPageSize = FilterBuilder.validatePageSize(pageSize);
 
+    const filter: any = { companyId: new Types.ObjectId(companyId) };
     if (search) {
-      filter.$or = [{ name: { $regex: search, $options: 'i' } }];
+      FilterBuilder.addSearchFilter(filter, search, ['name', 'email', 'phone']);
     }
 
-    if (beginDate || endDate) {
-      filter.createdAt = {};
-      if (beginDate) filter.createdAt.$gte = new Date(beginDate);
-      if (endDate) filter.createdAt.$lte = new Date(endDate);
-    }
-
-    const totalCount = await this.customerModel.countDocuments(filter);
-    const customers = await this.customerModel
-      .find(filter)
-      .collation({ locale: 'tr', strength: 1 })
-      .sort({ createdAt: -1 })
-      .skip((pageNumber - 1) * pageSize)
-      .limit(pageSize)
-      .lean()
-      .exec();
+    const [totalCount, customers] = await Promise.all([
+      this.customerModel.countDocuments(filter),
+      this.customerModel
+        .find(filter)
+        .collation({ locale: 'tr', strength: 1 })
+        .sort({ createdAt: -1 })
+        .skip((validPageNumber - 1) * validPageSize)
+        .limit(validPageSize)
+        .lean()
+        .exec(),
+    ]);
 
     const items = plainToInstance(CustomerDto, customers, {
       excludeExtraneousValues: true,
@@ -80,22 +84,25 @@ export class CustomersService {
 
     return {
       items,
-      pageNumber,
-      totalPages: Math.ceil(totalCount / pageSize),
+      pageNumber: validPageNumber,
+      totalPages: Math.ceil(totalCount / validPageSize),
       totalCount,
-      hasPreviousPage: pageNumber > 1,
-      hasNextPage: pageNumber * pageSize < totalCount,
+      hasPreviousPage: validPageNumber > 1,
+      hasNextPage: validPageNumber * validPageSize < totalCount,
     };
   }
 
   async findOne(id: string, companyId: string): Promise<CustomerDto> {
-    ensureValidObjectId(id, 'Geçersiz müşteri ID');
+    ensureValidObjectId(id, CustomersService.ERROR_MESSAGES.INVALID_CUSTOMER_ID);
 
     const customer = await this.customerModel
-      .findOne({ _id: id, companyId: new Types.ObjectId(companyId) })
+      .findOne({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) })
       .lean()
       .exec();
-    if (!customer) throw new NotFoundException('Müşteri bulunamadı');
+
+    if (!customer) {
+      throw new NotFoundException(CustomersService.ERROR_MESSAGES.CUSTOMER_NOT_FOUND);
+    }
 
     return plainToInstance(CustomerDto, customer, {
       excludeExtraneousValues: true,
@@ -103,13 +110,30 @@ export class CustomersService {
   }
 
   async update(id: string, dto: UpdateCustomerDto, companyId: string): Promise<CommandResponseDto> {
-    ensureValidObjectId(id, 'Geçersiz müşteri ID');
+    ensureValidObjectId(id, CustomersService.ERROR_MESSAGES.INVALID_CUSTOMER_ID);
+
+    if (dto.name) {
+      const existing = await this.customerModel
+        .findOne({
+          companyId: new Types.ObjectId(companyId),
+          name: dto.name,
+          _id: { $ne: new Types.ObjectId(id) },
+        })
+        .lean()
+        .exec();
+
+      if (existing) {
+        throw new ConflictException(CustomersService.ERROR_MESSAGES.CUSTOMER_ALREADY_EXISTS);
+      }
+    }
 
     const updated = await this.customerModel
-      .findOneAndUpdate({ _id: id, companyId: new Types.ObjectId(companyId) }, dto, { new: true })
+      .findOneAndUpdate({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) }, dto, { new: true })
       .exec();
 
-    if (!updated) throw new NotFoundException('Güncellenecek müşteri bulunamadı');
+    if (!updated) {
+      throw new NotFoundException(CustomersService.ERROR_MESSAGES.CUSTOMER_UPDATE_FAILED);
+    }
 
     return {
       statusCode: 200,
@@ -118,15 +142,18 @@ export class CustomersService {
   }
 
   async remove(id: string, companyId: string): Promise<CommandResponseDto> {
-    ensureValidObjectId(id, 'Geçersiz müşteri ID');
+    ensureValidObjectId(id, CustomersService.ERROR_MESSAGES.INVALID_CUSTOMER_ID);
 
     const deleted = await this.customerModel
-      .findOneAndDelete({ _id: id, companyId: new Types.ObjectId(companyId) })
+      .findOneAndDelete({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) })
       .exec();
-    if (!deleted) throw new NotFoundException('Silinecek müşteri bulunamadı');
+
+    if (!deleted) {
+      throw new NotFoundException(CustomersService.ERROR_MESSAGES.CUSTOMER_DELETE_FAILED);
+    }
 
     return {
-      statusCode: 200,
+      statusCode: 204,
       id: deleted.id.toString(),
     };
   }

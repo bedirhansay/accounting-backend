@@ -16,6 +16,18 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Injectable()
 export class CategoriesService {
+  private static readonly DEFAULT_PAGE_SIZE = 10;
+  private static readonly MAX_PAGE_SIZE = 100;
+
+  private static readonly ERROR_MESSAGES = {
+    INVALID_CATEGORY_ID: 'Geçersiz kategori ID',
+    CATEGORY_NOT_FOUND: 'Kategori bulunamadı',
+    CATEGORY_UPDATE_FAILED: 'Güncellenecek kategori bulunamadı',
+    CATEGORY_DELETE_FAILED: 'Silinecek kategori bulunamadı',
+    CATEGORY_ALREADY_EXISTS: 'Bu isimde bir kategori zaten mevcut',
+    INVALID_CATEGORY_TYPE: 'Geçersiz kategori tipi',
+  };
+
   constructor(
     @InjectModel(Category.name)
     private readonly categoryModel: Model<CategoryDocument>
@@ -23,17 +35,28 @@ export class CategoriesService {
 
   async create(dto: CreateCategoryDto, companyId: string): Promise<CommandResponseDto> {
     const allowedTypes = Object.values(CategoryType);
-
     if (!allowedTypes.includes(dto.type)) {
-      throw new BadRequestException(`Geçersiz kategori tipi. Geçerli değerler: ${allowedTypes.join(', ')}`);
+      throw new BadRequestException(
+        `${CategoriesService.ERROR_MESSAGES.INVALID_CATEGORY_TYPE}. Geçerli değerler: ${allowedTypes.join(', ')}`
+      );
     }
 
-    const exists = await this.categoryModel.findOne({ name: dto.name, companyId });
+    const exists = await this.categoryModel
+      .findOne({
+        name: dto.name,
+        companyId: new Types.ObjectId(companyId),
+      })
+      .lean()
+      .exec();
+
     if (exists) {
-      throw new ConflictException('Bu isimde bir kategori zaten mevcut');
+      throw new ConflictException(CategoriesService.ERROR_MESSAGES.CATEGORY_ALREADY_EXISTS);
     }
 
-    const created = await new this.categoryModel({ ...dto, companyId: new Types.ObjectId(companyId) }).save();
+    const created = await new this.categoryModel({
+      ...dto,
+      companyId: new Types.ObjectId(companyId),
+    }).save();
 
     return {
       statusCode: 201,
@@ -44,6 +67,12 @@ export class CategoriesService {
   async findAll(companyId: string, query: PaginatedSearchDTO): Promise<PaginatedResponseDto<CategoryDto>> {
     const { pageNumber = 1, pageSize = 10, search } = query;
 
+    const validPageNumber = Math.max(1, Math.floor(pageNumber) || 1);
+    const validPageSize = Math.min(
+      CategoriesService.MAX_PAGE_SIZE,
+      Math.max(1, Math.floor(pageSize) || CategoriesService.DEFAULT_PAGE_SIZE)
+    );
+
     const filter: any = {
       companyId: new Types.ObjectId(companyId),
     };
@@ -52,17 +81,18 @@ export class CategoriesService {
       filter.$or = [{ name: { $regex: search, $options: 'i' } }];
     }
 
-    const totalCount = await this.categoryModel.countDocuments(filter);
-
-    const categories = await this.categoryModel
-      .find(filter)
-      .collation({ locale: 'tr', strength: 1 })
-      .sort({ createdAt: -1 })
-      .skip((pageNumber - 1) * pageSize)
-      .limit(pageSize)
-      .select('-__v')
-      .lean()
-      .exec();
+    const [totalCount, categories] = await Promise.all([
+      this.categoryModel.countDocuments(filter),
+      this.categoryModel
+        .find(filter)
+        .collation({ locale: 'tr', strength: 1 })
+        .sort({ createdAt: -1 })
+        .skip((validPageNumber - 1) * validPageSize)
+        .limit(validPageSize)
+        .select('-__v')
+        .lean()
+        .exec(),
+    ]);
 
     const items = plainToInstance(CategoryDto, categories, {
       excludeExtraneousValues: true,
@@ -70,16 +100,16 @@ export class CategoriesService {
 
     return {
       items,
-      pageNumber,
+      pageNumber: validPageNumber,
       totalCount,
-      totalPages: Math.ceil(totalCount / pageSize),
-      hasPreviousPage: pageNumber > 1,
-      hasNextPage: pageNumber * pageSize < totalCount,
+      totalPages: Math.ceil(totalCount / validPageSize),
+      hasPreviousPage: validPageNumber > 1,
+      hasNextPage: validPageNumber * validPageSize < totalCount,
     };
   }
 
   async findOne(id: string, companyId: string): Promise<BaseResponseDto<CategoryDto>> {
-    ensureValidObjectId(id, 'Geçersiz kategori ID');
+    ensureValidObjectId(id, CategoriesService.ERROR_MESSAGES.INVALID_CATEGORY_ID);
 
     const category = await this.categoryModel
       .findOne({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) })
@@ -88,7 +118,7 @@ export class CategoriesService {
       .exec();
 
     if (!category) {
-      throw new NotFoundException('Kategori bulunamadı');
+      throw new NotFoundException(CategoriesService.ERROR_MESSAGES.CATEGORY_NOT_FOUND);
     }
 
     const data = plainToInstance(CategoryDto, category, {
@@ -99,16 +129,29 @@ export class CategoriesService {
   }
 
   async update(id: string, dto: UpdateCategoryDto, companyId: string): Promise<CommandResponseDto> {
-    ensureValidObjectId(id, 'Geçersiz kategori ID');
+    ensureValidObjectId(id, CategoriesService.ERROR_MESSAGES.INVALID_CATEGORY_ID);
+
+    if (dto.name) {
+      const exists = await this.categoryModel
+        .findOne({
+          name: dto.name,
+          companyId: new Types.ObjectId(companyId),
+          _id: { $ne: new Types.ObjectId(id) },
+        })
+        .lean()
+        .exec();
+
+      if (exists) {
+        throw new ConflictException(CategoriesService.ERROR_MESSAGES.CATEGORY_ALREADY_EXISTS);
+      }
+    }
 
     const updated = await this.categoryModel
-      .findOneAndUpdate({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) }, dto, {
-        new: true,
-      })
+      .findOneAndUpdate({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) }, dto, { new: true })
       .exec();
 
     if (!updated) {
-      throw new NotFoundException('Güncellenecek kategori bulunamadı');
+      throw new NotFoundException(CategoriesService.ERROR_MESSAGES.CATEGORY_UPDATE_FAILED);
     }
 
     return {
@@ -118,18 +161,18 @@ export class CategoriesService {
   }
 
   async remove(id: string, companyId: string): Promise<CommandResponseDto> {
-    ensureValidObjectId(id, 'Geçersiz kategori ID');
+    ensureValidObjectId(id, CategoriesService.ERROR_MESSAGES.INVALID_CATEGORY_ID);
 
     const deleted = await this.categoryModel
       .findOneAndDelete({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) })
       .exec();
 
     if (!deleted) {
-      throw new NotFoundException('Silinecek kategori bulunamadı');
+      throw new NotFoundException(CategoriesService.ERROR_MESSAGES.CATEGORY_DELETE_FAILED);
     }
 
     return {
-      statusCode: 200,
+      statusCode: 204,
       id: deleted.id.toString(),
     };
   }

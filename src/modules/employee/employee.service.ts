@@ -3,10 +3,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
 import { Model, Types } from 'mongoose';
 
-import { PAGINATION_DEFAULT_PAGE } from '../../common/constant/pagination.param';
-import { CompanyListQueryDto } from '../../common/DTO/request/company.list.request.dto';
+import { PAGINATION_DEFAULT_PAGE, PAGINATION_DEFAULT_PAGE_SIZE } from '../../common/constant/pagination.param';
+import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
+import { FilterBuilder } from '../../common/helper/filter.builder';
 import { ensureValidObjectId } from '../../common/helper/object.id';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { EmployeeDto } from './dto/employee.dto';
@@ -15,22 +16,29 @@ import { Employee, EmployeeDocument } from './employee.schema';
 
 @Injectable()
 export class EmployeeService {
+  private static readonly DEFAULT_PAGE_SIZE = 10;
+  private static readonly MAX_PAGE_SIZE = 100;
+
+  private static readonly ERROR_MESSAGES = {
+    INVALID_EMPLOYEE_ID: 'Geçersiz çalışan ID',
+    EMPLOYEE_NOT_FOUND: 'Çalışan bulunamadı',
+    EMPLOYEE_UPDATE_FAILED: 'Güncellenecek çalışan bulunamadı',
+    EMPLOYEE_DELETE_FAILED: 'Silinecek çalışan bulunamadı',
+    EMPLOYEE_ALREADY_EXISTS: 'Bu isimde bir çalışan zaten mevcut',
+  };
+
   constructor(
     @InjectModel(Employee.name)
-    private readonly EmployeeModel: Model<EmployeeDocument>
+    private readonly employeeModel: Model<EmployeeDocument>
   ) {}
 
   async create(dto: CreateEmployeeDto, companyId: string): Promise<CommandResponseDto> {
-    const exists = await this.EmployeeModel.findOne({
-      fullName: dto.fullName,
+    await this.checkExistingEmployee(companyId, dto.fullName);
+
+    const created = await new this.employeeModel({
+      ...dto,
       companyId: new Types.ObjectId(companyId),
-    });
-
-    if (exists) {
-      throw new ConflictException('Bu isimde bir personel zaten mevcut.');
-    }
-
-    const created = await new this.EmployeeModel({ ...dto, companyId: new Types.ObjectId(companyId) }).save();
+    }).save();
 
     return {
       statusCode: 201,
@@ -38,73 +46,89 @@ export class EmployeeService {
     };
   }
 
-  async findAll(params: CompanyListQueryDto): Promise<PaginatedResponseDto<EmployeeDto>> {
+  async findAll(companyId: string, query: PaginatedDateSearchDTO): Promise<PaginatedResponseDto<EmployeeDto>> {
     const {
       pageNumber = PAGINATION_DEFAULT_PAGE,
-      pageSize = 20,
+      pageSize = PAGINATION_DEFAULT_PAGE_SIZE,
       search,
 
-      companyId,
-    } = params;
+    } = query;
 
-    const filter: any = {
-      companyId: new Types.ObjectId(companyId),
-    };
+    const validPageNumber = FilterBuilder.validatePageNumber(pageNumber);
+    const validPageSize = FilterBuilder.validatePageSize(pageSize);
+    const filter: any = { companyId: new Types.ObjectId(companyId) };
 
     if (search) {
-      filter.$or = [
-        { fullName: { $regex: search, $options: 'i' } },
-        { phone: { $regex: search, $options: 'i' } },
-        { departmentName: { $regex: search, $options: 'i' } },
-      ];
+      FilterBuilder.addSearchFilter(filter, search, ['fullName', 'departmentName']);
     }
 
-    const totalCount = await this.EmployeeModel.countDocuments(filter);
+    const [totalCount, employees] = await Promise.all([
+      this.employeeModel.countDocuments(filter),
+      this.employeeModel
+        .find(filter)
+        .collation({ locale: 'tr', strength: 1 })
+        .sort({ createdAt: -1 })
+        .skip((validPageNumber - 1) * validPageSize)
+        .limit(validPageSize)
+        .lean()
+        .exec(),
+    ]);
 
-    const data = await this.EmployeeModel.find(filter)
-      .collation({ locale: 'tr', strength: 1 })
-      .skip((pageNumber - 1) * pageSize)
-      .limit(pageSize)
-      .sort({ createdAt: -1 })
-      .lean()
-      .exec();
-
-    const items = plainToInstance(EmployeeDto, data, {
+    const items = plainToInstance(EmployeeDto, employees, {
       excludeExtraneousValues: true,
     });
 
     return {
-      pageNumber,
-      totalPages: Math.ceil(totalCount / pageSize),
-      totalCount,
-      hasPreviousPage: pageNumber > 1,
-      hasNextPage: pageNumber * pageSize < totalCount,
       items,
+      pageNumber: validPageNumber,
+      totalPages: Math.ceil(totalCount / validPageSize),
+      totalCount,
+      hasPreviousPage: validPageNumber > 1,
+      hasNextPage: validPageNumber * validPageSize < totalCount,
     };
   }
 
   async findOne(id: string, companyId: string): Promise<EmployeeDto> {
-    ensureValidObjectId(id, 'Geçersiz personel ID');
+    ensureValidObjectId(id, EmployeeService.ERROR_MESSAGES.INVALID_EMPLOYEE_ID);
 
-    const data = await this.EmployeeModel.findOne({ _id: id, companyId: new Types.ObjectId(companyId) })
+    const employee = await this.employeeModel
+      .findOne({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) })
       .lean()
       .exec();
-    if (!data) throw new NotFoundException('Personel bulunamadı');
 
-    return plainToInstance(EmployeeDto, data);
+    if (!employee) {
+      throw new NotFoundException(EmployeeService.ERROR_MESSAGES.EMPLOYEE_NOT_FOUND);
+    }
+
+    return plainToInstance(EmployeeDto, employee, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async update(id: string, dto: UpdateEmployeeDto, companyId: string): Promise<CommandResponseDto> {
-    ensureValidObjectId(id, 'Geçersiz personel ID');
+    ensureValidObjectId(id, EmployeeService.ERROR_MESSAGES.INVALID_EMPLOYEE_ID);
 
-    const updated = await this.EmployeeModel.findOneAndUpdate(
-      { _id: id, companyId: new Types.ObjectId(companyId) },
-      dto,
-      { new: true }
-    ).exec();
+    if (dto.fullName) {
+      const existing = await this.employeeModel
+        .findOne({
+          companyId: new Types.ObjectId(companyId),
+          fullName: dto.fullName,
+          _id: { $ne: new Types.ObjectId(id) },
+        })
+        .lean()
+        .exec();
+
+      if (existing) {
+        throw new ConflictException(EmployeeService.ERROR_MESSAGES.EMPLOYEE_ALREADY_EXISTS);
+      }
+    }
+
+    const updated = await this.employeeModel
+      .findOneAndUpdate({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) }, dto, { new: true })
+      .exec();
 
     if (!updated) {
-      throw new NotFoundException('Güncellenecek personel bulunamadı');
+      throw new NotFoundException(EmployeeService.ERROR_MESSAGES.EMPLOYEE_UPDATE_FAILED);
     }
 
     return {
@@ -114,20 +138,39 @@ export class EmployeeService {
   }
 
   async remove(id: string, companyId: string): Promise<CommandResponseDto> {
-    ensureValidObjectId(id, 'Geçersiz personel ID');
+    ensureValidObjectId(id, EmployeeService.ERROR_MESSAGES.INVALID_EMPLOYEE_ID);
 
-    const deleted = await this.EmployeeModel.findOneAndDelete({
-      _id: id,
-      companyId: new Types.ObjectId(companyId),
-    }).exec();
+    const deleted = await this.employeeModel
+      .findOneAndDelete({
+        _id: new Types.ObjectId(id),
+        companyId: new Types.ObjectId(companyId),
+      })
+      .exec();
 
     if (!deleted) {
-      throw new NotFoundException('Silinecek personel bulunamadı');
+      throw new NotFoundException(EmployeeService.ERROR_MESSAGES.EMPLOYEE_DELETE_FAILED);
     }
 
     return {
       statusCode: 204,
-      id,
+      id: deleted.id.toString(),
     };
+  }
+
+  private async checkExistingEmployee(companyId: string, fullName: string, excludeId?: string): Promise<void> {
+    const query: any = {
+      companyId: new Types.ObjectId(companyId),
+      fullName,
+    };
+
+    if (excludeId) {
+      query._id = { $ne: new Types.ObjectId(excludeId) };
+    }
+
+    const existing = await this.employeeModel.findOne(query).lean().exec();
+
+    if (existing) {
+      throw new ConflictException('Bu isimde bir çalışan zaten mevcut');
+    }
   }
 }

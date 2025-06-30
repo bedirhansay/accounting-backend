@@ -2,15 +2,16 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
 export type EmployeeDocument = Employee & Document;
+
 @Schema({ timestamps: true })
 export class Employee {
-  @Prop({ required: true, unique: true, lowercase: true, trim: true })
+  @Prop({ required: true, trim: true, lowercase: true, index: true })
   fullName: string;
 
   @Prop({ required: false })
   phone?: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, trim: true, index: true })
   departmentName: string;
 
   @Prop({ type: Date })
@@ -19,10 +20,10 @@ export class Employee {
   @Prop({ type: Date })
   terminationDate?: Date;
 
-  @Prop({ required: false })
+  @Prop({ required: false, min: 0 })
   salary?: number;
 
-  @Prop({ default: false })
+  @Prop({ default: true })
   isActive: boolean;
 
   @Prop({ required: false })

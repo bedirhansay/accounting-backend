@@ -1,4 +1,18 @@
-import { Body, Controller, Delete, Get, Header, Param, Patch, Post, Query, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Header,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -6,24 +20,24 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiResponse,
   ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
 
-import { CurrentCompany } from '../../common/decorator/company.id';
-import { CompanyGuard } from '../../common/guards/company.id';
-
 import { Response } from 'express';
+import { CurrentCompany } from '../../common/decorator/company.id';
 import { ApiCommandResponse, ApiPaginatedResponse, ApiSearchDatePaginatedQuery } from '../../common/decorator/swagger';
-import { DateRangeDTO } from '../../common/DTO/request';
-import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
+import { DateRangeDTO, PaginatedDateSearchDTO } from '../../common/DTO/request';
+import { PaginatedSearchDTO } from '../../common/DTO/request/search.request.dto';
 import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
+import { CompanyGuard } from '../../common/guards/company.id';
+
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { ExpenseDto } from './dto/expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
-import { Expense } from './expense.schema';
 import { ExpenseService } from './expense.service';
 
 @ApiTags('Expenses')
@@ -33,7 +47,7 @@ import { ExpenseService } from './expense.service';
   BaseResponseDto,
   PaginatedResponseDto,
   ExpenseDto,
-  PaginatedDateSearchDTO,
+  PaginatedSearchDTO,
   CreateExpenseDto,
   UpdateExpenseDto,
   CommandResponseDto
@@ -43,78 +57,216 @@ import { ExpenseService } from './expense.service';
 export class ExpenseController {
   constructor(private readonly expenseService: ExpenseService) {}
 
-  @Post()
-  @ApiOperation({ summary: 'Yeni gider oluştur', operationId: 'createExpense' })
-  @ApiCommandResponse()
-  @ApiBody({ type: CreateExpenseDto })
-  create(@Body() createExpenseDto: CreateExpenseDto, @CurrentCompany() companyId: string) {
-    return this.expenseService.create({ ...createExpenseDto, companyId });
-  }
-
   @Get()
-  @ApiOperation({ summary: 'Tüm giderleri listele', operationId: 'getAllExpenses' })
+  @ApiOperation({
+    summary: 'Tüm giderleri listele',
+    description: 'Şirkete ait tüm giderleri sayfalı olarak listeler. İsteğe bağlı arama ve tarih filtreleme desteği.',
+    operationId: 'getAllExpenses',
+  })
   @ApiSearchDatePaginatedQuery()
   @ApiPaginatedResponse(ExpenseDto)
-  findAll(@Query() query: PaginatedDateSearchDTO, @CurrentCompany() companyId: string) {
-    return this.expenseService.findAll({ ...query, companyId });
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz sorgu parametreleri',
+  })
+  async findAll(
+    @Query() query: PaginatedDateSearchDTO,
+    @CurrentCompany() companyId: string
+  ): Promise<PaginatedResponseDto<ExpenseDto>> {
+    return this.expenseService.findAll(companyId, query);
+  }
+
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Yeni gider oluştur',
+    description: 'Şirkete ait yeni bir gider kaydı oluşturur.',
+    operationId: 'createExpense',
+  })
+  @ApiBody({
+    type: CreateExpenseDto,
+    description: 'Oluşturulacak gider bilgileri',
+  })
+  @ApiCommandResponse()
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz gider bilgileri',
+  })
+  async create(
+    @Body() createExpenseDto: CreateExpenseDto,
+    @CurrentCompany() companyId: string
+  ): Promise<CommandResponseDto> {
+    return this.expenseService.create({ ...createExpenseDto, companyId });
   }
 
   @Get('export-grouped-fuel-excel')
   @ApiOperation({
-    summary: 'Araç yakıt verilerini Excel olarak dışa aktarır',
+    summary: 'Gider verilerini Excel olarak dışa aktarır',
+    description: 'Belirtilen tarih aralığındaki gider verilerini Excel formatında dışa aktarır.',
     operationId: 'exportGroupedExpense',
   })
   @Header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-  exportIncomes(@Query() query: DateRangeDTO, @CurrentCompany() companyId: string, @Res() res: Response) {
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Excel dosyası başarıyla oluşturuldu',
+    content: {
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
+        schema: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  async exportExpenses(@Query() query: DateRangeDTO, @CurrentCompany() companyId: string, @Res() res: Response) {
     return this.expenseService.exportAllExpensesToExcel(companyId, res, query);
   }
 
+  @Get('vehicle/:vehicleId')
+  @ApiOperation({
+    summary: 'Araca ait giderler',
+    description: 'Belirtilen araca ait giderleri listeler.',
+    operationId: 'getExpensesByVehicle',
+  })
+  @ApiParam({
+    name: 'vehicleId',
+    description: 'Araç ID (MongoDB ObjectId)',
+    type: String,
+    example: '507f1f77bcf86cd799439011',
+  })
+  @ApiSearchDatePaginatedQuery()
+  @ApiPaginatedResponse(ExpenseDto)
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Araç bulunamadı',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz araç ID',
+  })
+  async getExpensesByVehicle(
+    @Param('vehicleId') vehicleId: string,
+    @Query() query: PaginatedSearchDTO,
+    @CurrentCompany() companyId: string
+  ): Promise<PaginatedResponseDto<ExpenseDto>> {
+    return this.expenseService.getVehicleExpenses(vehicleId, companyId, query);
+  }
+
+  @Get('employee/:employeeId')
+  @ApiOperation({
+    summary: 'Personele ait giderler',
+    description: 'Belirtilen personele ait giderleri listeler.',
+    operationId: 'getExpensesByEmployee',
+  })
+  @ApiParam({
+    name: 'employeeId',
+    description: 'Personel ID (MongoDB ObjectId)',
+    type: String,
+    example: '507f1f77bcf86cd799439011',
+  })
+  @ApiSearchDatePaginatedQuery()
+  @ApiPaginatedResponse(ExpenseDto)
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Personel bulunamadı',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz personel ID',
+  })
+  async getExpensesByEmployee(
+    @Param('employeeId') employeeId: string,
+    @Query() query: PaginatedSearchDTO,
+    @CurrentCompany() companyId: string
+  ): Promise<PaginatedResponseDto<ExpenseDto>> {
+    return this.expenseService.getEmployeeExpense(employeeId, companyId, query);
+  }
+
+  // Dynamic routes after static routes
   @Get(':id')
-  @ApiOperation({ summary: 'ID ile gider detayı getir', operationId: 'getExpenseById' })
-  @ApiParam({ name: 'id', description: 'Gider ID' })
-  @ApiOkResponse({ type: Expense })
-  findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
-    return this.expenseService.findOne({ id, companyId });
+  @ApiOperation({
+    summary: 'Gider detayı getir',
+    description: "Belirtilen ID'ye sahip gideri getirir.",
+    operationId: 'getExpenseById',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Gider ID (MongoDB ObjectId)',
+    type: String,
+    example: '507f1f77bcf86cd799439011',
+  })
+  @ApiOkResponse({
+    type: ExpenseDto,
+    description: 'Gider başarıyla getirildi',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Gider bulunamadı',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz gider ID',
+  })
+  async findOne(@Param('id') id: string, @CurrentCompany() companyId: string): Promise<ExpenseDto> {
+    return this.expenseService.findOne(id, companyId);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Gider güncelle', operationId: 'updateExpense' })
-  @ApiParam({ name: 'id', description: 'Gider ID' })
+  @ApiOperation({
+    summary: 'Gider bilgilerini güncelle',
+    description: "Belirtilen ID'ye sahip giderin bilgilerini günceller.",
+    operationId: 'updateExpense',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Güncellenecek gider ID (MongoDB ObjectId)',
+    type: String,
+    example: '507f1f77bcf86cd799439011',
+  })
+  @ApiBody({
+    type: UpdateExpenseDto,
+    description: 'Güncellenecek gider bilgileri (kısmi güncelleme)',
+  })
   @ApiCommandResponse()
-  @ApiBody({ type: UpdateExpenseDto })
-  update(@Param('id') id: string, @Body() updateExpenseDto: UpdateExpenseDto, @CurrentCompany() companyId: string) {
-    return this.expenseService.update({ id, companyId }, updateExpenseDto);
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Güncellenecek gider bulunamadı',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz gider ID veya güncelleme verisi',
+  })
+  async update(
+    @Param('id') id: string,
+    @Body() updateExpenseDto: UpdateExpenseDto,
+    @CurrentCompany() companyId: string
+  ): Promise<CommandResponseDto> {
+    return this.expenseService.update(id, updateExpenseDto, companyId);
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Gider sil', operationId: 'deleteExpense' })
-  @ApiParam({ name: 'id', description: 'Gider ID' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Gideri sil',
+    description: "Belirtilen ID'ye sahip gideri siler. Bu işlem geri alınamaz.",
+    operationId: 'deleteExpense',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Silinecek gider ID (MongoDB ObjectId)',
+    type: String,
+    example: '507f1f77bcf86cd799439011',
+  })
   @ApiCommandResponse()
-  remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
-    return this.expenseService.remove({ id, companyId });
-  }
-
-  @Get('vehicle/:id')
-  @ApiOperation({ summary: 'Araca ait giderler', operationId: 'getExpensesByVehicle' })
-  @ApiParam({ name: 'id', description: 'Araç ID' })
-  @ApiSearchDatePaginatedQuery()
-  @ApiPaginatedResponse(Expense)
-  getExpensesByVehicle(
-    @Param('id') id: string,
-    @Query() query: PaginatedDateSearchDTO,
-    @CurrentCompany() companyId: string
-  ) {
-    return this.expenseService.getVehicleExpenses(id, companyId, query);
-  }
-  @Get('employee/:id')
-  @ApiOperation({ summary: 'Personele ait giderler', operationId: 'getExpensesByEmployee' })
-  @ApiSearchDatePaginatedQuery()
-  @ApiPaginatedResponse(Expense)
-  getExpensesByEmployee(
-    @Param('id') id: string,
-    @Query() query: PaginatedDateSearchDTO,
-    @CurrentCompany() companyId: string
-  ) {
-    return this.expenseService.getEmployeeExpense(id, companyId, query);
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Silinecek gider bulunamadı',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz gider ID',
+  })
+  async remove(@Param('id') id: string, @CurrentCompany() companyId: string): Promise<CommandResponseDto> {
+    return this.expenseService.remove(id, companyId);
   }
 }
