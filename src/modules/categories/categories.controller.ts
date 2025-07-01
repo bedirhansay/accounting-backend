@@ -27,7 +27,7 @@ import {
   ApiBaseResponse,
   ApiCommandResponse,
   ApiPaginatedResponse,
-  ApiSearchDatePaginatedQuery,
+  ApiSearchPaginatedQuery,
 } from '../../common/decorator/swagger';
 import { PaginatedSearchDTO } from '../../common/DTO/request/search.request.dto';
 import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
@@ -63,7 +63,7 @@ export class CategoriesController {
     description: 'Şirkete ait tüm kategorileri sayfalı olarak listeler. İsteğe bağlı arama desteği.',
     operationId: 'getAllCategories',
   })
-  @ApiSearchDatePaginatedQuery()
+  @ApiSearchPaginatedQuery()
   @ApiPaginatedResponse(CategoryDto)
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,

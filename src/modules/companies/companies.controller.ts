@@ -11,7 +11,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { ApiPaginatedResponse, ApiSearchDatePaginatedQuery } from '../../common/decorator/swagger';
+import { ApiPaginatedResponse, ApiSearchPaginatedQuery } from '../../common/decorator/swagger';
 import { PaginationDTO } from '../../common/DTO/request/pagination.request.dto';
 import { BaseResponseDto } from '../../common/DTO/response/base.response.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
@@ -42,7 +42,7 @@ export class CompaniesController {
     description: 'Sistemdeki tüm şirketleri sayfalı olarak listeler.',
     operationId: 'getAllCompanies',
   })
-  @ApiSearchDatePaginatedQuery()
+  @ApiSearchPaginatedQuery()
   @ApiPaginatedResponse(CompanyDto)
   @ApiOkResponse({
     type: PaginatedResponseDto,

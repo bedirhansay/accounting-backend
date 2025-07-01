@@ -11,6 +11,14 @@ export function ApiSearchDatePaginatedQuery() {
   );
 }
 
+export function ApiSearchPaginatedQuery() {
+  return applyDecorators(
+    ApiQuery({ name: 'pageNumber', required: true, description: 'Sayfa numarası', type: Number }),
+    ApiQuery({ name: 'pageSize', required: true, description: 'Sayfa başına kayıt sayısı', type: Number }),
+    ApiQuery({ name: 'search', required: false, description: 'İsim ile arama yapılır', type: String })
+  );
+}
+
 export function ApiIncomeQueryDto() {
   return applyDecorators(
     ApiQuery({ name: 'pageNumber', required: true, description: 'Sayfa numarası', type: Number }),
