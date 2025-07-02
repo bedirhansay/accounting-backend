@@ -67,10 +67,6 @@ export class FuelService {
       endDate,
     });
 
-    if (search) {
-      FilterBuilder.addSearchFilter(filter, search, ['description', 'invoiceNo', 'driverName']);
-    }
-
     const pipeline: any[] = [
       { $match: filter },
       {
@@ -399,22 +395,18 @@ export class FuelService {
       {}
     );
 
-    // Create workbook using ExcelHelper
     const { workbook, sheet } = ExcelHelper.createWorkbook('Yakıt Özeti');
 
-    const title = `Araç Yakıt Özeti: ${ExcelHelper.formatDate(beginDate)} - ${ExcelHelper.formatDate(endDate)}`;
-
-    // Define columns for Excel export
+    const title = `Yakıt Özeti: ${ExcelHelper.formatDate(beginDate)} - ${ExcelHelper.formatDate(endDate)}`;
     const columns: ExcelColumnConfig[] = [
       { key: 'plateNumber', header: 'Plaka', width: 20 },
       { key: 'totalRecords', header: 'Yakıt Fişi Sayısı', width: 20 },
-      { key: 'totalAmount', header: 'Toplam Tutar (₺)', width: 20 },
+      { key: 'totalAmount', header: 'Toplam Tutar (₺)', width: 20, numFmt: '#,##0.00 ₺' },
     ];
 
     ExcelHelper.addTitle(sheet, title, columns.length);
     ExcelHelper.addHeaders(sheet, columns);
 
-    // Transform data for Excel
     const data = Object.values(grouped);
     let grandTotal = 0;
     let grandCount = 0;
@@ -424,18 +416,24 @@ export class FuelService {
       grandCount += item.totalRecords;
     });
 
-    ExcelHelper.addDataRows(sheet, data, (row, item) => {
-      row.getCell('plateNumber').value = item.plateNumber;
-      row.getCell('totalRecords').value = item.totalRecords;
-      row.getCell('totalAmount').value = item.totalAmount;
-    });
+    ExcelHelper.addDataRows(sheet, data);
 
-    // Add total row
+    // Toplam satırı ekle ve yeşil renkle vurgula
     ExcelHelper.addTotalRow(sheet, {
       plateNumber: 'TOPLAM',
       totalRecords: grandCount,
       totalAmount: grandTotal,
     });
+
+    const lastRow = sheet.addRow([]);
+    lastRow.getCell(1).value = `Toplam Araç Sayısı: ${data.length}`;
+    lastRow.getCell(1).font = { italic: true };
+    lastRow.getCell(1).alignment = { horizontal: 'left' };
+    lastRow.getCell(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'E0FFFF' },
+    };
 
     const fileName = `yakit_ozeti_${new Date().toISOString().split('T')[0]}.xlsx`;
     await ExcelHelper.sendAsResponse(workbook, res, fileName);
