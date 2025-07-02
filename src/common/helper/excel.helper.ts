@@ -118,7 +118,7 @@ export class ExcelHelper {
     }).format(amount);
   }
 
-  static formatDate(date: Date | string, format: string = 'DD.MM.YYYY'): string {
-    return dayjs(date).format(format);
+  static formatDate(date: Date | string, format = 'DD.MM.YYYY'): string {
+    return dayjs(date).tz('Europe/Istanbul').format(format);
   }
 }
