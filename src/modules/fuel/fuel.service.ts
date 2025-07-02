@@ -9,6 +9,7 @@ import { DateRangeDTO } from '../../common/DTO/request';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
+import { getLocalDateRange } from '../../common/helper/date-timezone';
 import { ExcelColumnConfig, ExcelHelper } from '../../common/helper/excel.helper';
 import { FilterBuilder } from '../../common/helper/filter.builder';
 import { getFinalDateRange } from '../../common/helper/get-date-params';
@@ -360,7 +361,7 @@ export class FuelService {
   }
 
   async exportMontlyFuelSummary(query: DateRangeDTO, companyId: string, res: Response): Promise<void> {
-    const { beginDate, endDate } = query;
+    const { beginDate, endDate } = getLocalDateRange(query.beginDate, query.endDate);
 
     if (!beginDate || !endDate) {
       throw new NotFoundException('Başlangıç ve bitiş tarihleri belirtilmelidir.');
