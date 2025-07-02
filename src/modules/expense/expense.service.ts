@@ -10,6 +10,7 @@ import { DateRangeDTO } from '../../common/DTO/request';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
+import { getLocalDateRange } from '../../common/helper/date-timezone';
 import { ExcelColumnConfig, ExcelHelper } from '../../common/helper/excel.helper';
 import { FilterBuilder } from '../../common/helper/filter.builder';
 import { ensureValidObjectId } from '../../common/helper/object.id';
@@ -330,7 +331,7 @@ export class ExpenseService {
   async exportMonthlyExpenseSummary(companyId: string, res: Response, query: DateRangeDTO): Promise<void> {
     ensureValidObjectId(companyId, ExpenseService.ERROR_MESSAGES.INVALID_COMPANY_ID);
 
-    const { beginDate, endDate } = query;
+    const { beginDate, endDate } = getLocalDateRange(query.beginDate, query.endDate);
 
     const expenses = await this.expenseModel
       .find({
@@ -353,7 +354,7 @@ export class ExpenseService {
 
     const { workbook, sheet } = ExcelHelper.createWorkbook('Gider Özeti');
 
-    const title = `Masraf Özeti: ${ExcelHelper.formatDate(beginDate as string)} - ${ExcelHelper.formatDate(endDate as string)}`;
+    const title = `Masraf Özeti: ${ExcelHelper.formatDate(beginDate)} - ${ExcelHelper.formatDate(endDate)}`;
     const columns: ExcelColumnConfig[] = [
       { key: 'categoryName', header: 'Kategori Adı', width: 30 },
       { key: 'totalAmount', header: 'Toplam Tutar (₺)', width: 20, numFmt: '#,##0.00 ₺' },
