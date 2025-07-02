@@ -418,7 +418,6 @@ export class FuelService {
 
     ExcelHelper.addDataRows(sheet, data);
 
-    // Toplam satırı ekle ve yeşil renkle vurgula
     ExcelHelper.addTotalRow(sheet, {
       plateNumber: 'TOPLAM',
       totalRecords: grandCount,
