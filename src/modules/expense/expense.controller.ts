@@ -119,7 +119,7 @@ export class ExpenseController {
     },
   })
   async exportExpenses(@Query() query: DateRangeDTO, @CurrentCompany() companyId: string, @Res() res: Response) {
-    return this.expenseService.exportAllExpensesToExcel(companyId, res, query);
+    return this.expenseService.exportMonthlyExpenseSummary(companyId, res, query);
   }
 
   @Get('vehicle/:vehicleId')

@@ -4,14 +4,13 @@ import { plainToInstance } from 'class-transformer';
 import { Model, Types } from 'mongoose';
 
 import dayjs from 'dayjs';
-import { Workbook } from 'exceljs';
 import { Response } from 'express';
 
 import { DateRangeDTO } from '../../common/DTO/request';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
-import { getMonthRange } from '../../common/helper/date';
+import { ExcelColumnConfig, ExcelHelper } from '../../common/helper/excel.helper';
 import { FilterBuilder } from '../../common/helper/filter.builder';
 import { ensureValidObjectId } from '../../common/helper/object.id';
 import { Employee, EmployeeDocument } from '../employee/employee.schema';
@@ -328,16 +327,10 @@ export class ExpenseService {
     };
   }
 
-  async exportAllExpensesToExcel(companyId: string, res: Response, dateRange?: DateRangeDTO): Promise<void> {
+  async exportMonthlyExpenseSummary(companyId: string, res: Response, query: DateRangeDTO): Promise<void> {
     ensureValidObjectId(companyId, ExpenseService.ERROR_MESSAGES.INVALID_COMPANY_ID);
 
-    const { beginDate, endDate } =
-      dateRange?.beginDate && dateRange?.endDate
-        ? {
-            beginDate: new Date(dateRange.beginDate),
-            endDate: new Date(new Date(dateRange.endDate).setHours(23, 59, 59, 999)),
-          }
-        : getMonthRange();
+    const { beginDate, endDate } = query;
 
     const expenses = await this.expenseModel
       .find({
@@ -358,28 +351,37 @@ export class ExpenseService {
       return acc;
     }, {});
 
-    const workbook = new Workbook();
-    const sheet = workbook.addWorksheet('Gider Özeti');
+    const { workbook, sheet } = ExcelHelper.createWorkbook('Gider Özeti');
 
-    sheet.columns = [
-      { header: 'Kategori Adı', key: 'categoryName', width: 30 },
-      { header: 'Toplam Tutar (₺)', key: 'totalAmount', width: 20 },
+    const title = `Masraf Özeti: ${ExcelHelper.formatDate(beginDate as string)} - ${ExcelHelper.formatDate(endDate as string)}`;
+    const columns: ExcelColumnConfig[] = [
+      { key: 'categoryName', header: 'Kategori Adı', width: 30 },
+      { key: 'totalAmount', header: 'Toplam Tutar (₺)', width: 20, numFmt: '#,##0.00 ₺' },
     ];
 
-    for (const [categoryName, totalAmount] of Object.entries(grouped)) {
-      sheet.addRow({
-        categoryName: categoryName.toUpperCase(),
-        totalAmount,
-      });
-    }
+    ExcelHelper.addTitle(sheet, title, columns.length);
+    ExcelHelper.addHeaders(sheet, columns);
 
-    sheet.getColumn(2).numFmt = '#,##0.00 ₺';
+    // 🔹 Veri satırlarını oluştur
+    const data = Object.entries(grouped).map(([categoryName, totalAmount]) => ({
+      categoryName: categoryName.toUpperCase(),
+      totalAmount,
+    }));
 
-    const buffer = await workbook.xlsx.writeBuffer();
-    const filename = `gider-ozeti-${dayjs().format('YYYY-MM-DD')}.xlsx`;
+    let totalSum = 0;
 
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-    res.end(buffer);
+    ExcelHelper.addDataRows(sheet, data, (row, item) => {
+      totalSum += item.totalAmount;
+    });
+
+    // 🔹 Toplam satırı ekle
+    ExcelHelper.addTotalRow(sheet, {
+      categoryName: 'TOPLAM',
+      totalAmount: totalSum,
+    });
+
+    // 🔹 Excel dosyasını gönder
+    const fileName = `gider-ozeti-${dayjs().format('YYYY-MM-DD')}.xlsx`;
+    await ExcelHelper.sendAsResponse(workbook, res, fileName);
   }
 }
