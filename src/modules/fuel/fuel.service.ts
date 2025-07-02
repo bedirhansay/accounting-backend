@@ -20,11 +20,9 @@ import { Fuel, FuelDocument } from './fuel.schema';
 
 @Injectable()
 export class FuelService {
-  // Constants for better maintainability
   private static readonly DEFAULT_PAGE_SIZE = 10;
   private static readonly MAX_PAGE_SIZE = 100;
 
-  // Enhanced error messages
   private static readonly ERROR_MESSAGES = {
     INVALID_FUEL_ID: 'Geçersiz yakıt ID',
     INVALID_COMPANY_ID: 'Geçersiz firma ID',
@@ -68,6 +66,10 @@ export class FuelService {
       beginDate,
       endDate,
     });
+
+    if (search) {
+      FilterBuilder.addSearchFilter(filter, search, ['description', 'invoiceNo', 'driverName']);
+    }
 
     const pipeline: any[] = [
       { $match: filter },
@@ -363,12 +365,15 @@ export class FuelService {
 
   async exportMontlyFuelSummary(query: DateRangeDTO, companyId: string, res: Response): Promise<void> {
     const { beginDate, endDate } = query;
-    const { beginDate: finalBeginDate, endDate: finalEndDate } = getFinalDateRange(beginDate, endDate);
+
+    if (!beginDate || !endDate) {
+      throw new NotFoundException('Başlangıç ve bitiş tarihleri belirtilmelidir.');
+    }
 
     const fuels = await this.fuelModel
       .find({
         companyId: new Types.ObjectId(companyId),
-        operationDate: { $gte: finalBeginDate, $lte: finalEndDate },
+        operationDate: { $gte: beginDate, $lte: endDate },
       })
       .populate('vehicleId', 'plateNumber')
       .lean()
@@ -397,7 +402,7 @@ export class FuelService {
     // Create workbook using ExcelHelper
     const { workbook, sheet } = ExcelHelper.createWorkbook('Yakıt Özeti');
 
-    const title = `Araç Yakıt Özeti: ${ExcelHelper.formatDate(finalBeginDate)} - ${ExcelHelper.formatDate(finalEndDate)}`;
+    const title = `Araç Yakıt Özeti: ${ExcelHelper.formatDate(beginDate)} - ${ExcelHelper.formatDate(endDate)}`;
 
     // Define columns for Excel export
     const columns: ExcelColumnConfig[] = [
