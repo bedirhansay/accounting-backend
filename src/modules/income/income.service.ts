@@ -9,9 +9,9 @@ import { DateRangeDTO } from '../../common/DTO/request/date.range.request.dto';
 import { PaginatedDateSearchDTO } from '../../common/DTO/request/pagination.request.dto';
 import { CommandResponseDto } from '../../common/DTO/response/command-response.dto';
 import { PaginatedResponseDto } from '../../common/DTO/response/paginated.response.dto';
+import { getLocalDateRange } from '../../common/helper/date-timezone';
 import { ExcelColumnConfig, ExcelHelper } from '../../common/helper/excel.helper';
 import { FilterBuilder } from '../../common/helper/filter.builder';
-import { getFinalDateRange } from '../../common/helper/get-date-params';
 import { ensureValidObjectId } from '../../common/helper/object.id';
 import { Customer, CustomerDocument } from '../customers/customer.schema';
 import { CreateIncomeDto } from './dto/create-income.dto';
@@ -157,8 +157,9 @@ export class IncomeService {
   }
 
   async exportMontlyIncomeSummary(query: DateRangeDTO, companyId: string, res: Response): Promise<void> {
-    const { beginDate, endDate } = query;
-    const { beginDate: finalBeginDate, endDate: finalEndDate } = getFinalDateRange(beginDate, endDate);
+    const { beginDate, endDate } = getLocalDateRange(query.beginDate, query.endDate);
+
+    if (!beginDate || !endDate) throw new NotFoundException('Başlangıç ve bitiş tarihleri belirtilmelidir.');
 
     type PopulatedIncome = Omit<Income, 'customerId'> & {
       customerId: { name: string } | null;
@@ -167,7 +168,7 @@ export class IncomeService {
     const incomes = (await this.incomeModel
       .find({
         companyId: new Types.ObjectId(companyId),
-        operationDate: { $gte: finalBeginDate, $lte: finalEndDate },
+        operationDate: { $gte: beginDate, $lte: endDate },
       })
       .populate('customerId', 'name')
       .lean()
@@ -187,7 +188,7 @@ export class IncomeService {
 
     const { workbook, sheet } = ExcelHelper.createWorkbook('Gelir Özeti');
 
-    const title = `Yükleme Özeti: ${ExcelHelper.formatDate(finalBeginDate)} - ${ExcelHelper.formatDate(finalEndDate)}`;
+    const title = `Yükleme Özeti: ${ExcelHelper.formatDate(beginDate)} - ${ExcelHelper.formatDate(endDate)}`;
     ExcelHelper.addTitle(sheet, title, columns.length);
 
     ExcelHelper.addHeaders(sheet, columns);
