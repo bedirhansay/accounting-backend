@@ -24,10 +24,10 @@ export class FilterBuilder {
 
     const { beginDate: finalBeginDate, endDate: finalEndDate } = getFinalDateRange(params.beginDate, params.endDate);
 
-    filter.operationDate = {
-      ...(finalBeginDate && { $gte: new Date(finalBeginDate) }),
-      ...(finalEndDate && { $lte: new Date(finalEndDate) }),
-    };
+    // filter.operationDate = {
+    //   ...(finalBeginDate && { $gte: new Date(finalBeginDate) }),
+    //   ...(finalEndDate && { $lte: new Date(finalEndDate) }),
+    // };
 
     return filter;
   }
@@ -42,10 +42,6 @@ export class FilterBuilder {
 
   static buildIncomeFilter(params: IncomeFilterParams): Record<string, any> {
     const filter = this.buildBaseFilter(params);
-
-    if (typeof params.isPaid === 'boolean') {
-      filter.isPaid = params.isPaid;
-    }
 
     if (params.customerId) {
       filter.customerId = new Types.ObjectId(params.customerId);

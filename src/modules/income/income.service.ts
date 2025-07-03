@@ -130,7 +130,18 @@ export class IncomeService {
     ensureValidObjectId(id, IncomeService.ERROR_MESSAGES.INVALID_INCOME_ID);
 
     const updated = await this.incomeModel
-      .findOneAndUpdate({ _id: new Types.ObjectId(id), companyId: new Types.ObjectId(companyId) }, dto, { new: true })
+      .findOneAndUpdate(
+        {
+          _id: new Types.ObjectId(id),
+          companyId: new Types.ObjectId(companyId),
+        },
+        {
+          ...dto,
+          customerId: new Types.ObjectId(dto.customerId),
+          categoryId: new Types.ObjectId(dto.categoryId),
+        },
+        { new: true }
+      )
       .exec();
 
     if (!updated) throw new NotFoundException(IncomeService.ERROR_MESSAGES.INCOME_UPDATE_FAILED);
@@ -140,7 +151,6 @@ export class IncomeService {
       id: updated.id.toString(),
     };
   }
-
   async remove(id: string, companyId: string): Promise<CommandResponseDto> {
     ensureValidObjectId(id, IncomeService.ERROR_MESSAGES.INVALID_INCOME_ID);
 
@@ -308,6 +318,8 @@ export class IncomeService {
       endDate,
       customerId,
     });
+
+    console.log('Filter:', filter);
 
     const [totalCount, incomes] = await Promise.all([
       this.incomeModel.countDocuments(filter),
